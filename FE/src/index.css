@@ -13,27 +13,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 구독 아이콘 */
-.subScribe {
-  position: absolute;
-  width: 53px;
-  height: 53px;
-  left: 107px;
-  top: 106px;
-  border-radius: 6px;
-}
- /* 구독 아이콘 */
-.lengerIcon {
-  position: absolute;
-  width: 60px;
-  height: 60px;
-  left: 0px;
-  top: 1px;
-  background: #FAF4B3;
-}
-
-
-
 a {
   font-weight: 500;
   color: #646cff;
