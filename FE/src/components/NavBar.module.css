@@ -1,0 +1,24 @@
+.navBar {
+    position: absolute;
+    width: 100%; 
+    height: 60px;
+    left: 0;
+    bottom: 0;
+    background: #FFFFFF;
+    box-shadow: 1px 0px 4px rgba(0, 0, 0, 0.14);
+    border-radius: 16px 16px 0 0;
+    display: flex; 
+    justify-content: space-around; 
+    align-items: center; 
+}
+
+.navBar span {
+    font-size: 1.2rem;
+    color: #333; 
+    cursor: pointer; 
+    transition: color 0.3s; 
+}
+
+.navBar span:hover {
+    color: #FF957A; 
+}
