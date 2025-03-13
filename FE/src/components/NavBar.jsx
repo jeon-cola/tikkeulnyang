@@ -1,10 +1,11 @@
+import { Link } from 'react-router-dom';
 import classes from './NavBar.module.css';
 
 export default function NavBar() {
     return(
     <>
         <nav className={classes.navBar}>
-            <span className={classes.navItem}>
+            <Link className={classes.navItem} to="/home/">
                 <div className={classes.homeIcon}>
                     <svg width="22" height="23" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="10" y="11" width="2" height="7" rx="1" fill="#222222"/>
@@ -14,8 +15,8 @@ export default function NavBar() {
                 <div className={classes.label}>
                     홈
                 </div>
-            </span>
-            <span className={classes.navItem}>
+            </Link>
+            <Link className={classes.navItem} to="/challenge/">
                 <div className={classes.challengeIcon}>
                     <svg width="29" height="22" viewBox="0 0 29 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M24.0851 8.641C25.5849 10.4149 25.2731 12.5857 25.2731 14.5C25.2731 19.7731 18.1626 21.25 14.5001 21.25C10.8375 21.25 3.7271 19.7731 3.7271 14.5C3.7271 12.5857 3.41525 10.4149 4.9151 8.641M24.0851 8.641C23.8218 8.3305 23.5046 8.0335 23.1185 7.75M24.0851 8.641C25.0301 9.18505 25.2717 7.14925 25.2731 6.4837V3.9538C25.2731 1.76005 23.7651 1 22.4718 1C21.1799 1 18.5933 3.11005 17.732 3.11005C16.6979 3.11005 16.4981 2.8981 14.5001 2.8981C12.5021 2.8981 12.3023 3.11005 11.2682 3.11005C10.4069 3.11005 7.8203 1 6.52835 1C5.2364 1 3.7271 1.76005 3.7271 3.9538V6.48505C3.7298 7.14925 3.9701 9.18505 4.9151 8.641M4.9151 8.641C5.17835 8.3305 5.4956 8.0335 5.8817 7.75" stroke="black" strokeWidth="1.5" strokeLinecap="round"/>
@@ -26,8 +27,8 @@ export default function NavBar() {
                 <div className={classes.label}>
                     챌린지
                 </div>
-            </span>
-            <span className={classes.navItem}>
+            </Link>
+            <Link className={classes.navItem} to="/bucketlist/">
                 <div className={classes.ledgerIcon}>
                     <svg width="21" height="23" viewBox="0 0 21 23" fill="none" xmlns="http://www.w3.org/2000/svg"> 
                         <rect className={classes.strokeOnly} x="1" y="3" width="19" height="19" rx="3" stroke="black" strokeWidth="2"/>
@@ -39,8 +40,8 @@ export default function NavBar() {
                 <div className={classes.label}>
                     가계부
                 </div>
-            </span>
-            <span className={classes.navItem}>
+            </Link>
+            <Link className={classes.navItem} to="/card">
                 <div className={classes.cardIcon}>
                     <svg width="23" height="23" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="11" stroke="black" strokeWidth="2"/>
@@ -50,8 +51,8 @@ export default function NavBar() {
                 <div className={classes.label}>
                     카드
                 </div>
-            </span>
-            <span className={classes.navItem}>
+            </Link>
+            <Link className={classes.navItem} to="/mypage/">
                 <div className={classes.myPageIcon}>
                     <svg width="28" height="22" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M7.70725 4.82738C6.87652 4.83004 6.0311 4.02501 6.02503 2.80686C6.01897 1.58872 6.85634 0.778299 7.68708 0.775636C8.51781 0.772974 9.36323 1.578 9.36929 2.79615C9.37536 4.01429 8.53798 4.82471 7.70725 4.82738Z" stroke="black" strokeWidth="1.5"/>
@@ -67,7 +68,7 @@ export default function NavBar() {
                 <div className={classes.label}>
                     마이
                 </div>
-            </span>
+            </Link>
         </nav>
     </>
     )

@@ -1,9 +1,10 @@
 import './App.css'
 import NavBar from './components/navBar'
+import Router from './routes'
 function App() {
   return (
     <>
-      <NavBar/>
+      <Router/>
     </>
   );
 }
