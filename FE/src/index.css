@@ -22,17 +22,15 @@
   top: 106px;
   border-radius: 6px;
 }
- /* 구독 아이콘 */
+/* 구독 아이콘 */
 .lengerIcon {
   position: absolute;
   width: 60px;
   height: 60px;
   left: 0px;
   top: 1px;
-  background: #FAF4B3;
+  background: #faf4b3;
 }
-
-
 
 a {
   font-weight: 500;
@@ -58,17 +56,17 @@ h1 {
 
 /* 일반 버튼 */
 button {
-  display: flex; 
-  justify-content: center; 
-  align-items: center; 
-  text-align: center; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
   border-radius: 100px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
   font-size: 23px;
   font-weight: 500;
   font-family: inherit;
-  background-color: #ff957A;
+  background-color: #ff957a;
   color: white;
   cursor: pointer;
   transition: all 0.25s;
@@ -90,8 +88,8 @@ button {
   height: 43px;
   left: 19px;
   top: 313px;
-  background: #FF957A;
-  border: 1px solid #DFDFDF;
+  background: #ff957a;
+  border: 1px solid #dfdfdf;
   border-radius: 100px;
 }
 
@@ -101,7 +99,7 @@ button:hover {
 button:focus,
 button:focus-visible {
   background-color: #e87c62;
-  outline: 4px auto ;
+  outline: 4px auto;
 }
 
 @media (prefers-color-scheme: light) {
@@ -113,6 +111,6 @@ button:focus-visible {
     color: #747bff;
   }
   button {
-    background-color: #ff957A;
+    background-color: #ff957a;
   }
 }
