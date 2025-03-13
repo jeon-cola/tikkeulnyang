@@ -70,38 +70,38 @@
     color: #222222;
 }
 
-.navBar span:nth-child(1):hover svg path {
+.navBar a:nth-child(1):hover svg path {
     stroke: #FF957A;
 }
-.navBar span:nth-child(1):hover svg rect {
+.navBar a:nth-child(1):hover svg rect {
     fill: #FF957A;
     stroke: #FF957A;
 }
 
-.navBar span:nth-child(2):hover svg path {
+.navBar a:nth-child(2):hover svg path {
 
     stroke: #FF957A;
 }
 
-.navBar span:nth-child(3):hover svg path,
-.navBar span:nth-child(3):hover svg rect {
+.navBar a:nth-child(3):hover svg path,
+.navBar a:nth-child(3):hover svg rect {
     stroke: #FF957A;
 }
 
-.navBar span:nth-child(4):hover svg path{
+.navBar a:nth-child(4):hover svg path{
     fill: #FF957A;
     stroke: #FF957A;
 }
-.navBar span:nth-child(4):hover svg circle {
+.navBar a:nth-child(4):hover svg circle {
 
     stroke: #FF957A;
 }
 
-.navBar span:nth-child(5):hover svg path {
+.navBar a:nth-child(5):hover svg path {
     fill: #FF957A;
     stroke: #FF957A;
 }
 
-.navBar span:hover .label {
+.navBar a:hover .label {
     color: #FF957A;
 }
