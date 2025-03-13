@@ -18,13 +18,13 @@ export default function challengeCard({
 }) {
   return (
     <div className="absolute w-[168px] h-[207px] left-[15px] top-[82px] bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] overflow-hidden">
-      {/* 이미지 영역 (Frame 12) */}
+      {/* 이미지 영역 */}
       <div
         className="absolute w-[168px] h-[129px] left-0 top-0"
         style={{ backgroundImage: `url(${imageUrl})`, backgroundSize: "cover" }}
       ></div>
 
-      {/* 공식챌린지 텍스트 */}
+      {/* 챌린지 타입*/}
       <div className="absolute w-[48px] h-[13px] left-[7px] top-[134px] font-['Pretendard'] font-normal text-[11px] leading-[13px] text-black">
         {type}
       </div>
@@ -34,7 +34,7 @@ export default function challengeCard({
         {title}
       </div>
 
-      {/* 날짜 표시 영역 */}
+      {/* 날짜 표시*/}
       <div className="absolute w-[67px] h-[11px] left-[94px] top-[188px] bg-[#DFDFDF] shadow-[0px_1px_1.5px_rgba(0,0,0,0.25)] rounded-[6px] flex items-center justify-center">
         <span className="font-['Pretendard'] font-normal text-[7px] leading-[8px] text-black">
           {startDate} ~ {endDate}
