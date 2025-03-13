@@ -44,19 +44,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 3. Access Token 검증
         if (accessToken != null && jwtUtil.validateToken(accessToken)) {
-            Claims claims = jwtUtil.parseClaims(accessToken);
+            setAuthentication(accessToken, request);
+        } else if (refreshToken != null && jwtUtil.validateToken(refreshToken)) {
+            // 4. Access Token이 만료되었지만 Refresh Token이 유효한 경우
+            Claims claims = jwtUtil.parseClaims(refreshToken);
             String email = claims.getSubject();
             String role = claims.get("role", String.class);
 
-            // 4. Spring Security 인증 정보 저장
-            User user = new User(email, "", Arrays.asList(() -> "ROLE_" + role));
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // 5. 새로운 Access Token 생성
+            String newAccessToken = jwtUtil.generateAccessToken(role, email, "nickname");
+
+            // 6. 응답 헤더에 새로운 Access Token 추가
+            response.setHeader("Authorization", "Bearer " + newAccessToken);
+
+            setAuthentication(newAccessToken, request);
         }
 
-        // 5. 필터 체인 계속 진행
         chain.doFilter(request, response);
+    }
+
+    /**
+     * SecurityContextHolder에 인증 정보 저장
+     */
+    private void setAuthentication(String token, HttpServletRequest request) {
+        Claims claims = jwtUtil.parseClaims(token);
+        String email = claims.getSubject();
+        String role = claims.get("role", String.class);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(email, null, Arrays.asList(() -> "ROLE_" + role)); // Principal을 email로 설정
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 }
