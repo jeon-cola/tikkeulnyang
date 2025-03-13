@@ -36,7 +36,7 @@ public class SecurityConfig {
                 }))
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-                        .requestMatchers("/auth/login", "/auth/refresh", "/users","/api/auth/callback").permitAll()
+                        .requestMatchers("api/auth/login", "api/user/register","/api/auth/callback").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
