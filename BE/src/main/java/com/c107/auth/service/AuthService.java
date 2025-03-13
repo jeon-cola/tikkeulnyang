@@ -1,19 +1,22 @@
 package com.c107.auth.service;
 
 import com.c107.auth.dto.KakaoTokenResponseDto;
-import com.c107.auth.dto.JwtTokenResponseDto;
 import com.c107.auth.entity.LoginUserEntity;
 import com.c107.auth.repository.LoginUserRepository;
 import com.c107.common.util.JwtUtil;
 import com.c107.common.util.ResponseUtil;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -21,8 +24,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final LoginUserRepository loginuserRepository;
+    private final LoginUserRepository loginUserRepository;
     private final JwtUtil jwtUtil;
+    private final FinanceService financeService;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${spring.security.oauth2.client.registration.kakao.client-id}")
@@ -37,12 +41,22 @@ public class AuthService {
     @Value("${spring.security.oauth2.client.provider.kakao.token-uri}")
     private String kakaoTokenUri;
 
-    // user-info-uri는 동의 항목이 없으면 거의 빈값만 내려옴.
     @Value("${spring.security.oauth2.client.provider.kakao.user-info-uri}")
     private String kakaoUserInfoUri;
 
     /**
-     * 1) 인가 코드(code)로 카카오 액세스 토큰 요청
+     * [1] 카카오 로그인 페이지로 바로 리다이렉트
+     */
+    public void redirectToKakaoLogin(HttpServletResponse response) throws IOException {
+        String loginUrl = "https://kauth.kakao.com/oauth/authorize"
+                + "?client_id=" + kakaoClientId
+                + "&redirect_uri=" + kakaoRedirectUri
+                + "&response_type=code";
+        response.sendRedirect(loginUrl);
+    }
+
+    /**
+     * [2] 카카오 액세스 토큰 요청
      */
     public KakaoTokenResponseDto getKakaoAccessToken(String code) {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -65,8 +79,7 @@ public class AuthService {
     }
 
     /**
-     * 2) (선택) 카카오 사용자 정보 호출
-     * 동의 항목이 없으면 거의 { id: ~ } 정도만 내려옴.
+     * [3] 카카오 사용자 정보 조회
      */
     public Map<String, Object> getKakaoUserInfo(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
@@ -83,34 +96,89 @@ public class AuthService {
     }
 
     /**
-     * 3) JWT 발급 및 회원가입 유무 확인
-     * - 만약 DB에 사용자가 없다면 회원가입이 필요하다고 응답 (신규 회원)
-     * - 이미 존재하면 JWT를 발급하여 바로 로그인 처리
+     * [4] 카카오 콜백 처리: 기존 회원이면 JWT 발급, 신규 회원이면 회원가입 요청
+     *    (DB에 저장 X, 금융 API 계정 생성 X)
      */
-    public ResponseEntity<Map<String, Object>> authenticateWithKakao(String code) {
-        // (1) 액세스 토큰 받기
+    public ResponseEntity<Map<String, Object>> authenticateWithKakao(String code, HttpServletResponse response) {
+        // 1. 카카오 액세스 토큰 받기
         KakaoTokenResponseDto tokenResponse = getKakaoAccessToken(code);
 
-        // (2) 사용자 정보 요청 (동의 항목이 없으면 거의 id만 내려옴)
+        // 2. 카카오 사용자 정보 요청
         Map<String, Object> kakaoUser = getKakaoUserInfo(tokenResponse.getAccessToken());
-        // 임시로 id만 가져오기
-        String kakaoId = kakaoUser.getOrDefault("id", "kakao-unknown").toString();
+        if (kakaoUser == null || !kakaoUser.containsKey("kakao_account")) {
+            return ResponseUtil.badRequest("카카오 사용자 정보가 없습니다.", null);
+        }
+        Map<String, Object> kakaoAccount = (Map<String, Object>) kakaoUser.get("kakao_account");
+        String email = (String) kakaoAccount.get("email");
 
-        // (3) 신규 회원인 경우 DB에 회원이 없으므로 추가 회원가입 페이지로 이동 필요.
-        // 예: 이메일, 닉네임 등 추가 정보를 프론트엔드에서 입력 받음.
-        // 여기서는 기본 email, nickname을 생성하지 않고 "SIGNUP_REQUIRED"로 응답.
-        String defaultEmail = "unknown-" + kakaoId + "@noemail.com";
-        Optional<LoginUserEntity> existingUser = loginuserRepository.findByEmail(defaultEmail);
-        if (existingUser.isEmpty()) {
-            // 신규 회원: 추가 정보 입력이 필요하다는 응답을 반환
-            return ResponseUtil.success("SIGNUP_REQUIRED", Map.of("kakaoId", kakaoId));
+        if (email == null || email.isBlank()) {
+            return ResponseUtil.badRequest("카카오에서 이메일 정보를 받지 못했습니다.", null);
         }
 
-        // (4) 기존 회원인 경우, JWT 생성
-        LoginUserEntity user = existingUser.get();
-        String accessTokenJwt = jwtUtil.generateAccessToken(user.getRole(), user.getEmail(), user.getNickname());
-        String refreshTokenJwt = jwtUtil.generateRefreshToken(user.getRole(), user.getEmail(),user.getNickname());
+        // 3. DB에서 사용자 조회
+        Optional<LoginUserEntity> existingUserOpt = loginUserRepository.findByEmail(email);
 
-        return ResponseUtil.success("JWT 발급 성공", new JwtTokenResponseDto(accessTokenJwt, refreshTokenJwt));
+        // 4. 기존 회원인 경우 -> JWT 발급
+        if (existingUserOpt.isPresent()) {
+            LoginUserEntity user = existingUserOpt.get();
+            String accessTokenJwt = jwtUtil.generateAccessToken(user.getRole(), user.getEmail(), user.getNickname());
+            String refreshTokenJwt = jwtUtil.generateRefreshToken(user.getRole(), user.getEmail(), user.getNickname());
+
+            setRefreshTokenCookie(refreshTokenJwt, response);
+            return ResponseUtil.success("JWT 발급 성공", Map.of("accessToken", accessTokenJwt));
+        }
+
+        // 5. 신규 회원 -> "신규회원 회원가입 요청" 메시지 (DB 저장 안 함)
+        return ResponseUtil.success("신규회원 회원가입 요청", Map.of("email", email));
+    }
+
+    /**
+     * Refresh Token을 HttpOnly 쿠키에 설정
+     */
+    private void setRefreshTokenCookie(String refreshToken, HttpServletResponse response) {
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
+        response.addCookie(refreshTokenCookie);
+    }
+
+    /**
+     * 로그아웃 처리 (JWT 삭제 + 카카오 로그아웃)
+     */
+    public ResponseEntity<Map<String, Object>> logout(HttpServletResponse response, String email) {
+        if (email == null) {
+            return ResponseUtil.badRequest("인증된 사용자가 없습니다.", null);
+        }
+
+        // 1. JWT 쿠키 삭제
+        removeJwtCookies(response);
+
+        // 2. 카카오 로그아웃 URL 생성
+        String kakaoLogoutUrl = "https://kauth.kakao.com/oauth/logout"
+                + "?client_id=" + kakaoClientId
+                + "&logout_redirect_uri=" + "http://localhost:8080/api/auth/logout/callback";
+
+        return ResponseUtil.success("로그아웃 완료", Map.of("redirectUri", kakaoLogoutUrl));
+    }
+
+    /**
+     * JWT 쿠키 삭제
+     */
+    private void removeJwtCookies(HttpServletResponse response) {
+        Cookie accessTokenCookie = new Cookie("accessToken", null);
+        accessTokenCookie.setMaxAge(0);
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setHttpOnly(true);
+
+        Cookie refreshTokenCookie = new Cookie("refreshToken", null);
+        refreshTokenCookie.setMaxAge(0);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setHttpOnly(true);
+
+        response.addCookie(accessTokenCookie);
+        response.addCookie(refreshTokenCookie);
+
     }
 }

@@ -25,4 +25,6 @@ public class LoginUserEntity {
 
     @Column(nullable = false)
     private String role;
+
+    private String financeUserKey;
 }

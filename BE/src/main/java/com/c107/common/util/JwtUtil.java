@@ -62,4 +62,17 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
+
+    public String getEmailFromToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .setSigningKey(secretKey) // 서명 검증
+                    .parseClaimsJws(token)
+                    .getBody();
+            return claims.get("email", String.class); // 이메일 가져오기
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 }
