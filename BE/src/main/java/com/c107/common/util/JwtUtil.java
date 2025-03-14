@@ -5,14 +5,14 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.Map;
 
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+    private final SecretKey secretKey;
 
     @Value("${jwt.access-token.expiration}")
     private long accessTokenExpiration;
@@ -20,47 +20,59 @@ public class JwtUtil {
     @Value("${jwt.refresh-token.expiration}")
     private long refreshTokenExpiration;
 
-    // JWT 서명에 사용할 Key
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes());
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    // AccessToken 생성 시
     public String generateAccessToken(String role, String email, String nickname) {
-        return generateToken(role, email, nickname, accessTokenExpiration);
-    }
-
-    // RefreshToken 생성 시
-    public String generateRefreshToken(String role, String email, String nickname) {
-        return generateToken(role, email, nickname, refreshTokenExpiration);
-    }
-
-    private String generateToken(String role, String email, String nickname, long expiration) {
-        Date now = new Date();
         return Jwts.builder()
                 .setSubject(email)
-                .claim("role", role)         // 문자열 role
-                .claim("nickname", nickname) // 닉네임 claim
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + expiration))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .claim("role", role)
+                .claim("nickname", nickname)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
+                .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // 토큰 검증
-    public Claims validateToken(String token) {
+    public String generateRefreshToken(String role, String email, String nickname) {
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("role", role)
+                .claim("nickname", nickname)  // nickname도 추가
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
+                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    public Claims parseClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
 
-    public long getAccessTokenExpiration() {
-        return accessTokenExpiration;
+    public String getEmailFromToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .setSigningKey(secretKey) // 서명 검증
+                    .parseClaimsJws(token)
+                    .getBody();
+            return claims.get("email", String.class); // 이메일 가져오기
+        } catch (Exception e) {
+            return null;
+        }
     }
 
-    public long getRefreshTokenExpiration() {
-        return refreshTokenExpiration;
-    }
 }
