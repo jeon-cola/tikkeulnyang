@@ -19,7 +19,7 @@ export default function Router() {
         <Route path="/ledger/*" element={<LedgerRouter/>}/>
         <Route path="/mypage/*" element={<MyPageRouter/>}/>
         <Route path="/card/*" element={<CardRouter/>} />
-        <Route path="/user/" element={<UserRouter/>} />
+        <Route path="/user/*" element={<UserRouter/>} />
       </Routes>
 
       {/* 하단 앱 바 */}
