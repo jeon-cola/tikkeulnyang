@@ -1,93 +1,55 @@
 package com.c107.auth.controller;
 
-import com.c107.common.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import com.c107.auth.service.AuthService;
+import com.c107.common.util.ResponseUtil;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.security.Principal;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    private final JwtUtil jwtUtil;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final AuthService authService;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.client-id}")
-    private String kakaoClientId;
-
-    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri}")
-    private String kakaoRedirectUri;
-
-    @Value("${spring.security.oauth2.client.provider.kakao.token-uri}")
-    private String kakaoTokenUri;
-
-    @Value("${spring.security.oauth2.client.provider.kakao.user-info-uri}")
-    private String kakaoUserInfoUri;
-
-    @Value("${spring.security.oauth2.client.registration.kakao.client-secret}")
-    private String kakaoClientSecret;
-
-
-    public AuthController(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
+    /**
+     * 카카오 로그인:
+     * - 들어오면 바로 카카오 로그인 페이지로 서버에서 302 리다이렉트
+     */
+    @GetMapping("/login")
+    public void kakaoLogin(HttpServletResponse response) throws IOException {
+        authService.redirectToKakaoLogin(response);
     }
 
+    /**
+     * 카카오 로그인 후 콜백 (인가 코드 수신 → JWT 발급 혹은 신규회원 안내)
+     */
     @GetMapping("/callback")
-    public ResponseEntity<?> kakaoCallback(@RequestParam("code") String code) {
+    public ResponseEntity<Map<String, Object>> kakaoCallback(
+            @RequestParam("code") String code,
+            HttpServletResponse response
+    ) {
+        return authService.authenticateWithKakao(code, response);
+    }
 
-        // 1. 카카오 API에 accessToken 요청
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", "authorization_code");
-        params.add("client_id", kakaoClientId);
-        params.add("redirect_uri", kakaoRedirectUri);
-        params.add("code", code);
-        // client_secret 추가
-        params.add("client_secret", kakaoClientSecret);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        HttpEntity<MultiValueMap<String, String>> tokenRequestEntity = new HttpEntity<>(params, headers);
-
-        ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(kakaoTokenUri, tokenRequestEntity, Map.class);
-        if (!tokenResponse.getStatusCode().is2xxSuccessful() || tokenResponse.getBody() == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("카카오 토큰 발급 실패");
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, Object>> logout(
+            Principal principal,
+            HttpServletResponse response) {
+        if (principal == null) {
+            return ResponseUtil.badRequest("유저를 찾을 수 없습니다.", null);
         }
-        Map<String, Object> tokenBody = tokenResponse.getBody();
-        String kakaoAccessToken = (String) tokenBody.get("access_token");
 
-        // 2. 카카오 API에 사용자 정보 요청
-        HttpHeaders userInfoHeaders = new HttpHeaders();
-        userInfoHeaders.setBearerAuth(kakaoAccessToken);
-        HttpEntity<?> userInfoRequest = new HttpEntity<>(userInfoHeaders);
-
-        ResponseEntity<Map> userInfoResponse = restTemplate.exchange(
-                kakaoUserInfoUri,
-                HttpMethod.GET,
-                userInfoRequest,
-                Map.class
-        );
-        if (!userInfoResponse.getStatusCode().is2xxSuccessful() || userInfoResponse.getBody() == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("카카오 사용자 정보 조회 실패");
-        }
-        Map<String, Object> userInfo = userInfoResponse.getBody();
-
-        // JWT 토큰 생성 및 반환 등 이후 처리...
-        String email = "unknown@noemail.com";
-        String nickname = "사용자";
-
-        String accessToken = jwtUtil.generateAccessToken("USER", email, nickname);
-        String refreshToken = jwtUtil.generateRefreshToken("USER", email, nickname);
-
-        return ResponseEntity.ok(Map.of(
-                "accessToken", accessToken,
-                "refreshToken", refreshToken
-        ));
+        String email = principal.getName(); // Principal에서 이메일 추출
+        return authService.logout(response, email);
     }
 
 }
-
