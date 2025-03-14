@@ -22,7 +22,8 @@ import java.util.Map;
 @RequestMapping("/api/subscribe")
 @RequiredArgsConstructor
 @Slf4j
-public class SubscribeController {
+public class
+SubscribeController {
 
     private final SubscribeService subscribeService;
 
