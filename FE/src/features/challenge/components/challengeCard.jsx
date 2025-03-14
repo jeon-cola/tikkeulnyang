@@ -9,7 +9,7 @@ import React from "react";
   />
 */
 
-export default function challengeCard({
+export default function ChallengeCard({
   imageUrl,
   type,
   title,
@@ -17,7 +17,7 @@ export default function challengeCard({
   endDate,
 }) {
   return (
-    <div className="absolute w-[168px] h-[207px] left-[15px] top-[82px] bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] overflow-hidden">
+    <div className="relative w-[168px] h-[207px] bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] overflow-hidden">
       {/* 이미지 영역 */}
       <div
         className="absolute w-[168px] h-[129px] left-0 top-0"

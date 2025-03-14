@@ -1,5 +1,5 @@
 import { Route, Routes } from "react-router-dom";
-import ChallengeMain from "../features/challenge/challengeMain";
+import ChallengeMain from "../features/challenge/ChallengeMain";
 
 export default function ChallengeMainRouter(){
     return(
