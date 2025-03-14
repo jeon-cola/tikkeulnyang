@@ -17,32 +17,30 @@ public class UserService {
     private final FinanceService financeService;
 
     public ResponseEntity<?> registerUser(UserRegistrationRequestDto request) {
-        // 1. DB에 유저가 이미 있는지 확인
+        // 1. DB에서 유저 존재 여부 확인
         LoginUserEntity user = loginUserRepository.findByEmail(request.getEmail()).orElse(null);
 
-        if (user != null) {
-            // 이미 존재하면 닉네임 등 업데이트
-            user.setNickname(request.getNickname());
-            // 만약 name, birthDate를 LoginUserEntity에 추가했다면 업데이트
-            // user.setName(request.getName());
-            // user.setBirthDate(request.getBirthDate());
-        } else {
-            // DB에 없는 경우 신규 유저 생성
+        if (user == null) {
+            // 신규 유저 생성 (필요에 따라 request의 name, birthDate 등도 저장 가능)
             user = LoginUserEntity.builder()
                     .email(request.getEmail())
                     .nickname(request.getNickname())
                     .role("USER")
                     .build();
-            // name, birthDate도 엔티티에 맞춰서 저장
+        } else {
+            // 기존 유저 -> 닉네임 업데이트
+            user.setNickname(request.getNickname());
         }
 
-        // 2. 금융 API 계정도 없는 경우 새로 생성
+        // 2. 금융 API 계정 확인 및 userKey 저장
         if (user.getFinanceUserKey() == null || user.getFinanceUserKey().isBlank()) {
-            String financeUserKey = financeService.createFinanceUser(user.getEmail(), user.getNickname());
-            user.setFinanceUserKey(financeUserKey);
+            String financeUserKey = financeService.getFinanceUserKey(user.getEmail());
+            if (financeUserKey != null && !financeUserKey.isBlank()) {
+                user.setFinanceUserKey(financeUserKey);
+            }
         }
 
-        // 3. DB 저장
+        // 3. DB 저장 (financeUserKey 포함)
         loginUserRepository.save(user);
 
         return ResponseUtil.success("회원가입 완료", user.getEmail());
