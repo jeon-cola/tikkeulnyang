@@ -4,7 +4,7 @@ import UserMain from "../features/user/UserMain";
 export default function UserRouter() {
     return (
         <Routes>
-            <Route path="/" element={<UserMain/>}/>
+            <Route path="/*" element={<UserMain/>}/>
         </Routes>
     )
 }
