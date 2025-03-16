@@ -32,4 +32,10 @@ public class CardEntity {
 
     @Column(name = "updated_at")
     private String updatedAt;
+
+    @Column(name = "card_no")
+    private String cardNo;
+
+    @Column(name = "cvc")
+    private String cvc;
 }
