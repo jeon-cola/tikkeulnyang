@@ -13,7 +13,6 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
@@ -95,41 +94,43 @@ public class AuthService {
         return response.getBody();
     }
 
-    /**
-     * [4] 카카오 콜백 처리: 기존 회원이면 JWT 발급, 신규 회원이면 회원가입 요청
-     *    (DB에 저장 X, 금융 API 계정 생성 X)
-     */
-    public ResponseEntity<Map<String, Object>> authenticateWithKakao(String code, HttpServletResponse response) {
+    public void authenticateWithKakaoAndRedirect(String code, HttpServletResponse response) throws IOException {
         // 1. 카카오 액세스 토큰 받기
         KakaoTokenResponseDto tokenResponse = getKakaoAccessToken(code);
 
         // 2. 카카오 사용자 정보 요청
         Map<String, Object> kakaoUser = getKakaoUserInfo(tokenResponse.getAccessToken());
         if (kakaoUser == null || !kakaoUser.containsKey("kakao_account")) {
-            return ResponseUtil.badRequest("카카오 사용자 정보가 없습니다.", null);
+            // 오류 발생 시, 로그인 페이지로 에러 메시지와 함께 리다이렉트
+            response.sendRedirect("http://localhost:5173/login?error=kakaoUserNotFound");
+            return;
         }
         Map<String, Object> kakaoAccount = (Map<String, Object>) kakaoUser.get("kakao_account");
         String email = (String) kakaoAccount.get("email");
 
         if (email == null || email.isBlank()) {
-            return ResponseUtil.badRequest("카카오에서 이메일 정보를 받지 못했습니다.", null);
+            response.sendRedirect("http://localhost:5173/login?error=emailNotFound");
+            return;
         }
 
         // 3. DB에서 사용자 조회
         Optional<LoginUserEntity> existingUserOpt = loginUserRepository.findByEmail(email);
 
-        // 4. 기존 회원인 경우 -> JWT 발급
+        // 4. 기존 회원인 경우 -> JWT 발급 및 메인 페이지로 리다이렉트
         if (existingUserOpt.isPresent()) {
             LoginUserEntity user = existingUserOpt.get();
             String accessTokenJwt = jwtUtil.generateAccessToken(user.getRole(), user.getEmail(), user.getNickname());
             String refreshTokenJwt = jwtUtil.generateRefreshToken(user.getRole(), user.getEmail(), user.getNickname());
 
+            // JWT 발급 후, Refresh Token을 HttpOnly 쿠키에 설정
             setRefreshTokenCookie(refreshTokenJwt, response);
-            return ResponseUtil.success("JWT 발급 성공", Map.of("accessToken", accessTokenJwt));
-        }
 
-        // 5. 신규 회원 -> "신규회원 회원가입 요청" 메시지 (DB 저장 안 함)
-        return ResponseUtil.success("신규회원 회원가입 요청", Map.of("email", email));
+            // (원래 ResponseUtil.success()를 호출했지만, 리다이렉트 방식에서는 JSON 대신 URL 이동)
+            response.sendRedirect("http://localhost:5173/home/");
+        } else {
+            // 5. 신규 회원인 경우 -> 회원가입 요청 페이지로 리다이렉트 (쿼리 파라미터로 이메일 전달)
+            response.sendRedirect("http://localhost:5173/user/signup?email=" + email);
+        }
     }
 
     /**
