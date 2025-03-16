@@ -33,11 +33,12 @@ public class AuthController {
      * 카카오 로그인 후 콜백 (인가 코드 수신 → JWT 발급 혹은 신규회원 안내)
      */
     @GetMapping("/callback")
-    public ResponseEntity<Map<String, Object>> kakaoCallback(
+    public void kakaoCallback(
             @RequestParam("code") String code,
             HttpServletResponse response
-    ) {
-        return authService.authenticateWithKakao(code, response);
+    ) throws IOException {
+        // authenticateWithKakao 내부에서 사용자 확인 후, 리다이렉트 URL을 결정하도록 함.
+        authService.authenticateWithKakaoAndRedirect(code, response);
     }
 
     @PostMapping("/logout")
