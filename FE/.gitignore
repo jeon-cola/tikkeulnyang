@@ -40,3 +40,6 @@ dist-ssr
 .temp
 .tmp
 .cache
+
+# pwa 관련 파일 
+/dev-dist
