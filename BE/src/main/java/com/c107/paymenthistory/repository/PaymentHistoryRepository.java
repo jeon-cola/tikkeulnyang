@@ -11,26 +11,27 @@ import java.util.List;
 
 @Repository
 public interface PaymentHistoryRepository extends JpaRepository<PaymentHistoryEntity, Integer> {
-
-    // JOIN을 통한 사용자의 결제 내역 조회
+    // 사용자 ID와 날짜로 결제 내역 조회 (카드와 조인)
     @Query("SELECT p FROM PaymentHistoryEntity p JOIN CardEntity c ON p.cardId = c.cardId " +
             "WHERE c.userId = :userId AND p.transactionDate BETWEEN :startDate AND :endDate")
     List<PaymentHistoryEntity> findByUserIdAndTransactionDateBetween(
             @Param("userId") Integer userId,
             @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate);
+            @Param("endDate") LocalDate endDate
+    );
 
-    // JOIN을 통한 사용자의 특정 날짜 결제 내역 조회
+    // 카드 ID 목록과 날짜로 결제 내역 조회
+    List<PaymentHistoryEntity> findByCardIdInAndTransactionDateBetween(
+            List<Integer> cardIds,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+    // 사용자 ID와 특정 날짜로 결제 내역 조회
     @Query("SELECT p FROM PaymentHistoryEntity p JOIN CardEntity c ON p.cardId = c.cardId " +
             "WHERE c.userId = :userId AND p.transactionDate = :date")
     List<PaymentHistoryEntity> findByUserIdAndTransactionDate(
             @Param("userId") Integer userId,
-            @Param("date") LocalDate date);
+            @Param("date") LocalDate date
+    );
 
-    // 낭비 소비 표시 업데이트
-    @Query("UPDATE PaymentHistoryEntity p SET p.isWaste = :isWaste " +
-            "WHERE p.paymentHistoryId = :paymentHistoryId")
-    void updateIsWaste(
-            @Param("paymentHistoryId") Integer paymentHistoryId,
-            @Param("isWaste") Boolean isWaste);
 }
