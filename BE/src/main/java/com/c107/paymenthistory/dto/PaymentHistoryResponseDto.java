@@ -15,7 +15,13 @@ public class PaymentHistoryResponseDto {
 
     private Integer year;
     private Integer month;
+    private String date;
+    private Integer totalIncome;
+    private Integer totalSpent;
     private List<DayData> data;
+    private String status;
+    private String message;
+    private List<Transaction> transactions;
 
     @Getter
     @NoArgsConstructor
@@ -23,6 +29,33 @@ public class PaymentHistoryResponseDto {
     @Builder
     public static class DayData {
         private String date;
-        private Integer spending; // 지출 (음수로 표현)
+        private Integer income;
+        private Integer expense;
+        private List<TransactionDetail> transactions;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class TransactionDetail {
+        private String merchantName;
+        private Integer amount;
+        private String transactionType;
+        private String category;
+        private String description;
+    }
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class Transaction {
+        private String date;
+        private String categoryName;
+        private String merchantName;
+        private Integer transactionBalance;
+        private String category;
+        private Integer amount;
+        private String description;
     }
 }
