@@ -18,6 +18,7 @@ export default function ChallengeMain() {
               title="카페 방문 줄이기"
               startDate="01-01"
               endDate="01-31"
+              challengeId="1"
             />
 
             <ChallengeCard
@@ -26,6 +27,7 @@ export default function ChallengeMain() {
               title="카페 방문 줄이기"
               startDate="01-01"
               endDate="01-31"
+              challengeId="2"
             />
           </CardBox>
 
@@ -36,6 +38,7 @@ export default function ChallengeMain() {
               title="카페 방문 줄이기"
               startDate="01-01"
               endDate="01-31"
+              challengeId="3"
             />
 
             <ChallengeCard
@@ -44,6 +47,7 @@ export default function ChallengeMain() {
               title="카페 방문 줄이기"
               startDate="01-01"
               endDate="01-31"
+              challengeId="4"
             />
           </CardBox>
 
@@ -59,6 +63,7 @@ export default function ChallengeMain() {
               title="카페 방문 줄이기"
               startDate="01-01"
               endDate="01-31"
+              challengeId="5"
             />
 
             <ChallengeCard
@@ -67,6 +72,7 @@ export default function ChallengeMain() {
               title="카페 방문 줄이기"
               startDate="01-01"
               endDate="01-31"
+              challengeId="6"
             />
           </CardBox>
 
@@ -77,6 +83,7 @@ export default function ChallengeMain() {
               title="카페 방문 줄이기"
               startDate="01-01"
               endDate="01-31"
+              challengeId="7"
             />
 
             <ChallengeCard
@@ -85,6 +92,7 @@ export default function ChallengeMain() {
               title="카페 방문 줄이기"
               startDate="01-01"
               endDate="01-31"
+              challengeId="8"
             />
           </CardBox>
 
