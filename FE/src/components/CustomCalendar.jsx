@@ -1,13 +1,21 @@
-import { useState } from "react";
+// App.jsx
+import React, { useState } from "react";
 import Calendar from "react-calendar";
+// import "./Calendar.css";
 import "react-calendar/dist/Calendar.css";
+import "./CustomCalendar.css";
 
 export default function CustomCalendar() {
-  const [value, setValue] = useState(new Date()); // useState에서 타입
+  const [value, setValue] = useState(new Date());
 
   return (
     <div>
-      <Calendar onChange={setValue} value={value} />
+      <Calendar
+        onChange={setValue}
+        value={value}
+        calendarType="hebrew"
+        formatDay={(local, date) => date.getDate()}
+      />
       <div>
         선택한 날짜:{" "}
         {Array.isArray(value)
