@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
-import BucketListMain from "../features/bucketlist/BucketListMain";
+import BucketListMain from "../features/bucketlist/bucketListMain";
+
 
 export default function BucketListRouter() {
     return (
