@@ -1,4 +1,13 @@
+import { useNavigate } from "react-router-dom"
+
 export default function BucketListInformation() {
+    const nav = useNavigate();
+
+    // 생성 페이지로 이동동
+    function stepHandler(e) {
+        e.preventDefault();
+        nav("/bucketlist/step1")
+    }
     return (
         <div className="flex flex-col justify-center gap-5">
             <img src="/bucketListImg_1.png" alt="안내문 사진 1" className="w-full scale-[1.2] transform-gpu mb-[30px]"/>
@@ -33,7 +42,9 @@ export default function BucketListInformation() {
                 <p>간편하게 송금해 보세요요</p>
             </div>
             <img src="/cat_stamp.png" alt="고양이 스탬프" className="w-full scale-[1.2] transform-gpu" />
-            <button className="mb-[10px] mx-auto">생성하기</button>
+            <div className="w-full mx-auto flex flex-col items-center">
+                <button onClick={stepHandler}>생성하기</button>
+            </div>
         </div>
     ) 
 }
