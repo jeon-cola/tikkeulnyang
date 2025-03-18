@@ -18,7 +18,4 @@ public class CreateChallengeRequest {
     private LocalDate startDate;
     private LocalDate endDate;
     private String description;
-    private String createdBy;
-    private Integer minRequired;
-    private Boolean publicFlag;
 }
