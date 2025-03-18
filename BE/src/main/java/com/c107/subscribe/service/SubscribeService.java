@@ -27,23 +27,21 @@ public class SubscribeService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
+        Integer paymentDay;
+        try {
+            paymentDay = Integer.parseInt(requestDto.getPaymentDate().split("-")[2]);
+        } catch (Exception e) {
+            paymentDay = 1;
+        }
         SubscribeEntity subscribeEntity = SubscribeEntity.builder()
                 .userId(user.getUserId())
                 .email(email)
                 .subscribeName(requestDto.getSubscribeName())
                 .subscribePrice(requestDto.getSubscribePrice())
-                .paymentDate(requestDto.toEntity().getPaymentDate())
+                .paymentDate(paymentDay)
                 .build();
 
         return subscribeRepository.save(subscribeEntity);
-    }
-    // 날짜 파싱 메서드 추가
-    private LocalDateTime parsePaymentDate(String dateStr) {
-        try {
-            return LocalDate.parse(dateStr).atStartOfDay();
-        } catch (Exception e) {
-            return LocalDateTime.now();
-        }
     }
     @Transactional(readOnly = true)
     public List<SubscribeEntity> getUserSubscribes(String email) {

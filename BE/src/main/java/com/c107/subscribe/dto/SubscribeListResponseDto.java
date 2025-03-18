@@ -26,16 +26,12 @@ public class SubscribeListResponseDto {
                 .collect(Collectors.toList());
 
         return SubscribeListResponseDto.builder()
-                .status("success")
-                .message("결제일 순으로 정렬이 완료되었습니다.")
                 .subscriptions(sortedSubscriptions)
                 .build();
     }
 
     public static SubscribeListResponseDto forPriceOrder(List<SubscribeResponseDto> subscriptions) {
         return SubscribeListResponseDto.builder()
-                .status("success")
-                .message("금액순으로 정렬이 완료되었습니다.")
                 .subscriptions(subscriptions)
                 .build();
     }
