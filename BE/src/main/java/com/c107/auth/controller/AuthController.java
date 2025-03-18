@@ -53,4 +53,9 @@ public class AuthController {
         return authService.logout(response, email);
     }
 
+    @GetMapping("/callback/json")
+    public ResponseEntity<?> kakaoCallbackJson(@RequestParam("code") String code) {
+        return authService.authenticateWithKakaoAndReturnJson(code);
+    }
+
 }
