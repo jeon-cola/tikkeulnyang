@@ -3,10 +3,12 @@ import { useParams } from "react-router-dom";
 import CustomHeader from "@/components/CustomHeader";
 import ChallengeDetailImg from "@/features/challenge/components/ChallengeDetailImg";
 import ChallengeIntro from "@/features/challenge/components/ChallengeIntro";
+import MyCurrentStatus from "@/features/challenge/components/MyCurrentStatus";
 /*
   추후에 axios로 채워넣을 데이터: 
   title, imageInfo, challengeType, challengeName, currentParticipants, startDate, endDate,
-   챌린지 상세 설명, 
+   챌린지 상세 설명,
+   deposit, currentProgress, 
 */
 export default function ChallengeDetail() {
   const { ChallengeId } = useParams();
@@ -65,6 +67,7 @@ export default function ChallengeDetail() {
           </div>
         </div>
 
+        <MyCurrentStatus deposit="10000" currentProgress="50" />
         {/* 참가 버튼 */}
         <div className="w-full justify-center flex flex-row">
           <button className="longButton">참여하기</button>
