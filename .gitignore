@@ -1,2 +1,3 @@
 .vscode
 BE/src/main/resources/application.properties
+.idea/

@@ -4,6 +4,7 @@ import CustomHeader from "@/components/CustomHeader";
 import ChallengeDetailImg from "@/features/challenge/components/ChallengeDetailImg";
 import ChallengeIntro from "@/features/challenge/components/ChallengeIntro";
 import MyCurrentStatus from "@/features/challenge/components/MyCurrentStatus";
+import ParticiStatics from "./components/ParticiStatics";
 /*
   추후에 axios로 채워넣을 데이터: 
   title, imageInfo, challengeType, challengeName, currentParticipants, startDate, endDate,
@@ -67,7 +68,10 @@ export default function ChallengeDetail() {
           </div>
         </div>
 
+        {/* 현재 챌린지들의 현황*/}
         <MyCurrentStatus deposit="10000" currentProgress="50" />
+
+        <ParticiStatics />
         {/* 참가 버튼 */}
         <div className="w-full justify-center flex flex-row">
           <button className="longButton">참여하기</button>
