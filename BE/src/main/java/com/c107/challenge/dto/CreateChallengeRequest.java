@@ -18,4 +18,5 @@ public class CreateChallengeRequest {
     private LocalDate startDate;
     private LocalDate endDate;
     private String description;
+    private Integer maxParticipants;
 }
