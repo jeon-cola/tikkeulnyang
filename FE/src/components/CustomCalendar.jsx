@@ -1,7 +1,5 @@
-// App.jsx
 import React, { useState } from "react";
 import Calendar from "react-calendar";
-// import "./Calendar.css";
 import "react-calendar/dist/Calendar.css";
 import "./CustomCalendar.css";
 
@@ -15,6 +13,23 @@ export default function CustomCalendar() {
         value={value}
         calendarType="hebrew"
         formatDay={(local, date) => date.getDate()}
+        tileClassName={({ date, view, activeStartDate }) => {
+          // 'month' 뷰에서만 스타일 지정
+          if (view === "month") {
+            const startMonth = activeStartDate.getMonth();
+            const startYear = activeStartDate.getFullYear();
+
+            // 현재 렌더링 중인 달과 같은 연/월 && 요일이 일요일이면
+            if (
+              date.getFullYear() === startYear &&
+              date.getMonth() === startMonth &&
+              date.getDay() === 0
+            ) {
+              return "current-month-sunday";
+            }
+          }
+          return null;
+        }}
       />
       <div>
         선택한 날짜:{" "}
