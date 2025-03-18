@@ -1,0 +1,5 @@
+# FE/.dockerignore
+node_modules
+build
+dist
+.git
