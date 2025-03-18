@@ -25,5 +25,7 @@ public class BudgetResponseDto {
         private String endDate;
         private String createdAt;
         private String updatedAt;
+
+
     }
 }

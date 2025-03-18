@@ -16,12 +16,16 @@ import java.time.LocalDateTime;
 public class BudgetEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "budget_id")
+    private Integer budgetId;
 
     @Column(name = "user_id")
     private Integer userId;
 
-    @Column(name = "category_id")
+    @Column(nullable = false)
+    private String email;
+
+    @Column(name = "category_id", nullable = false)
     private Integer categoryId;
 
     @Column(name = "amount")
