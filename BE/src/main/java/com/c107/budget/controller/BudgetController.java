@@ -28,13 +28,11 @@ public class BudgetController {
         BudgetResponseDto responseDto = budgetService.createBudget(email, requestDto);
         return ResponseUtil.success("예산 계획이 성공적으로 등록되었습니다.", responseDto);
 
+    }
 
-//        try {
-//            BudgetResponseDto responseDto = budgetService.createBudget(token, requestDto);
-//            return ResponseEntity.ok(responseDto);
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body("예산 설정 중 오류 발생: " + e.getMessage());
-//        }
+    @GetMapping("/plan")
+    public ResponseEntity<?> getBudgetPlan(@AuthenticationPrincipal String email) {
+        BudgetResponseDto responseDto = budgetService.getBudgetPlan(email);
+        return ResponseUtil.success("예산 계획 조회에 성공했습니다.", responseDto);
     }
 }

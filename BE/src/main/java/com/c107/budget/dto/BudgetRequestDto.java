@@ -10,7 +10,6 @@ import lombok.*;
 @Builder
 public class BudgetRequestDto {
 
-
     @JsonProperty("category_id")
     private Integer categoryId;
 

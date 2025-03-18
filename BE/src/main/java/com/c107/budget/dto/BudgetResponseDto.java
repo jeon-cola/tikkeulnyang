@@ -1,6 +1,9 @@
 package com.c107.budget.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -9,6 +12,28 @@ import lombok.*;
 @Builder
 public class BudgetResponseDto {
     private Budget budget;
+
+    private Totals totals;
+    private List<Budget> budgets;
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class Totals {
+        @JsonProperty("total_amount")
+        private Integer totalAmount;
+
+        @JsonProperty("total_spending_amount")
+        private Integer totalSpendingAmount;
+
+        @JsonProperty("total_remaining_amount")
+        private Integer totalRemainingAmount;
+
+        @JsonProperty("total_is_exceed")
+        private Integer totalIsExceed;
+    }
 
     @Getter
     @Setter

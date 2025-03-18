@@ -10,9 +10,6 @@ import java.util.List;
 @Repository
 public interface SubscribeRepository extends JpaRepository<SubscribeEntity, Integer> {
 
-    // 특정 사용자의 모든 구독 목록 조회
-//    List<SubscribeEntity> findByUserId(Integer userId);
-
     List<SubscribeEntity> findByEmail(String email);
     // 결제일 순으로 모든 구독 정보 조회 (오름차순)
     List<SubscribeEntity> findByEmailOrderByPaymentDateAsc(String email);
