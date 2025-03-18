@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useParams } from "react-router-dom";
 import CustomHeader from "@/components/CustomHeader";
 import ChallengeDetailImg from "@/features/challenge/components/ChallengeDetailImg";
 import ChallengeIntro from "@/features/challenge/components/ChallengeIntro";
 import MyCurrentStatus from "@/features/challenge/components/MyCurrentStatus";
 import ParticiStatics from "./components/ParticiStatics";
+import { useNavigate } from "react-router-dom";
 /*
   추후에 axios로 채워넣을 데이터: 
   title, imageInfo, challengeType, challengeName, currentParticipants, startDate, endDate,
@@ -13,7 +14,11 @@ import ParticiStatics from "./components/ParticiStatics";
 */
 export default function ChallengeDetail() {
   const { ChallengeId } = useParams();
-
+  const navigate = useNavigate();
+  const challengeId = useRef(ChallengeId);
+  const handleClick = () => {
+    navigate(`/challenge/enter/${challengeId}`);
+  };
   return (
     <>
       <CustomHeader title="챌린지 상세" />
@@ -74,7 +79,9 @@ export default function ChallengeDetail() {
         <ParticiStatics />
         {/* 참가 버튼 */}
         <div className="w-full justify-center flex flex-row">
-          <button className="longButton">참여하기</button>
+          <button className="longButton" onClick={handleClick}>
+            참여하기
+          </button>
         </div>
       </div>
     </>
