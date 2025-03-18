@@ -4,7 +4,7 @@ FROM openjdk:17-alpine
 # 작업 디렉토리 설정
 WORKDIR /app
 
-# JAR 파일을 컨테이너로 복사 (Gradle 빌드된 JAR 파일이 필요함)
+# Gradle로 빌드된 JAR 파일을 복사 (JAR 파일은 build/libs에 생성되어야 함)
 COPY build/libs/*.jar app.jar
 
 # 컨테이너에서 사용할 포트 지정
