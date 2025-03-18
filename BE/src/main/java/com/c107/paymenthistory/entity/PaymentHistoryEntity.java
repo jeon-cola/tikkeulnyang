@@ -12,7 +12,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class PaymentHistoryEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "payment_history_id")
@@ -33,11 +32,11 @@ public class PaymentHistoryEntity {
     @Column(name = "transaction_date")
     private LocalDate transactionDate;
 
-    @Column(name = "transaction_time")
-    private String transactionTime;
+    @Column(name = "transcation_time")
+    private String transcationTime;
 
     @Column(name = "transaction_type")
-    private String transactionType; // "EXPENSE"(지출) 또는 "INCOME"(수입)
+    private String transactionType;
 
     @Column(name = "transaction_balance")
     private String transactionBalance;
@@ -50,4 +49,25 @@ public class PaymentHistoryEntity {
 
     @Column(name = "is_waste")
     private Boolean isWaste;
+
+    @Column(name = "transaction_unique_no")
+    private String transactionUniqueNo;
+
+    @Column(name = "card_no")
+    private String cardNo;
+
+    @Column(name = "card_name")
+    private String cardName;
+
+    @Column(name = "card_issuer_code")
+    private String cardIssuerCode;
+
+    @Column(name = "card_issuer_name")
+    private String cardIssuerName;
+
+    @Column(name = "bill_statements_yn")
+    private String billStatementsYn;
+
+    @Column(name = "bill_statements_status")
+    private String billStatementsStatus;
 }

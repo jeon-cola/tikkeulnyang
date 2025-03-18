@@ -72,6 +72,7 @@ button {
   transition: all 0.25s;
   height: 43px;
   width: 125px;
+  white-space: nowrap;
 }
 
 /* 긴 버튼 */
@@ -83,11 +84,8 @@ button {
   align-items: center;
   padding: 6px 16px;
   gap: 10px;
-  position: absolute;
   width: 267px;
   height: 43px;
-  left: 19px;
-  top: 313px;
   background: #ff957a;
   border: 1px solid #dfdfdf;
   border-radius: 100px;

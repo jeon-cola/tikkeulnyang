@@ -4,7 +4,7 @@ import BucketListMain from "../features/bucketlist/BucketListMain";
 export default function BucketListRouter() {
     return (
         <Routes>
-            <Route path="/" element={<BucketListMain/>}/>
+            <Route path="/*" element={<BucketListMain/>}/>
         </Routes>
     )
 }

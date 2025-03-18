@@ -4,7 +4,7 @@ import HomeMain from "../features/home/HomeMain";
 export default function HomeRouter() {
     return (
         <Routes>
-            <Route path="/" element={<HomeMain/>}/>
+            <Route path="/*" element={<HomeMain/>}/>
         </Routes>
     )
 }

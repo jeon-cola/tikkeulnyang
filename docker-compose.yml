@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: cat
+    ports:
+      - "3306:3306"
+    networks:
+      - app_network
+
+  backend:
+    build:
+      context: ./BE
+      dockerfile: Dockerfile
+    container_name: backend
+    depends_on:
+      - mysql
+    environment:
+      # MySQL 컨테이너 이름을 호스트명으로 사용
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/cat?serverTimezone=UTC&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+    ports:
+      - "8080:8080"
+    networks:
+      - app_network
+
+  frontend:
+    build:
+      context: ./FE
+      dockerfile: Dockerfile
+    container_name: frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
