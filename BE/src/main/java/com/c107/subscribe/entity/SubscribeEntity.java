@@ -18,8 +18,10 @@ public class SubscribeEntity {
     @Column(name = "subscribe_id")
     private Integer subscribeId;
 
-    @Column(name = "user_id", nullable = false)
-    private Integer userId;
+//    @Column(name = "user_id", nullable = false)
+//    private Integer userId;
+    @Column(nullable = false)
+    private String email;
 
     @Column(name = "subscribe_name", length = 20)
     private String subscribeName;
