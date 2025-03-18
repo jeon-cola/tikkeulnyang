@@ -11,11 +11,6 @@ import lombok.*;
 @Builder
 public class SubscribeRequestDto {
 
-//    @NotNull(message = "회원 ID는 필수입니다.")
-//    private Integer memberId;
-    @NotBlank(message = "회원 이메일은 필수입니다.")
-    private String email;
-
     @NotBlank(message = "구독 이름은 필수입니다.")
     private String subscribeName;
 
@@ -28,8 +23,6 @@ public class SubscribeRequestDto {
         Integer paymentDay = parsePaymentDate(paymentDate);
 
         return SubscribeEntity.builder()
-//                .userId(memberId)
-                .email(email)
                 .subscribeName(subscribeName)
                 .subscribePrice(subscribePrice)
                 .paymentDate(paymentDay)
