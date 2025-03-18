@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 /* 사용 예시
   <ChallengeCard
     imageUrl="https://media.istockphoto.com/id/1552871673/ko/%EC%82%AC%EC%A7%84/%ED%95%98%EC%96%80-%EC%9C%A0%EB%A6%AC%EC%9E%94%EC%97%90-%EB%8B%B4%EA%B8%B4-%EB%B8%94%EB%9E%99-%EC%BB%A4%ED%94%BC%EB%8A%94-%EC%BB%A4%ED%94%BC-%EC%9B%90%EB%91%90%EA%B0%80-%EC%9E%88%EB%8A%94-%EC%98%A4%EB%9E%98%EB%90%9C-%EC%8B%9C%EB%A9%98%ED%8A%B8-%ED%85%8C%EC%9D%B4%EB%B8%94-%EC%9C%84%EC%97%90-%EB%86%93%EC%97%AC-%EC%9E%88%EB%8B%A4.jpg?s=612x612&w=0&k=20&c=I7irn9wSVxvSSHVNFSxpxTHFkBcCJlHL0m4NIiTc3Sg="
@@ -9,15 +10,25 @@ import React from "react";
   />
 */
 
-export default function challengeCard({
+export default function ChallengeCard({
   imageUrl,
   type,
   title,
   startDate,
   endDate,
+  challengeId,
 }) {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/challenge/${challengeId}`);
+  };
+
   return (
-    <div className="absolute w-[168px] h-[207px] left-[15px] top-[82px] bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] overflow-hidden">
+    <div
+      onClick={handleClick} // 클릭시 상세 페이지로 넘어간다.
+      className="relative w-[168px] h-[207px] bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] overflow-hidden"
+    >
       {/* 이미지 영역 */}
       <div
         className="absolute w-[168px] h-[129px] left-0 top-0"

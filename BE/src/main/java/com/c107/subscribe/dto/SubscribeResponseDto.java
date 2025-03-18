@@ -16,7 +16,7 @@ import java.time.temporal.ChronoUnit;
 @AllArgsConstructor
 @Builder
 public class SubscribeResponseDto {
-
+    private String email;
     private Integer subscribeId;
     private Integer userId;
     private String subscribeName;
@@ -45,7 +45,8 @@ public class SubscribeResponseDto {
 
         return SubscribeResponseDto.builder()
                 .subscribeId(entity.getSubscribeId())
-                .userId(entity.getUserId())
+//                .userId(entity.getUserId())
+                .email(entity.getEmail())
                 .subscribeName(entity.getSubscribeName())
                 .subscribePrice(entity.getSubscribePrice())
                 .paymentDate(formattedDate)
