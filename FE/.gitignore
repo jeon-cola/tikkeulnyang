@@ -42,4 +42,4 @@ dist-ssr
 .cache
 
 # pwa 관련 파일 
-/dev-dist/*
+dev-dist/
