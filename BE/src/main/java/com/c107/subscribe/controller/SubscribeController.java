@@ -29,9 +29,11 @@ public class SubscribeController {
     public ResponseEntity<Map<String, Object>> registerSubscribe(
             @AuthenticationPrincipal String email,  // JWT에서 가져온 이메일
             @RequestBody @Validated SubscribeRequestDto requestDto) {
-        log.info("구독 정보 등록 요청: email={}", email);
 
+        // 구독 등록 서비스 호출
         SubscribeEntity savedSubscribe = subscribeService.registerSubscribe(email, requestDto);
+
+        // 성공적으로 구독 등록 후 응답 반환
         return ResponseUtil.success("구독 정보가 성공적으로 등록되었습니다.",
                 Map.of("subscribeId", savedSubscribe.getSubscribeId()));
     }
@@ -68,7 +70,6 @@ public class SubscribeController {
     public ResponseEntity<Map<String, Object>> deleteSubscribe(
             @AuthenticationPrincipal String email,
             @PathVariable Integer subscribeId) {
-        log.info("구독 삭제 요청: email={}, subscribeId={}", email, subscribeId);
 
         subscribeService.deleteSubscribe(email, subscribeId);
         return ResponseUtil.success("구독 정보가 성공적으로 삭제되었습니다.", null);
