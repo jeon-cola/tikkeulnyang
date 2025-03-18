@@ -40,8 +40,8 @@ public class ChallengeEntity {
     @Column(name = "created_by", nullable = false, length = 10)
     private String createdBy;
 
-    @Column(name = "min_required", nullable = false)
-    private Integer minRequired;
+    @Column(name = "max_participants")
+    private Integer maxParticipants;
 
     @Column(name = "public_flag", nullable = false)
     private Boolean publicFlag;

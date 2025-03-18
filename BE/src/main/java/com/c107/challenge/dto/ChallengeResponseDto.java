@@ -20,4 +20,5 @@ public class ChallengeResponseDto {
     private Boolean activeFlag;
     private String challengeCategory;
     private LocalDateTime createdAt;
+    private Integer maxParticipants;
 }
