@@ -9,8 +9,8 @@ import java.util.Optional;
 
 @Repository
 public interface BudgetRepository extends JpaRepository<BudgetEntity, Integer> {
-    Optional<BudgetEntity> findByUserIdAndCategoryIdAndStartDateAndEndDate(
-            Integer userId,
+    Optional<BudgetEntity> findByEmailAndCategoryIdAndStartDateAndEndDate(
+            String email,
             Integer categoryId,
             LocalDate startDate,
             LocalDate endDate

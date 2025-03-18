@@ -6,6 +6,8 @@ import com.c107.budget.dto.BudgetResponseDto;
 import com.c107.budget.entity.BudgetEntity;
 import com.c107.budget.repository.BudgetRepository;
 import com.c107.common.util.JwtUtil;
+import com.c107.user.entity.User;
+import com.c107.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,25 +19,29 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class BudgetService {
     private final BudgetRepository budgetRepository;
+    private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 
     @Transactional
-    public BudgetResponseDto createBudget(String token, BudgetRequestDto requestDto) {
-        // JWT에서 userId 추출
-//        Integer userId = jwtUtil.
-        Integer userId = 1;
+    public BudgetResponseDto createBudget(String email, BudgetRequestDto requestDto) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        System.out.println("Category ID: " + requestDto.getCategoryId());
+
         LocalDate now = LocalDate.now();
         LocalDate startDate = now.withDayOfMonth(1);
         LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth());
 
 
-        budgetRepository.findByUserIdAndCategoryIdAndStartDateAndEndDate(
-                        userId, requestDto.getCategoryId(), startDate, endDate)
+        budgetRepository.findByEmailAndCategoryIdAndStartDateAndEndDate(
+                        email, requestDto.getCategoryId(), startDate, endDate)
                 .ifPresent(budgetRepository::delete);
 
 
         BudgetEntity budgetEntity = BudgetEntity.builder()
-                .userId(userId)
+                .userId(user.getUserId())
+                .email(email)
                 .categoryId(requestDto.getCategoryId())
                 .amount(requestDto.getAmount())
                 .spendingAmount(0)
