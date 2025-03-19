@@ -20,12 +20,14 @@ export default function BucketListStep2() {
             [name]:value
         });
     };
-    
+
+    // 다음 페이지 이동 로직직
     function nextHandler(e) {
         e.preventDefault();
         nav("/bucketlist/step3")
     } 
 
+    // 체크 사항 확인
     const isChecked = 
         stepCheck.withdrawl_amount && 
         stepCheck.withdrawl_amount_num && 
@@ -34,9 +36,13 @@ export default function BucketListStep2() {
 
     return(
         <div className="flex flex-col justify-center gap-4">
+            
+            {/* 진행 단계 */}
             <Step currentStep={2}/>
             <p className="w-full font-semibold text-xl">출근 통장과 저축통장을 선택해주세요</p>
             <img src={step2Image} alt="고양이 사진" className="w-full scale-[1] transform-gpu" />
+
+            {/* 송금 계좌 선택 */}
             <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex flex-col gap-1 p-[20px]">
                 <p className="text-left">주거래 계좌를 선택해주세요</p>
                 <select name="saving_account" id="" className="w-full text-xl font-semibold" onChange={inputHandler} value={stepCheck.saving_account}>
@@ -45,6 +51,8 @@ export default function BucketListStep2() {
                 </select>
                 <input type="text" placeholder="계좌번호를 입력해주세요" className="text-left w-full text-xl font-semibold" value={stepCheck.saving_account_num} name="saving_account_num" onChange={inputHandler}/>
             </div>
+
+            {/* 저축 계좌 선택 */}
             <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex flex-col gap-1 p-[20px]">
                 <p className="text-left">저축할 계좌를 선택해주세요</p>
                 <select name="withdrawl_amount" id="" className="w-full text-xl font-semibold" onChange={inputHandler} value={stepCheck.withdrawl_amount}>
@@ -53,6 +61,8 @@ export default function BucketListStep2() {
                 </select>
                 <input type="text" placeholder="계좌번호를 입력해주세요" className="text-left w-full text-xl font-semibold" value={stepCheck.withdrawl_amount_num} name="withdrawl_amount_num" onChange={inputHandler}/>
             </div>
+
+            {/* 다음 버튼 */}
             <div className="w-full mx-auto flex flex-col items-center">
                 <button 
                     className="hover:bg-blue-600 disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed mx-auto" 
