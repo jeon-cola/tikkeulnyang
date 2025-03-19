@@ -26,6 +26,7 @@ export default function BucketListInformation() {
                 </div>
                 <img src="/Plane.png" alt="비행기" className="w-25 h-25" />
             </div>
+            
             <div className="w-full h-[128px] bg-[#FF957A] rounded-[25px] flex items-center justify-between px-7">
                 <div className="text-white text-left">
                     <p className="font-semibold text-2xl">자취방 마련하기</p>
