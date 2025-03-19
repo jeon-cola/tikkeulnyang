@@ -6,10 +6,13 @@ services:
     container_name: mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_DATABASE: cat
+      MYSQL_ROOT_PASSWORD: ksh147!!  
+      MYSQL_DATABASE: catcat  
     ports:
       - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql  # MySQL 데이터 유지
+      - ./initdb:/docker-entrypoint-initdb.d  # 초기화 SQL 적용
     networks:
       - app_network
 
@@ -20,9 +23,9 @@ services:
       - mysql
     environment:
       # MySQL 컨테이너 이름을 호스트명으로 사용
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/cat?serverTimezone=UTC&characterEncoding=UTF-8
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/catcat?serverTimezone=UTC&characterEncoding=UTF-8
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATASOURCE_PASSWORD: ksh147!!
     ports:
       - "8080:8080"
     networks:
@@ -41,3 +44,6 @@ services:
 networks:
   app_network:
     driver: bridge
+
+volumes:
+  mysql_data:
