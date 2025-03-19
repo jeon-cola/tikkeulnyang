@@ -1,7 +1,7 @@
 import { Route, Routes } from "react-router-dom";
-import CustomHeader from "../../components/CustomHeader";
-import PersonalLedger from "./components/PersonalLedger";
-import SharedLedger from "./components/SharedLedger";
+import CustomHeader from "@/components/CustomHeader";
+import PersonalLedger from "./PersonalLedger";
+import SharedLedger from "./SharedLedger";
 
 export default function LedgerMain() {
   return (

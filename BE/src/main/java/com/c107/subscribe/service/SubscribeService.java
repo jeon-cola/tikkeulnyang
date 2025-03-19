@@ -4,10 +4,14 @@ import com.c107.subscribe.dto.SubscribeRequestDto;
 import com.c107.subscribe.dto.SubscribeResponseDto;
 import com.c107.subscribe.entity.SubscribeEntity;
 import com.c107.subscribe.repository.SubscribeRepository;
+import com.c107.user.entity.User;
+import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,31 +20,29 @@ import java.util.stream.Collectors;
 public class SubscribeService {
 
     private final SubscribeRepository subscribeRepository;
+    private final UserRepository userRepository;
 
-    // 구독 정보 등록
-//    @Transactional
-//    public SubscribeEntity registerSubscribe(SubscribeRequestDto requestDto) {
-//        SubscribeEntity subscribeEntity = requestDto.toEntity();
-//        // 구독 정보 저장
-//        return subscribeRepository.save(subscribeEntity);
-//    }
     @Transactional
     public SubscribeEntity registerSubscribe(String email, SubscribeRequestDto requestDto) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        Integer paymentDay;
+        try {
+            paymentDay = Integer.parseInt(requestDto.getPaymentDate().split("-")[2]);
+        } catch (Exception e) {
+            paymentDay = 1;
+        }
         SubscribeEntity subscribeEntity = SubscribeEntity.builder()
+                .userId(user.getUserId())
                 .email(email)
                 .subscribeName(requestDto.getSubscribeName())
                 .subscribePrice(requestDto.getSubscribePrice())
-                .paymentDate(requestDto.toEntity().getPaymentDate())
+                .paymentDate(paymentDay)
                 .build();
 
         return subscribeRepository.save(subscribeEntity);
     }
-
-    // 구독 정보 조회
-//    @Transactional(readOnly = true)
-//    public List<SubscribeEntity> getUserSubscribes(Integer userId) {
-//        return subscribeRepository.findByUserId(userId);
-//    }
     @Transactional(readOnly = true)
     public List<SubscribeEntity> getUserSubscribes(String email) {
         return subscribeRepository.findByEmail(email);
@@ -78,8 +80,4 @@ public class SubscribeService {
         subscribeRepository.delete(subscribe);
     }
 
-//    @Transactional
-//    public void deleteSubscribe(Integer subscribeId) {
-//        subscribeRepository.deleteById(subscribeId);
-//    }
 }

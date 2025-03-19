@@ -10,7 +10,7 @@ export default function Login() {
         <>  
             <div className="w-[392px] h-[326px] flex-none order-none self-stretch flex-grow-0 z-0 flex items-center justify-center">
                 <h1 className="mr-2 text-[60px]">티끌냥</h1>
-                <img src="public/logo.png" alt="티끌냥 로고" />
+                <img src="/logo.png" alt="티끌냥 로고" />
             </div>
 
             {/* 이미지 추가 필요 */}
