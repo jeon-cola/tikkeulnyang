@@ -63,4 +63,7 @@ public class ChallengeEntity {
 
     @Column(name = "challenge_category", nullable = false, length = 10)
     private String challengeCategory;
+
+    @Column(name = "limit_amount")
+    private Integer limitAmount;
 }
