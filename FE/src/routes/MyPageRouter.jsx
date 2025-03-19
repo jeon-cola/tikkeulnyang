@@ -1,5 +1,5 @@
 import { Route, Routes } from "react-router-dom";
-import MyPageMain from "../features/mypage/MyPageMain";
+import MyPageMain from "../features/mypage/myPageMain";
 
 export default function MyPageRouter() {
     return(
