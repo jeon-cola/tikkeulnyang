@@ -18,6 +18,8 @@ public class User {
     private String email;
     @Column(nullable = true)
     private String name;
+    private String financeUserKey;
+
 
     public Integer getUserId() {
         return userId;
