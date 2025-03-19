@@ -4,7 +4,8 @@
   border: none !important;
   font-family: "Pretendard-Regular";
   padding-top: 20px;
-  padding-bottom: 20pk;
+  padding-bottom: 20px;
+  border-radius: 6px;
 }
 
 .react-calendar__navigation {
@@ -22,7 +23,7 @@
 }
 
 .react-calendar__month-view__days__day--neighboringMonth {
-  color: gray !important;
+  color: #dfdfdf !important;
 }
 
 /* 일요일 날짜 빨간색 */
