@@ -54,12 +54,13 @@ public class ChallengeService {
                 .description(request.getDescription())
                 .createdBy(createdBy)
                 .maxParticipants(request.getMaxParticipants()) // 최대 인원 설정
+                .limitAmount(request.getLimitAmount())
                 .publicFlag(true) // 기본 공개 설정
                 .activeFlag(false) // 기본적으로 비활성화 (시작 시간이 되면 활성화)
-                .challengeCategory(isAdmin ? "공식챌린지" : "유저챌린지")
+                .challengeCategory(request.getChallengeCategory())
                 .createdAt(now)
                 .updatedAt(now)
-                .currentParticipants(0)
+                .currentParticipants(1)
                 .deleted(false)
                 .build();
 
@@ -97,13 +98,13 @@ public class ChallengeService {
 
     // 공식 챌린지 조회 (페이지네이션 적용)
     public Page<ChallengeResponseDto> getOfficialChallenges(int page, int size) {
-        Page<ChallengeEntity> challenges = challengeRepository.findByChallengeCategoryAndDeleted("공식챌린지", false, PageRequest.of(page, size));
+        Page<ChallengeEntity> challenges = challengeRepository.findByChallengeTypeAndDeleted("공식챌린지", false, PageRequest.of(page, size));
         return challenges.map(this::mapToDto);
     }
 
     // 유저 챌린지 조회 (페이지네이션 적용)
     public Page<ChallengeResponseDto> getUserChallenges(int page, int size) {
-        Page<ChallengeEntity> challenges = challengeRepository.findByChallengeCategoryAndDeleted("유저챌린지", false, PageRequest.of(page, size));
+        Page<ChallengeEntity> challenges = challengeRepository.findByChallengeTypeAndDeleted("유저챌린지", false, PageRequest.of(page, size));
         return challenges.map(this::mapToDto);
     }
 

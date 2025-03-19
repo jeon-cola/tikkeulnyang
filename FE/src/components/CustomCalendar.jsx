@@ -11,7 +11,9 @@ export default function CustomCalendar() {
       <Calendar
         onChange={setValue}
         value={value}
+        // 일요일 기준으로 정렬
         calendarType="hebrew"
+        // 달력 일에 숫자일 표시를 숫자로 보이게 하는 속성성
         formatDay={(local, date) => date.getDate()}
         tileClassName={({ date, view, activeStartDate }) => {
           // 'month' 뷰에서만 스타일 지정

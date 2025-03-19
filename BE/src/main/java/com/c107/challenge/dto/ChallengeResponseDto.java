@@ -21,4 +21,5 @@ public class ChallengeResponseDto {
     private String challengeCategory;
     private LocalDateTime createdAt;
     private Integer maxParticipants;
+    private Integer limitAmount;
 }
