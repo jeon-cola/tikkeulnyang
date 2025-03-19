@@ -68,7 +68,6 @@ export default function BucketListStep3() {
             onClick={creationHandler}
           >시작하기</button>
         </div>
-
     </div>
   )
 }
