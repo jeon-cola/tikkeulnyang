@@ -9,6 +9,7 @@ import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,8 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class AccountService {
-
+    @Value("${finance.api.key}")
+    private String financeApiKey;
     private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
@@ -50,7 +52,7 @@ public class AccountService {
         header.put("fintechAppNo", "001");
         header.put("apiServiceCode", "inquireDemandDepositAccountList");
         header.put("institutionTransactionUniqueNo", institutionTransactionUniqueNo);
-        header.put("apiKey", "4fd56093078f45a6b95a1e77a1334282");
+        header.put("apiKey", financeApiKey);
         header.put("userKey", userKey);
 
         Map<String, Object> requestBody = new HashMap<>();
