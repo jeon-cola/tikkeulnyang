@@ -14,9 +14,7 @@ services:
       - app_network
 
   backend:
-    build:
-      context: ./BE
-      dockerfile: Dockerfile
+    image: ddukio/backend:latest
     container_name: backend
     depends_on:
       - mysql
@@ -31,14 +29,12 @@ services:
       - app_network
 
   frontend:
-    build:
-      context: ./FE
-      dockerfile: Dockerfile
+    image: ddukio/frontend:latest
     container_name: frontend
     depends_on:
       - backend
     ports:
-      - "3000:3000"
+      - "80:80"  # 외부 5173번 -> 컨테이너 내부 80번
     networks:
       - app_network
 
