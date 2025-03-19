@@ -36,4 +36,7 @@ public class UserChallengeEntity {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(name = "spend_amount")
+    private Integer spendAmount;
 }
