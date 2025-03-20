@@ -2,9 +2,10 @@
 FROM node:18-alpine AS build
 WORKDIR /app
 
-# package.json과 package-lock.json만 먼저 복사하여 캐시 활용
+# package.json과 package-lock.json 복사
 COPY package.json package-lock.json ./
-RUN npm install && npm update react-calendar
+# 기존 package-lock.json 제거 후, npm install 및 업데이트 실행
+RUN rm -f package-lock.json && npm install && npm update react-calendar
 
 # 나머지 소스코드 복사 후 빌드 실행
 COPY . .
