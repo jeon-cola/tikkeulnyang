@@ -6,7 +6,7 @@ import purseImg from "./assets/purse.png"
 
 export default function PersonalLedger() {
   return (
-    <div>
+    <div className="w-full">
       <Container>
         <Box text="유저님의 가계부" variant="title" />
         <Box text="예산 설정하러 가기" variant="highlight">
