@@ -44,4 +44,13 @@ export default defineConfig({
     },
     extensions: [".js", ".jsx"],
   },
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        // "경로를 찾을 수 없음" 오류만 무시하고 나머지는 출력
+        if (warning.code === "UNRESOLVED_IMPORT") return;
+        warn(warning);
+      },
+    },
+  },
 });
