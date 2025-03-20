@@ -7,7 +7,7 @@ export default function CustomCalendar() {
   const [value, setValue] = useState(new Date());
 
   return (
-    <div>
+    <div className="max-w-[320px]">
       <Calendar
         onChange={setValue}
         value={value}
