@@ -19,37 +19,37 @@ export default function MyPageMenu() {
   const [completedChallenges, setCompletedChallenges] = useState(0)
 
   return(
-      <div className="flex flex-col justify-center gap-5">
+      <div className="flex flex-col justify-center gap-5 min-w-[345px]">
 
         <CustomHeader title="마이 페이지"/>
-
+        
         {/* 유저 정보 */}
-        <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex items-center p-4 border border-dashed border-blue-200">
+        <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex items-center p-4">
           <div className="mr-4">
             <img src={userImage} alt="유저 이미지"/>
           </div>
           <div className="flex flex-col">
             <div className="flex items-center mb-1 gap-3">
-              <span>{userName}</span>
-              <span>{userLevel}</span>
+              <span className="font-semibold">{userName}</span>
+              <span className="font-semibold text-xs">{userLevel}</span>
             </div>
             <div>
-              <span>{userEmail}</span>
+              <span className="font-regular text-xs">{userEmail}</span>
             </div>
           </div>
         </div>
 
           {/* 예치금 */}
-        <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex items-center p-4 border border-dashed border-blue-200">
+        <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex items-center p-4">
 
         </div>
 
         {/* 챌린지 현황 */}
         <div className="relative"> {/* 전체를 감싸는 컨테이너 */}
-          <p className="text-left">첼린지 현황</p>
+          <p className="text-left font-semibold">첼린지 현황</p>
           
           {/* 박스 */}
-          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[25px] flex justify-between items-center p-4 border border-dashed border-blue-200 mt-2">
+          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[25px] flex justify-between items-center p-4 mt-2">
             <div className="flex flex-col items-center w-1/3">
               <p className="text-xl font-medium">{pendingChallenges}</p>
               <p className="text-sm text-gray-500">시작 전</p>
@@ -74,52 +74,52 @@ export default function MyPageMenu() {
 
         <div className="flex flex-col gap-4">
           {/* 회원정보 수정 */}
-          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4 border border-dashed border-blue-200">
+          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4">
             <div className="mr-4">
               <CorrectionIcon/>
             </div>
               <div className="flex items-center mb-1 gap-3">
-                <p>회원정보 수정</p>
+                <p className="font-regular">회원정보 수정</p>
               </div>
           </div>
 
           {/* 내 고양이 */}
-          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4 border border-dashed border-blue-200">
+          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4">
             <div className="mr-4">
                 <MyCatIcon/>
               </div>
               <div className="flex items-center mb-1 gap-3">
-                <p>내 고양이</p>
+                <p className="font-regular">내 고양이</p>
               </div>
           </div>
 
           {/* 등록 계좌 설정 */}
-          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4 border border-dashed border-blue-200">
+          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4">
             <div className="mr-4">
               <AccountIcon/>
             </div>
             <div className="flex items-center mb-1 gap-3">
-              <p>등록 계좌 설정</p>
+              <p className="font-regular">등록 계좌 설정</p>
             </div>
           </div>
 
           {/* 등록 카드 설정 */}
-          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4 border border-dashed border-blue-200">
+          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4">
             <div className="mr-4">
               <CardIcon/>
             </div>
             <div className="flex items-center mb-1 gap-3">
-              <p>등록 카드 설정</p>
+              <p className="font-regular">등록 카드 설정</p>
             </div>
           </div>
 
           {/* 출석부 리포트 */}
-          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 flex items-center p-4 border border-dashed border-blue-200">
+          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 flex items-center p-4">
             <div className="mr-4">
               <ReportIcon/>
             </div>
             <div className="flex items-center mb-1 gap-3">
-              <p>출석부 리포트</p>
+              <p className="font-regular">출석부 리포트</p>
             </div>
           </div>
 
