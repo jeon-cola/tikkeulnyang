@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router-dom";
 import userProfile from "/userProfile.png"
 import CorrectionIcon from "../assets/CorrectionIcon";
 import MyCatIcon from "../assets/MyCatIcon";
@@ -7,7 +8,7 @@ import CardIcon from "../assets/CardIcon";
 import ReportIcon from "../assets/ReportIcon";
 import "../../../components/CustomHeader"
 import CustomHeader from "../../../components/CustomHeader";
-import YellowCat from "../../../../public/YellowCat";
+import YellowCat from "../../../../public/YellowCat.jsx";
 
 export default function MyPageMenu() {
   const [userImage, setUserImage] = useState(userProfile);
@@ -45,7 +46,7 @@ export default function MyPageMenu() {
         </div>
 
         {/* 챌린지 현황 */}
-        <div className="relative"> {/* 전체를 감싸는 컨테이너 */}
+        <div className="relative">
           <p className="text-left font-semibold">첼린지 현황</p>
           
           {/* 박스 */}
@@ -74,14 +75,16 @@ export default function MyPageMenu() {
 
         <div className="flex flex-col gap-4">
           {/* 회원정보 수정 */}
-          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4">
-            <div className="mr-4">
-              <CorrectionIcon/>
-            </div>
-              <div className="flex items-center mb-1 gap-3">
-                <p className="font-regular">회원정보 수정</p>
+          <Link to="correction">
+            <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4">
+              <div className="mr-4">
+                <CorrectionIcon/>
               </div>
-          </div>
+                <div className="flex items-center mb-1 gap-3">
+                  <p className="font-regular">회원정보 수정</p>
+                </div>
+            </div>
+          </Link>
 
           {/* 내 고양이 */}
           <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4">
