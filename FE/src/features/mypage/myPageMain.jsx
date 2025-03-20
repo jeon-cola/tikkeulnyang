@@ -5,6 +5,7 @@ export default function MyPageMain(){
     return(
         <Routes>
             <Route path="/" element={<MyPageMenu/>}/>
+            <Route/>
         </Routes>
     )
 }
