@@ -1,19 +1,19 @@
-version: '3.8'
+version: "3.8"
 
 services:
   mysql:
-  image: mysql:8.0
-  container_name: mysql
-  restart: always
-  environment:
-    MYSQL_ROOT_PASSWORD: ksh147!!
-    MYSQL_DATABASE: catcat
-  ports:
-    - "3307:3306"  # 호스트 3307, 컨테이너 3306
-  volumes:
-    - mysql_data:/var/lib/mysql
-  networks:
-    - app_network
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ksh147!!
+      MYSQL_DATABASE: catcat
+    ports:
+      - "3307:3306" # 호스트 3307 -> 컨테이너 3306
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
 
   backend:
     image: ddukio/backend:latest
@@ -35,7 +35,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "80:80"  # 외부 포트 80 → 컨테이너 내부 포트 80
+      - "80:80" # 외부 포트 80 -> 컨테이너 내부 포트 80
     networks:
       - app_network
 
