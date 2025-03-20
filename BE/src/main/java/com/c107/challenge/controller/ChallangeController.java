@@ -23,7 +23,7 @@ public class ChallangeController {
     @PostMapping
     public ResponseEntity<ChallengeResponseDto> createChallenge(@RequestBody CreateChallengeRequest request) {
         if (request.getStartDate().isBefore(LocalDate.now().plusDays(1))) {
-            throw new CustomException(ErrorCode.VALIDATION_FAILED, "챌린지는 최소 24시간 이후부터 시작할 수 있습니다.");
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "챌린지는 다음 날짜부터 시작할 수 있습니다.");
         }
         return ResponseEntity.ok(challengeService.createChallenge(request));
     }
