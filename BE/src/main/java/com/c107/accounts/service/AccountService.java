@@ -1,7 +1,9 @@
 package com.c107.accounts.service;
 
 import com.c107.accounts.entity.Account;
+import com.c107.accounts.entity.AccountTransaction;
 import com.c107.accounts.repository.AccountRepository;
+import com.c107.accounts.repository.AccountTransactionRepository;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
 import com.c107.user.entity.User;
@@ -28,6 +30,7 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
+    private final AccountTransactionRepository accountTransactionRepository; // 내부 거래내역 기록용
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Transactional
@@ -138,5 +141,110 @@ public class AccountService {
 
         logger.info("수동 계좌 동기화 완료");
         return accountRepository.findAll();
+    }
+
+    /**
+     * 예치금 충전 (서비스 계좌로 이체) 처리
+     * @param loggedInUserId 사용자 ID
+     * @param selectedAccountNo 사용자가 선택한 계좌번호 (출금계좌)
+     * @param amount 이체할 금액 (예치금 충전액)
+     */
+    @Transactional
+    public void depositCharge(Integer loggedInUserId, String selectedAccountNo, String amount) {
+        // 서비스 계좌번호 (예: 고정 값)
+        String serviceAccountNo = "0018023868856766";
+
+        // Open API 호출로 이체 진행
+        Map<String, Object> response = transferDeposit(loggedInUserId, serviceAccountNo, selectedAccountNo, amount);
+
+        // 이체 응답을 확인한 후, 성공 시 내부 거래내역 테이블에 기록
+        // AccountTransaction 엔티티는 account_transactions 테이블과 매핑되어 있다고 가정
+        AccountTransaction transaction = AccountTransaction.builder()
+                .accountId(getServiceAccountId()) // 서비스 계좌의 ID (별도 관리하는 경우)
+                .userId(loggedInUserId)
+                .transactionDate(LocalDateTime.now())
+                .category("DEPOSIT_CHARGE")
+                .transactionType("DEPOSIT")
+                .transactionAccountNo(selectedAccountNo)
+                .transactionBalance(Integer.parseInt(amount))
+                .description("예치금 충전: 사용자 계좌 " + selectedAccountNo + " → 서비스 계좌 " + serviceAccountNo)
+                .transactionAfterBalance(calculateAfterBalance(loggedInUserId, amount)) // 잔액 계산 함수 (구현 필요)
+                .build();
+        accountTransactionRepository.save(transaction);
+        logger.info("예치금 충전 거래내역 기록됨: {}", transaction);
+    }
+
+    /**
+     * 예치금 이체 Open API 호출 (transferDeposit)
+     */
+    @Transactional
+    public Map<String, Object> transferDeposit(Integer loggedInUserId,
+                                               String depositAccountNo,
+                                               String withdrawalAccountNo,
+                                               String transactionBalance) {
+        // 사용자 정보 조회 (금융 API userKey 필요)
+        User user = userRepository.findById(loggedInUserId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
+        String userKey = user.getFinanceUserKey();
+
+        // 전송일시 및 거래 고유번호 생성
+        LocalDateTime now = LocalDateTime.now();
+        String transmissionDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String transmissionTime = now.format(DateTimeFormatter.ofPattern("HHmmss"));
+        String institutionTransactionUniqueNo = transmissionDate + transmissionTime + String.format("%06d", new Random().nextInt(1000000));
+
+        // Open API 요청 헤더 생성
+        Map<String, Object> header = new HashMap<>();
+        header.put("apiName", "updateDemandDepositAccountTransfer");
+        header.put("transmissionDate", transmissionDate);
+        header.put("transmissionTime", transmissionTime);
+        header.put("institutionCode", "00100");
+        header.put("fintechAppNo", "001");
+        header.put("apiServiceCode", "updateDemandDepositAccountTransfer");
+        header.put("institutionTransactionUniqueNo", institutionTransactionUniqueNo);
+        header.put("apiKey", financeApiKey);
+        header.put("userKey", userKey);
+
+        // 요청 바디 생성
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("Header", header);
+        requestBody.put("depositAccountNo", depositAccountNo);
+        requestBody.put("depositTransactionSummary", "(수시입출금) : 입금(이체)");
+        requestBody.put("transactionBalance", transactionBalance);
+        requestBody.put("withdrawalAccountNo", withdrawalAccountNo);
+        requestBody.put("withdrawalTransactionSummary", "(수시입출금) : 출금(이체)");
+
+        // HTTP 요청 세팅
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(requestBody, httpHeaders);
+
+        // 예치금 이체 Open API URL
+        String url = "https://finopenapi.ssafy.io/ssafy/api/v1/edu/demandDeposit/updateDemandDepositAccountTransfer";
+        logger.info("예치금 이체 요청 시작: {}", LocalDateTime.now());
+
+        ResponseEntity<Map> responseEntity = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Map.class);
+        Map<String, Object> responseMap = responseEntity.getBody();
+
+        if (responseMap == null) {
+            logger.error("예치금 이체 응답이 비어 있습니다.");
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "예치금 이체 응답이 비어 있습니다.");
+        }
+        logger.info("예치금 이체 완료: {}", responseMap);
+        return responseMap;
+    }
+
+    // 서비스 계좌의 ID를 가져오는 로직 (필요 시 구현)
+    private Integer getServiceAccountId() {
+        // 예를 들어, DB에 미리 등록해둔 서비스 계좌 정보를 조회
+        // 임시로 null 리턴
+        return null;
+    }
+
+    // 사용자의 잔액을 업데이트 후 반환하는 로직 (구현 필요)
+    private Integer calculateAfterBalance(Integer loggedInUserId, String amount) {
+        // DB의 유저 예치금 정보를 업데이트하고, 이체 후 잔액을 계산
+        // 임시로 0 리턴
+        return 0;
     }
 }
