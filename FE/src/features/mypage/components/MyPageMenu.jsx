@@ -35,7 +35,7 @@ export default function MyPageMenu() {
               <span className="font-semibold text-xs">{userLevel}</span>
             </div>
             <div>
-              <span className="font-regular text-xs">{userEmail}</span>
+              <span className="font-regular text-x">{userEmail}</span>
             </div>
           </div>
         </div>
