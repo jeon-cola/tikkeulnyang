@@ -24,7 +24,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/catcat?serverTimezone=UTC&characterEncoding=UTF-8
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ksh147!!
-    # 외부 노출을 막기 위해 ports 섹션 제거
+    ports:
+      - "127.0.0.1:8081:8080" # 백엔드 컨테이너의 8080 포트를 호스트의 127.0.0.1:8081로 매핑
     networks:
       - app_network
 
@@ -33,7 +34,7 @@ services:
     container_name: frontend
     depends_on:
       - backend
-    # Nginx가 외부 접속을 처리하므로, 직접 포트를 노출하지 않음
+    # 프론트엔드는 내부 네트워크로만 접근 (포트 매핑 제거)
     networks:
       - app_network
     volumes:
