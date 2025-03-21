@@ -29,15 +29,19 @@ services:
     networks:
       - app_network
 
-  frontend:
+    frontend:
     image: ddukio/frontend:latest
     container_name: frontend
     depends_on:
       - backend
     ports:
-      - "80:80" # 외부 포트 80 -> 컨테이너 내부 포트 80
+      - "80:80"
+      - "443:443"
     networks:
       - app_network
+    volumes:
+      - /etc/letsencrypt/live/j12c107.p.ssafy.io/fullchain.pem:/etc/letsencrypt/live/j12c107.p.ssafy.io/fullchain.pem:ro
+      - /etc/letsencrypt/live/j12c107.p.ssafy.io/privkey.pem:/etc/letsencrypt/live/j12c107.p.ssafy.io/privkey.pem:ro
 
 networks:
   app_network:
