@@ -33,11 +33,14 @@ public class AccountService {
     private final AccountTransactionRepository accountTransactionRepository; // 내부 거래내역 기록용
     private final RestTemplate restTemplate = new RestTemplate();
 
+    /**
+     * Open API를 호출하여 사용자의 모든 계좌 정보를 DB에 등록 또는 업데이트
+     */
     @Transactional
     public List<Account> refreshAccounts(Integer loggedInUserId) {
         logger.info("수동 계좌 동기화 시작: {}", LocalDateTime.now());
 
-        // 로그인한 사용자의 정보를 DB에서 조회하여 financeUserKey를 가져옴
+        // 로그인한 사용자의 정보를 DB에서 조회하여 financeUserKey 확보
         User user = userRepository.findById(loggedInUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
         String userKey = user.getFinanceUserKey();
@@ -77,65 +80,40 @@ public class AccountService {
 
         List<Map<String, Object>> recList = (List<Map<String, Object>>) responseMap.get("REC");
 
-        // DB에서 해당 사용자의 계좌가 존재하는지 확인 (가장 오래된 계좌 기준)
-        Optional<Account> optionalAccount = accountRepository.findFirstByUserIdOrderByCreatedAtAsc(loggedInUserId);
-        if (optionalAccount.isEmpty()) {
-            // DB에 계좌가 없으면, open API 응답의 첫 번째 계좌 정보를 사용해 신규 계좌 생성
-            Map<String, Object> firstRec = recList.get(0);
-            String accountNo = (String) firstRec.get("accountNo");
-            String bankCode = (String) firstRec.get("bankCode");
-            Object currencyObj = firstRec.get("currency");
-            String currency = (currencyObj instanceof Map)
-                    ? (String) ((Map) currencyObj).get("currency")
-                    : (String) currencyObj;
-            String accountBalance = (String) firstRec.get("accountBalance");
+        // recList의 모든 항목에 대해 DB에 저장 또는 업데이트
+        for (Map<String, Object> rec : recList) {
+            try {
+                String accountNo = (String) rec.get("accountNo");
+                String bankName = (String) rec.get("bankName");
+                Object currencyObj = rec.get("currency");
+                String currency = (currencyObj instanceof Map)
+                        ? (String) ((Map) currencyObj).get("currency")
+                        : (String) currencyObj;
+                String accountBalance = (String) rec.get("accountBalance");
 
-            Account newAccount = Account.builder()
-                    .userId(loggedInUserId)
-                    .accountNumber(accountNo)
-                    .bankName(bankCode)
-                    .balance(accountBalance)
-                    .currency(currency)
-                    .createdAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
-                    .build();
-            accountRepository.save(newAccount);
-            logger.info("새로운 계좌 저장됨: {}", accountNo);
-        } else {
-            // 기존 계좌가 있으면, 응답의 각 REC 항목에 대해 계좌 정보 업데이트 또는 신규 생성
-            for (Map<String, Object> rec : recList) {
-                try {
-                    String accountNo = (String) rec.get("accountNo");
-                    String bankName = (String) rec.get("bankName");
-                    Object currencyObj = rec.get("currency");
-                    String currency = (currencyObj instanceof Map)
-                            ? (String) ((Map) currencyObj).get("currency")
-                            : (String) currencyObj;
-                    String accountBalance = (String) rec.get("accountBalance");
-
-                    Optional<Account> existingOpt = accountRepository.findByAccountNumber(accountNo);
-                    if (existingOpt.isEmpty()) {
-                        Account account = Account.builder()
-                                .userId(loggedInUserId)
-                                .accountNumber(accountNo)
-                                .bankName(bankName)
-                                .balance(accountBalance)
-                                .currency(currency)
-                                .createdAt(LocalDateTime.now())
-                                .updatedAt(LocalDateTime.now())
-                                .build();
-                        accountRepository.save(account);
-                        logger.info("새로운 계좌 저장됨: {}", accountNo);
-                    } else {
-                        Account existing = existingOpt.get();
-                        existing.setBalance(accountBalance);
-                        existing.setUpdatedAt(LocalDateTime.now());
-                        accountRepository.save(existing);
-                        logger.info("계좌 업데이트됨: {}", accountNo);
-                    }
-                } catch (Exception e) {
-                    logger.error("계좌 동기화 중 오류 발생: {}", e.getMessage());
+                Optional<Account> existingOpt = accountRepository.findByAccountNumber(accountNo);
+                if (existingOpt.isEmpty()) {
+                    Account account = Account.builder()
+                            .userId(loggedInUserId)
+                            .accountNumber(accountNo)
+                            .bankName(bankName)
+                            .balance(accountBalance)
+                            // 대표계좌 플래그는 기본 false로 설정 (추후 별도 설정)
+                            .representative(false)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build();
+                    accountRepository.save(account);
+                    logger.info("새로운 계좌 저장됨: {}", accountNo);
+                } else {
+                    Account existing = existingOpt.get();
+                    existing.setBalance(accountBalance);
+                    existing.setUpdatedAt(LocalDateTime.now());
+                    accountRepository.save(existing);
+                    logger.info("계좌 업데이트됨: {}", accountNo);
                 }
+            } catch (Exception e) {
+                logger.error("계좌 동기화 중 오류 발생: {}", e.getMessage());
             }
         }
 
@@ -144,35 +122,57 @@ public class AccountService {
     }
 
     /**
-     * 예치금 충전 (서비스 계좌로 이체) 처리
+     * 예치금 충전 (대표계좌에서 서비스 계좌로 이체) 처리
+     * 로그인한 사용자의 대표계좌를 DB에서 조회하여, 서비스 계좌(고정 값)로 이체 요청을 진행합니다.
      * @param loggedInUserId 사용자 ID
-     * @param selectedAccountNo 사용자가 선택한 계좌번호 (출금계좌)
      * @param amount 이체할 금액 (예치금 충전액)
      */
     @Transactional
-    public void depositCharge(Integer loggedInUserId, String selectedAccountNo, String amount) {
+    public void depositCharge(Integer loggedInUserId, String amount) {
         // 서비스 계좌번호 (예: 고정 값)
-        String serviceAccountNo = "0018023868856766";
+        String serviceAccountNo = "0018031273647742";
 
-        // Open API 호출로 이체 진행
-        Map<String, Object> response = transferDeposit(loggedInUserId, serviceAccountNo, selectedAccountNo, amount);
+        // 로그인한 사용자의 대표계좌 조회
+        Optional<Account> repOpt = accountRepository.findByUserIdAndRepresentativeTrue(loggedInUserId);
+        if (repOpt.isEmpty()) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "대표계좌가 설정되어 있지 않습니다.");
+        }
+        Account representativeAccount = repOpt.get();
+        String representativeAccountNo = representativeAccount.getAccountNumber();
 
-        // 이체 응답을 확인한 후, 성공 시 내부 거래내역 테이블에 기록
-        // AccountTransaction 엔티티는 account_transactions 테이블과 매핑되어 있다고 가정
+        // Open API 호출로 이체 진행 (서비스 계좌로 이체)
+        Map<String, Object> response = transferDeposit(loggedInUserId, serviceAccountNo, representativeAccountNo, amount);
+
+        // 이체 응답 확인 후 내부 거래내역 기록
         AccountTransaction transaction = AccountTransaction.builder()
-                .accountId(getServiceAccountId()) // 서비스 계좌의 ID (별도 관리하는 경우)
+                .accountId(getServiceAccountId()) // 서비스 계좌의 ID (DB에서 조회)
                 .userId(loggedInUserId)
                 .transactionDate(LocalDateTime.now())
                 .category("DEPOSIT_CHARGE")
                 .transactionType("DEPOSIT")
-                .transactionAccountNo(selectedAccountNo)
+                .transactionAccountNo(representativeAccountNo)
                 .transactionBalance(Integer.parseInt(amount))
-                .description("예치금 충전: 사용자 계좌 " + selectedAccountNo + " → 서비스 계좌 " + serviceAccountNo)
-                .transactionAfterBalance(calculateAfterBalance(loggedInUserId, amount)) // 잔액 계산 함수 (구현 필요)
+                .description("예치금 충전: 대표 계좌 " + representativeAccountNo + " → 서비스 계좌 " + serviceAccountNo)
+                .transactionAfterBalance(calculateAfterBalance(loggedInUserId, amount)) // stub; 필요 시 수정
                 .build();
         accountTransactionRepository.save(transaction);
         logger.info("예치금 충전 거래내역 기록됨: {}", transaction);
+
+        // 사용자 예치금(잔액) 업데이트
+        User user = userRepository.findById(loggedInUserId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
+        int currentDeposit = (user.getDeposit() != null ? user.getDeposit() : 0);
+        int newDeposit = currentDeposit + Integer.parseInt(amount);
+        user.setDeposit(newDeposit);
+        userRepository.save(user);
+        logger.info("사용자 예치금 업데이트 완료: {}", newDeposit);
+
+        // 이체가 이루어진 대표계좌(및 기타 사용자 계좌) 잔액을 최신화하기 위해 동기화 API 호출
+        List<Account> updatedAccounts = refreshAccounts(loggedInUserId);
+        logger.info("계좌 잔액 동기화 완료: {}", updatedAccounts);
     }
+
+
 
     /**
      * 예치금 이체 Open API 호출 (transferDeposit)
@@ -187,13 +187,11 @@ public class AccountService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
         String userKey = user.getFinanceUserKey();
 
-        // 전송일시 및 거래 고유번호 생성
         LocalDateTime now = LocalDateTime.now();
         String transmissionDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String transmissionTime = now.format(DateTimeFormatter.ofPattern("HHmmss"));
         String institutionTransactionUniqueNo = transmissionDate + transmissionTime + String.format("%06d", new Random().nextInt(1000000));
 
-        // Open API 요청 헤더 생성
         Map<String, Object> header = new HashMap<>();
         header.put("apiName", "updateDemandDepositAccountTransfer");
         header.put("transmissionDate", transmissionDate);
@@ -205,7 +203,6 @@ public class AccountService {
         header.put("apiKey", financeApiKey);
         header.put("userKey", userKey);
 
-        // 요청 바디 생성
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("Header", header);
         requestBody.put("depositAccountNo", depositAccountNo);
@@ -214,12 +211,10 @@ public class AccountService {
         requestBody.put("withdrawalAccountNo", withdrawalAccountNo);
         requestBody.put("withdrawalTransactionSummary", "(수시입출금) : 출금(이체)");
 
-        // HTTP 요청 세팅
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(requestBody, httpHeaders);
 
-        // 예치금 이체 Open API URL
         String url = "https://finopenapi.ssafy.io/ssafy/api/v1/edu/demandDeposit/updateDemandDepositAccountTransfer";
         logger.info("예치금 이체 요청 시작: {}", LocalDateTime.now());
 
@@ -234,17 +229,48 @@ public class AccountService {
         return responseMap;
     }
 
+    /**
+     * 등록된 계좌 중 대표계좌를 설정하는 기능
+     * 사용자 계좌 목록에서 요청한 accountNo를 대표계좌(true)로 설정하고 나머지는 false로 업데이트
+     */
+    @Transactional
+    public void setRepresentativeAccount(Integer loggedInUserId, String accountNo) {
+        // 사용자 ID로 해당 사용자의 모든 계좌 조회
+        List<Account> accounts = accountRepository.findByUserId(loggedInUserId);
+
+        // 전달받은 accountNo가 사용자 계좌 목록에 있는지 확인
+        boolean exists = accounts.stream()
+                .anyMatch(account -> account.getAccountNumber().equals(accountNo));
+        if (!exists) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "해당 계좌번호는 로그인한 사용자의 계좌가 아닙니다.");
+        }
+
+        // 존재하는 경우, 대표계좌 설정: 전달된 계좌만 true, 나머지는 false로 업데이트
+        for (Account account : accounts) {
+            if (account.getAccountNumber().equals(accountNo)) {
+                account.setRepresentative(true);
+            } else {
+                account.setRepresentative(false);
+            }
+            accountRepository.save(account);
+        }
+        logger.info("대표계좌 설정 완료: {}", accountNo);
+    }
+
     // 서비스 계좌의 ID를 가져오는 로직 (필요 시 구현)
     private Integer getServiceAccountId() {
-        // 예를 들어, DB에 미리 등록해둔 서비스 계좌 정보를 조회
-        // 임시로 null 리턴
-        return null;
+        // 서비스 계좌는 user_id가 NULL이며, account_type이 'SERVICE'로 등록되어 있다고 가정
+        Optional<Account> serviceAccount = accountRepository.findByUserIdIsNullAndAccountType("SERVICE");
+        if (serviceAccount.isPresent()) {
+            return serviceAccount.get().getAccountId();
+        }
+        throw new CustomException(ErrorCode.NOT_FOUND, "서비스 계좌가 등록되어 있지 않습니다.");
     }
+
 
     // 사용자의 잔액을 업데이트 후 반환하는 로직 (구현 필요)
     private Integer calculateAfterBalance(Integer loggedInUserId, String amount) {
         // DB의 유저 예치금 정보를 업데이트하고, 이체 후 잔액을 계산
-        // 임시로 0 리턴
         return 0;
     }
 }

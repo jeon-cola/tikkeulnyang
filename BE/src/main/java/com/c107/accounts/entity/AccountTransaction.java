@@ -42,7 +42,7 @@ public class AccountTransaction {
     @Column(name = "transaction_after_balance", nullable = false)
     private Integer transactionAfterBalance;
 
-    @Column(name = "description", length = 50)
+    @Column(name = "description", length = 255)
     private String description;
 
     @Column(name = "is_waste", nullable = false, columnDefinition = "TINYINT(1) default 0")

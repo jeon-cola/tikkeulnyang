@@ -37,7 +37,7 @@ public class ChallengeEntity {
     @Column(name = "description", length = 255)
     private String description;
 
-    @Column(name = "created_by", nullable = false, length = 10)
+    @Column(name = "created_by", nullable = false, length = 255)
     private String createdBy;
 
     @Column(name = "max_participants")

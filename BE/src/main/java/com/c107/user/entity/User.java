@@ -21,6 +21,9 @@ public class User {
     private String financeUserKey;
     private String role;
 
+    @Column(nullable = false)
+    private Integer deposit = 0;
+
     public Integer getUserId() {
         return userId;
     }
