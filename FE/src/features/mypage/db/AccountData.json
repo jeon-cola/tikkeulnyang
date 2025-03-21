@@ -1,0 +1,164 @@
+{
+    "account": [
+        {
+            "accountId": 2,
+            "userId": 1,
+            "accountNumber": "0020987654321098",
+            "bankName": "산업은행",
+            "balance": "7500000",
+            "createdAt": "2025-03-21T15:10:13.5008208",
+            "updatedAt": "2025-03-21T15:10:13.5008208",
+            "representative": false
+        },
+        {
+            "accountId": 3,
+            "userId": 1,
+            "accountNumber": "0034589123456789",
+            "bankName": "기업은행",
+            "balance": "12000000",
+            "createdAt": "2025-03-21T15:10:13.5508208",
+            "updatedAt": "2025-03-21T15:10:13.5508208",
+            "representative": false
+        },
+        {
+            "accountId": 4,
+            "userId": 1,
+            "accountNumber": "0048023868856766",
+            "bankName": "국민은행",
+            "balance": "100000000",
+            "createdAt": "2025-03-21T15:10:13.6008208",
+            "updatedAt": "2025-03-21T15:10:13.6008208",
+            "representative": false
+        },
+        {
+            "accountId": 5,
+            "userId": 1,
+            "accountNumber": "0111234567890123",
+            "bankName": "농협은행",
+            "balance": "8500000",
+            "createdAt": "2025-03-21T15:10:13.6508208",
+            "updatedAt": "2025-03-21T15:10:13.6508208",
+            "representative": false
+        },
+        {
+            "accountId": 6,
+            "userId": 1,
+            "accountNumber": "0208031273647742",
+            "bankName": "우리은행",
+            "balance": "25000000",
+            "createdAt": "2025-03-21T15:10:13.7008208",
+            "updatedAt": "2025-03-21T15:10:13.7008208",
+            "representative": false
+        },
+        {
+            "accountId": 7,
+            "userId": 1,
+            "accountNumber": "0237890123456789",
+            "bankName": "SC제일은행",
+            "balance": "15000000",
+            "createdAt": "2025-03-21T15:10:13.7508208",
+            "updatedAt": "2025-03-21T15:10:13.7508208",
+            "representative": false
+        },
+        {
+            "accountId": 8,
+            "userId": 1,
+            "accountNumber": "0278765432109876",
+            "bankName": "시티은행",
+            "balance": "35000000",
+            "createdAt": "2025-03-21T15:10:13.8008208",
+            "updatedAt": "2025-03-21T15:10:13.8008208",
+            "representative": false
+        },
+        {
+            "accountId": 9,
+            "userId": 1,
+            "accountNumber": "0321234987650987",
+            "bankName": "대구은행",
+            "balance": "4500000",
+            "createdAt": "2025-03-21T15:10:13.8508208",
+            "updatedAt": "2025-03-21T15:10:13.8508208",
+            "representative": false
+        },
+        {
+            "accountId": 10,
+            "userId": 1,
+            "accountNumber": "0349876543210987",
+            "bankName": "광주은행",
+            "balance": "3200000",
+            "createdAt": "2025-03-21T15:10:13.9008208",
+            "updatedAt": "2025-03-21T15:10:13.9008208",
+            "representative": false
+        },
+        {
+            "accountId": 11,
+            "userId": 1,
+            "accountNumber": "0350123789456123",
+            "bankName": "제주은행",
+            "balance": "2800000",
+            "createdAt": "2025-03-21T15:10:13.9508208",
+            "updatedAt": "2025-03-21T15:10:13.9508208",
+            "representative": false
+        },
+        {
+            "accountId": 12,
+            "userId": 1,
+            "accountNumber": "0372345678901234",
+            "bankName": "전북은행",
+            "balance": "4300000",
+            "createdAt": "2025-03-21T15:10:14.0008208",
+            "updatedAt": "2025-03-21T15:10:14.0008208",
+            "representative": false
+        },
+        {
+            "accountId": 13,
+            "userId": 1,
+            "accountNumber": "0391234567890123",
+            "bankName": "경남은행",
+            "balance": "6700000",
+            "createdAt": "2025-03-21T15:10:14.0508208",
+            "updatedAt": "2025-03-21T15:10:14.0508208",
+            "representative": false
+        },
+        {
+            "accountId": 14,
+            "userId": 1,
+            "accountNumber": "0458976543210987",
+            "bankName": "새마을금고",
+            "balance": "9200000",
+            "createdAt": "2025-03-21T15:10:14.1008208",
+            "updatedAt": "2025-03-21T15:10:14.1008208",
+            "representative": false
+        },
+        {
+            "accountId": 15,
+            "userId": 1,
+            "accountNumber": "0813456789012345",
+            "bankName": "KEB하나은행",
+            "balance": "18000000",
+            "createdAt": "2025-03-21T15:10:14.1508208",
+            "updatedAt": "2025-03-21T15:10:14.1508208",
+            "representative": false
+        },
+        {
+            "accountId": 16,
+            "userId": 1,
+            "accountNumber": "0889876543210987",
+            "bankName": "신한은행",
+            "balance": "43000000",
+            "createdAt": "2025-03-21T15:10:14.2008208",
+            "updatedAt": "2025-03-21T15:10:14.2008208",
+            "representative": false
+        },
+        {
+            "accountId": 17,
+            "userId": 1,
+            "accountNumber": "0901234567891234",
+            "bankName": "카카오뱅크",
+            "balance": "27500000",
+            "createdAt": "2025-03-21T15:10:14.2508208",
+            "updatedAt": "2025-03-21T15:10:14.2508208",
+            "representative": false
+        }
+    ]
+}

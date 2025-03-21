@@ -5,10 +5,10 @@ import CorrectionIcon from "../assets/CorrectionIcon";
 import MyCatIcon from "../assets/MyCatIcon";
 import AccountIcon from "../assets/AccountIcon";
 import CardIcon from "../assets/CardIcon";
-import ReportIcon from "../assets/ReportIcon";
 import "../../../components/CustomHeader"
 import CustomHeader from "../../../components/CustomHeader";
 import YellowCat from "../../../../public/YellowCat.jsx";
+import AttendanceIcon from "../assets/AttendanceIcon.jsx";
 
 export default function MyPageMenu() {
   const [userImage, setUserImage] = useState(userProfile);
@@ -103,7 +103,7 @@ export default function MyPageMenu() {
                 <AccountIcon/>
               </div>
               <div className="flex items-center mb-1 gap-3">
-                <p className="font-regular">등록 계좌 설정</p>
+                <p className="font-regular">대표 계좌 설정</p>
               </div>
             </div>
           </Link>
@@ -121,10 +121,10 @@ export default function MyPageMenu() {
           </Link>
 
           {/* 출석부 리포트 */}
-          <Link to="report">
+          <Link to="attendance">
             <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 flex items-center p-4">
               <div className="mr-4">
-                <ReportIcon/>
+                <AttendanceIcon/>
               </div>
               <div className="flex items-center mb-1 gap-3">
                 <p className="font-regular">출석부 리포트</p>
