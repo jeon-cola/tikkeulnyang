@@ -97,34 +97,40 @@ export default function MyPageMenu() {
           </div>
 
           {/* 등록 계좌 설정 */}
-          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4">
-            <div className="mr-4">
-              <AccountIcon/>
+          <Link to="account">
+            <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4">
+              <div className="mr-4">
+                <AccountIcon/>
+              </div>
+              <div className="flex items-center mb-1 gap-3">
+                <p className="font-regular">등록 계좌 설정</p>
+              </div>
             </div>
-            <div className="flex items-center mb-1 gap-3">
-              <p className="font-regular">등록 계좌 설정</p>
-            </div>
-          </div>
+          </Link>
 
           {/* 등록 카드 설정 */}
-          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4">
-            <div className="mr-4">
-              <CardIcon/>
+          <Link to="card">
+            <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4">
+              <div className="mr-4">
+                <CardIcon/>
+              </div>
+              <div className="flex items-center mb-1 gap-3">
+                <p className="font-regular">등록 카드 설정</p>
+              </div>
             </div>
-            <div className="flex items-center mb-1 gap-3">
-              <p className="font-regular">등록 카드 설정</p>
-            </div>
-          </div>
+          </Link>
 
           {/* 출석부 리포트 */}
-          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 flex items-center p-4">
-            <div className="mr-4">
-              <ReportIcon/>
+          <Link to="report">
+            <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 flex items-center p-4">
+              <div className="mr-4">
+                <ReportIcon/>
+              </div>
+              <div className="flex items-center mb-1 gap-3">
+                <p className="font-regular">출석부 리포트</p>
+              </div>
             </div>
-            <div className="flex items-center mb-1 gap-3">
-              <p className="font-regular">출석부 리포트</p>
-            </div>
-          </div>
+          </Link>
 
 
         </div>
