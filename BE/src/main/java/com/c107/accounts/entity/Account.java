@@ -32,13 +32,16 @@ public class Account {
     @Column(nullable = false, length = 255)
     private String balance;
 
-    // 추가 필드: 통화 (예: KRW)
-    @Column(length = 10)
-    private String currency;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(name = "account_type")
+    private String accountType;
+
+    @Column(nullable = false)
+    private boolean representative;
 }
