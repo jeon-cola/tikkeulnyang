@@ -25,7 +25,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ksh147!!
     ports:
-      - "8080:8080"
+      - "8081:8080"
     networks:
       - app_network
 
