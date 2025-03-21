@@ -1,0 +1,24 @@
+{
+    "account": [
+        {
+            "accountId": 1,
+            "userId": 1,
+            "accountNumber": "0018023868856766",
+            "bankName": "한국은행",
+            "balance": "100000000",
+            "createdAt": "2025-03-21T15:10:13.4490739",
+            "updatedAt": "2025-03-21T15:10:13.4490739",
+            "representative": false
+        },
+        {
+            "accountId": 2,
+            "userId": 1,
+            "accountNumber": "0018031273647742",
+            "bankName": "한국은행",
+            "balance": "0",
+            "createdAt": "2025-03-21T15:10:13.5008208",
+            "updatedAt": "2025-03-21T15:10:13.5008208",
+            "representative": false
+        }
+    ]
+}
