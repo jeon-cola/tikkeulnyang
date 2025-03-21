@@ -1,4 +1,4 @@
-export default function ReportIcon() {
+export default function AttendanceIcon() {
     return(
         <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M24.75 25.5938H2.25C1.78875 25.5938 1.40625 25.2112 1.40625 24.75C1.40625 24.2887 1.78875 23.9062 2.25 23.9062H24.75C25.2113 23.9062 25.5938 24.2887 25.5938 24.75C25.5938 25.2112 25.2113 25.5938 24.75 25.5938Z" fill="black"/>
