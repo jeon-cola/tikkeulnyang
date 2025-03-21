@@ -29,7 +29,7 @@ services:
     networks:
       - app_network
 
-    frontend:
+  frontend:
     image: ddukio/frontend:latest
     container_name: frontend
     depends_on:
