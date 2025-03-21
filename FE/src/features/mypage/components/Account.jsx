@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from "react"
 import CustomBackHeader from "../../../components/CustomBackHeader"
 import bankImage from "../assets/bank.png"
 import axios from "axios";
-import bankImageFunction from "../assets/BankImgFunction"
+// BankImg 컴포넌트 이름으로 올바르게 임포트
+import BankImg from "../assets/BankImgFunction"
 
 export default function Account() {
     const [list, setList] = useState([])
@@ -46,24 +47,21 @@ export default function Account() {
 
     return(
         <div className="flex flex-col justify-center gap-5 min-w-[345px]">
-            {bankImageFunction("신한은행")}
             <CustomBackHeader title="대표 계좌 설정"/>
             <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 flex flex-col gap-2">
                 <p className="text-left font-regular text-lg">대표 계좌 선택</p>
                 
-                {/* 커스텀 드롭다운 */}
+                {/* 드롭다운 */}
                 <div className="relative w-full" ref={dropdownRef}>
                     <div 
                         className="w-full p-2 border rounded flex items-center justify-between cursor-pointer"
                         onClick={() => setIsOpen(!isOpen)}
                     >
                         {account.bank ? (
-                            <div className="flex items-center">
-                                <img 
-                                    src={bankImageFunction(account.bank)} 
-                                    alt={`${account.bank} 이미지`} 
-                                    className="h-6 mr-2" 
-                                />
+                            <div className="flex items-center justify-center w-full">
+                                <span className="h-6 mr-2">
+                                    <BankImg bankName={account.bank} />
+                                </span>
                                 <span>{account.bank}</span>
                             </div>
                         ) : (
@@ -80,11 +78,10 @@ export default function Account() {
                                     className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
                                     onClick={() => handleBankSelect(bank.bankName)}
                                 >
-                                    <img 
-                                        src={bankImageFunction(bank.bankName)} 
-                                        alt={`${bank.bankName} 이미지`} 
-                                        className="h-6 mr-2" 
-                                    />
+                                    {/* 컴포넌트 직접 렌더링 */}
+                                    <span className="h-6 mr-2">
+                                        <BankImg bankName={bank.bankName} />
+                                    </span>
                                     <span>{bank.bankName} : {bank.accountNumber}</span>
                                 </div>
                             ))}

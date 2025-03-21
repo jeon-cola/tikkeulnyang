@@ -2,7 +2,7 @@ export default function Daegu() {
     return(
         <svg width="52" height="26" viewBox="0 0 52 26" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M9.22661 9.22668H0V25.9955H9.22661V9.22668Z" fill="#00C4A6"/>
-<mask id="mask0_2002_279" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="9" y="0" width="27" height="26">
+<mask id="mask0_2002_279" style={{maskType:"luminance"}} maskUnits="userSpaceOnUse" x="9" y="0" width="27" height="26">
 <path d="M9.22659 9.22662C13.6725 9.23146 17.9349 10.9997 21.0786 14.1435C24.2223 17.2872 25.9906 21.5496 25.9954 25.9955H35.2221C35.2221 22.5817 34.5497 19.2014 33.2433 16.0474C31.9369 12.8935 30.0221 10.0278 27.6082 7.61389C25.1943 5.19999 22.3285 3.28518 19.1746 1.97879C16.0207 0.672392 12.6404 0 9.22659 0V9.22662Z" fill="white"/>
 </mask>
 <g mask="url(#mask0_2002_279)">
