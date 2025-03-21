@@ -1,5 +1,6 @@
 package com.c107.budget.controller;
 
+import com.c107.budget.dto.BudgetRemainResponseDto;
 import com.c107.budget.dto.BudgetRequestDto;
 import com.c107.budget.dto.BudgetResponseDto;
 import com.c107.budget.entity.BudgetEntity;
@@ -34,5 +35,11 @@ public class BudgetController {
     public ResponseEntity<?> getBudgetPlan(@AuthenticationPrincipal String email) {
         BudgetResponseDto responseDto = budgetService.getBudgetPlan(email);
         return ResponseUtil.success("예산 계획 조회에 성공했습니다.", responseDto);
+    }
+
+    @GetMapping("/remain")
+    public ResponseEntity<?> getBudgetRemain(@AuthenticationPrincipal String email) {
+        BudgetRemainResponseDto responseDto = budgetService.getBudgetRemain(email);
+        return ResponseUtil.success("남은 예산 조회에 성공했습니다.", responseDto);
     }
 }
