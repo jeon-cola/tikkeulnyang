@@ -1,5 +1,5 @@
 import { useState } from "react"
-import Step from "../assets/step"
+import Step from "../assets/Step"
 import step3Image from "../assets/step3.png"
 import { useNavigate } from "react-router-dom";
 export default function BucketListStep3() {
