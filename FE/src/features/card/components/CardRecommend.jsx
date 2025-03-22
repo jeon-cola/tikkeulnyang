@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import CustomHeader from "../../../components/CustomHeader"
 import axios from "axios"
 import CardCat from "../assets/CardCat.png"
+import { Link } from "react-router-dom"
 
 export default function CardRecommend() {
   const [cardList, setCardList] = useState([])
@@ -20,7 +21,7 @@ export default function CardRecommend() {
   },[])
 
   return(
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 mt-[45px]">
       <CustomHeader title="티끌냥"/>
 
       {/* 광고 이미지 */}
@@ -37,13 +38,15 @@ export default function CardRecommend() {
       <div className="w-full">
         {cardList.length > 0 ? (
           cardList.map((card, index ) => (
-            <div className="w-full flex flex-row bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 gap-15" key={index}>
-                <img src={card.image_url} alt="카드 이미지" />
-                <div className="flex flex-col">
-                  <p className="text-left font-semibold text-lg">{card.reco_card_name}</p>
-                  <p className="text-left">{card.corp_name}</p>
-                </div>
-            </div>
+            <Link to={`detail_card/${card.reco_card_id}`} state={{ cardData: card}} key={card.reco_card_id}>
+              <div className="w-full flex flex-row bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 gap-15" key={index}>
+                  <img src={card.image_url} alt="카드 이미지" />
+                  <div className="flex flex-col">
+                    <p className="text-left font-semibold text-lg">{card.reco_card_name}</p>
+                    <p className="text-left">{card.corp_name}</p>
+                  </div>
+              </div>
+            </Link>
           ))
         )
         : (
