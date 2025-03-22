@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PaymentHistoryRepository extends JpaRepository<PaymentHistoryEntity, Integer> {
@@ -24,4 +25,6 @@ public interface PaymentHistoryRepository extends JpaRepository<PaymentHistoryEn
             LocalDate date
     );
 
+    // 결재 내역 조회
+    Optional<PaymentHistoryEntity> findById(Integer paymentHistoryId);
 }
