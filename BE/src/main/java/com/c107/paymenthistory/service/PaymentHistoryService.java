@@ -5,6 +5,8 @@ import com.c107.paymenthistory.entity.CardEntity;
 import com.c107.paymenthistory.entity.PaymentHistoryEntity;
 import com.c107.paymenthistory.repository.CardRepository;
 import com.c107.paymenthistory.repository.PaymentHistoryRepository;
+import com.c107.user.entity.User;
+import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,14 +24,19 @@ import java.util.stream.Collectors;
 public class PaymentHistoryService {
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final CardRepository cardRepository;
+    private final UserRepository userRepository;
+
 
     @Transactional(readOnly = true)
     public PaymentHistoryResponseDto getConsumptionCalendar(
-            Integer userId,
+            String email,
             int year,
             int month,
             String type
     ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
+        Integer userId = user.getUserId();
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
         LocalDate endDate = yearMonth.atEndOfMonth();
@@ -93,16 +100,25 @@ public class PaymentHistoryService {
 
     @Transactional(readOnly = true)
     public PaymentHistoryResponseDto getMonthlyConsumption(
-            Integer userId,
+            String email,
             Integer year,
             Integer month
     ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
+        Integer userId = user.getUserId();
+
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
         LocalDate endDate = yearMonth.atEndOfMonth();
 
+        List<Integer> userCardIds = cardRepository.findByUserId(userId)
+                .stream()
+                .map(CardEntity::getCardId)
+                .collect(Collectors.toList());
+
         List<PaymentHistoryEntity> paymentHistories = paymentHistoryRepository
-                .findByUserIdAndTransactionDateBetween(userId, startDate, endDate);
+                .findByCardIdInAndTransactionDateBetween(userCardIds, startDate, endDate);
 
         int totalSpent = calculateTotalAmount(paymentHistories, false);
         int totalIncome = calculateTotalAmount(paymentHistories, true);
@@ -127,13 +143,22 @@ public class PaymentHistoryService {
 
     @Transactional(readOnly = true)
     public PaymentHistoryResponseDto getDailyConsumption(
-            Integer userId,
+            String email,
             String date
     ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
+        Integer userId = user.getUserId();
+
         LocalDate targetDate = LocalDate.parse(date);
 
+        List<Integer> userCardIds = cardRepository.findByUserId(userId)
+                .stream()
+                .map(CardEntity::getCardId)
+                .collect(Collectors.toList());
+
         List<PaymentHistoryEntity> paymentHistories = paymentHistoryRepository
-                .findByUserIdAndTransactionDate(userId, targetDate);
+                .findByCardIdInAndTransactionDate(userCardIds, targetDate);
 
         int totalSpent = calculateTotalAmount(paymentHistories, false);
         int totalIncome = calculateTotalAmount(paymentHistories, true);
