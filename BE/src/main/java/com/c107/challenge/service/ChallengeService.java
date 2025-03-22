@@ -3,11 +3,18 @@ package com.c107.challenge.service;
 import com.c107.challenge.dto.ChallengeResponseDto;
 import com.c107.challenge.dto.CreateChallengeRequest;
 import com.c107.challenge.entity.ChallengeEntity;
+import com.c107.challenge.entity.UserChallengeEntity;
 import com.c107.challenge.repository.ChallengeRepository;
+import com.c107.challenge.repository.UserChallengeRepository;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
+import com.c107.user.entity.User;
+import com.c107.user.repository.UserRepository;
+import com.c107.accounts.entity.AccountTransaction;
+import com.c107.accounts.repository.AccountTransactionRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import org.slf4j.Logger;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +35,9 @@ public class ChallengeService {
     private static final Logger logger = LoggerFactory.getLogger(ChallengeService.class);
 
     private final ChallengeRepository challengeRepository;
+    private final UserChallengeRepository userChallengeRepository;
+    private final UserRepository userRepository;
+    private final AccountTransactionRepository accountTransactionRepository;
 
     // 챌린지 생성 (로그인한 유저 정보 자동 등록)
     @Transactional
@@ -36,27 +45,25 @@ public class ChallengeService {
         String createdBy = getAuthenticatedUserEmail();
         boolean isAdmin = isAdmin();
 
-        // 현재 시간 기준으로 최소 시작 가능 날짜 계산 (내일 00:00부터)
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime earliestStartTime = now.toLocalDate().plusDays(1).atStartOfDay(); // 내일 00:00
-
-        // 요청한 시작 날짜가 최소 시작 가능 날짜보다 빠르면 예외 발생
+        LocalDateTime earliestStartTime = now.toLocalDate().plusDays(1).atStartOfDay();
         if (request.getStartDate().isBefore(earliestStartTime.toLocalDate())) {
-            throw new CustomException(ErrorCode.VALIDATION_FAILED, "챌린지는 등록 후 최소 하루 뒤 자정(00:00)부터 시작할 수 있습니다.");
+            throw new CustomException(ErrorCode.VALIDATION_FAILED,
+                    "챌린지는 등록 후 최소 하루 뒤 자정(00:00)부터 시작할 수 있습니다.");
         }
 
         ChallengeEntity entity = ChallengeEntity.builder()
                 .challengeName(request.getChallengeName())
-                .challengeType(isAdmin ? "공식챌린지" : "유저챌린지") // 운영자는 공식, 유저는 유저 챌린지
+                .challengeType(isAdmin ? "공식챌린지" : "유저챌린지")
                 .targetAmount(request.getTargetAmount())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .description(request.getDescription())
                 .createdBy(createdBy)
-                .maxParticipants(request.getMaxParticipants()) // 최대 인원 설정
+                .maxParticipants(request.getMaxParticipants())
                 .limitAmount(request.getLimitAmount())
-                .publicFlag(true) // 기본 공개 설정
-                .activeFlag(false) // 기본적으로 비활성화 (시작 시간이 되면 활성화)
+                .publicFlag(true)
+                .activeFlag(false)
                 .challengeCategory(request.getChallengeCategory())
                 .createdAt(now)
                 .updatedAt(now)
@@ -68,7 +75,6 @@ public class ChallengeService {
         return mapToDto(saved);
     }
 
-
     // 챌린지 삭제 (시작 전인 경우만 삭제 가능)
     @Transactional
     public void deleteChallenge(Integer challengeId) {
@@ -76,12 +82,10 @@ public class ChallengeService {
         String loggedInUser = getAuthenticatedUserEmail();
         boolean isAdmin = isAdmin();
 
-        // 삭제 가능 조건: 챌린지가 아직 시작되지 않은 경우 (activeFlag가 false)와 시작일이 미래여야 함.
         if (challenge.getActiveFlag() || !LocalDate.now().isBefore(challenge.getStartDate())) {
             throw new CustomException(ErrorCode.UNAUTHORIZED, "시작된 챌린지는 삭제할 수 없습니다.");
         }
 
-        // 삭제 권한 확인: 운영자 또는 생성자만 가능
         if (!isAdmin && !challenge.getCreatedBy().equals(loggedInUser)) {
             throw new CustomException(ErrorCode.UNAUTHORIZED, "삭제 권한이 없습니다.");
         }
@@ -90,78 +94,74 @@ public class ChallengeService {
         challengeRepository.save(challenge);
     }
 
-    // 챌린지 수정은 어떠한 경우에도 불가능하도록 처리
+    // 챌린지 수정은 항상 불가능
     @Transactional
     public ChallengeResponseDto updateChallenge(Integer challengeId, CreateChallengeRequest request) {
         throw new CustomException(ErrorCode.UNAUTHORIZED, "챌린지는 수정할 수 없습니다.");
     }
 
-    // 공식 챌린지 조회 (페이지네이션 적용)
     public Page<ChallengeResponseDto> getOfficialChallenges(int page, int size) {
         Page<ChallengeEntity> challenges = challengeRepository.findByChallengeTypeAndDeleted("공식챌린지", false, PageRequest.of(page, size));
         return challenges.map(this::mapToDto);
     }
 
-    // 유저 챌린지 조회 (페이지네이션 적용)
     public Page<ChallengeResponseDto> getUserChallenges(int page, int size) {
         Page<ChallengeEntity> challenges = challengeRepository.findByChallengeTypeAndDeleted("유저챌린지", false, PageRequest.of(page, size));
         return challenges.map(this::mapToDto);
     }
 
-    // 현재 로그인한 유저 이메일 가져오기
+    // 로그인한 사용자 이메일 조회
     private String getAuthenticatedUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication.getName();
     }
 
-    // 현재 로그인한 유저가 운영자인지 확인
+    // 로그인한 User 객체 조회
+    private User getAuthenticatedUser() {
+        String email = getAuthenticatedUserEmail();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보를 찾을 수 없습니다."));
+    }
+
     private boolean isAdmin() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
     }
 
-    // 챌린지 조회 유틸 메서드
     private ChallengeEntity findChallengeById(Integer challengeId) {
         return challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "챌린지를 찾을 수 없습니다."));
     }
 
-    // 챌린지 ID로 조회하는 메서드 추가
     public ChallengeResponseDto getChallengeById(Integer challengeId) {
         ChallengeEntity challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "챌린지를 찾을 수 없습니다."));
         return mapToDto(challenge);
     }
 
-    // ✅ 서버가 켜질 때 실행 (이전 날짜 챌린지도 활성화)
     @PostConstruct
     public void initializeChallenges() {
         activatePendingChallenges();
         logger.info("✅ 서버 시작 시, 활성화되지 않은 챌린지 확인 완료!");
     }
 
-    // ✅ 매일 0시 0분에 실행 (정상적으로 실행되는 경우)
     @Scheduled(cron = "0 0 0 * * *")
     public void activateChallenges() {
         activatePendingChallenges();
         logger.info("✅ 0시 0분에 챌린지 활성화 완료!");
     }
 
-    // ✅ 활성화되지 않은 챌린지를 찾고 활성화하는 공통 로직
     private void activatePendingChallenges() {
         LocalDate today = LocalDate.now();
         List<ChallengeEntity> challenges = challengeRepository.findByStartDateBeforeAndActiveFlagFalse(today);
-
         for (ChallengeEntity challenge : challenges) {
             challenge.setActiveFlag(true);
             challengeRepository.save(challenge);
-            logger.debug("🔹 챌린지 활성화됨: ID = {}, Name = {}", challenge.getChallengeId(), challenge.getChallengeName());
+            logger.debug("챌린지 활성화됨: ID = {}, Name = {}", challenge.getChallengeId(), challenge.getChallengeName());
         }
     }
 
-
-    // Entity -> DTO 변환
     private ChallengeResponseDto mapToDto(ChallengeEntity entity) {
         return ChallengeResponseDto.builder()
                 .challengeId(entity.getChallengeId())
@@ -178,4 +178,103 @@ public class ChallengeService {
                 .createdAt(entity.getCreatedAt())
                 .build();
     }
+
+    // ------------------ 챌린지 참여/취소 및 결과 처리 ------------------
+
+    /**
+     * 챌린지 참여
+     * 로그인한 사용자가 참여할 챌린지가 아직 시작 전이면,
+     * 챌린지의 targetAmount만큼 예치금이 차감되고 참여 기록과 거래내역이 생성됩니다.
+     */
+    @Transactional
+    public void joinChallenge(Integer challengeId) {
+        User user = getAuthenticatedUser();
+        ChallengeEntity challenge = challengeRepository.findById(challengeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "챌린지를 찾을 수 없습니다."));
+
+        if (!challenge.getStartDate().isAfter(LocalDate.now())) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "이미 시작된 챌린지에는 참여할 수 없습니다.");
+        }
+
+        if (userChallengeRepository.findByUserIdAndChallenge_ChallengeIdAndStatus(user.getUserId(), challengeId, "진행중").isPresent()) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "이미 참여하셨습니다.");
+        }
+
+        int depositAmount = challenge.getTargetAmount();
+        if (user.getDeposit() < depositAmount) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "예치금이 부족합니다.");
+        }
+
+        user.setDeposit(user.getDeposit() - depositAmount);
+        userRepository.save(user);
+        logger.info("사용자 예치금 차감 완료: 차감액={}, 남은 예치금={}", depositAmount, user.getDeposit());
+
+        UserChallengeEntity participation = UserChallengeEntity.builder()
+                .challenge(challenge)
+                .challengeName(challenge.getChallengeName())
+                .userId(user.getUserId())
+                .depositAmount(depositAmount)
+                .status("진행중")
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .spendAmount(0)
+                .build();
+        userChallengeRepository.save(participation);
+        logger.info("챌린지 참여 기록 생성됨: {}", participation);
+
+        // 거래내역 기록 (챌린지 참여)
+        AccountTransaction joinTx = AccountTransaction.builder()
+                .userId(user.getUserId())
+                .transactionDate(LocalDateTime.now())
+                .category("CHALLENGE_JOIN")
+                .transactionType("WITHDRAW")
+                .transactionBalance(depositAmount)
+                .transactionAfterBalance(user.getDeposit())
+                .description("챌린지 참여: " + challenge.getChallengeName() + " 참여로 예치금 차감")
+                .build();
+        accountTransactionRepository.save(joinTx);
+        logger.info("챌린지 참여 거래내역 기록됨: {}", joinTx);
+    }
+
+    /**
+     * 챌린지 참여 취소
+     * 챌린지 시작 전인 경우에만 취소 가능하며, 차감된 예치금을 환불하고 거래내역을 기록합니다.
+     */
+    @Transactional
+    public void cancelChallengeParticipation(Integer challengeId) {
+        User user = getAuthenticatedUser();
+        UserChallengeEntity participation = userChallengeRepository
+                .findByUserIdAndChallenge_ChallengeIdAndStatus(user.getUserId(), challengeId, "진행중")
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "진행 중인 참여 기록을 찾을 수 없습니다."));
+
+        ChallengeEntity challenge = challengeRepository.findById(challengeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "챌린지를 찾을 수 없습니다."));
+        if (!challenge.getStartDate().isAfter(LocalDate.now())) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "챌린지가 이미 시작되어 참여 취소할 수 없습니다.");
+        }
+
+        int refundAmount = participation.getDepositAmount();
+        user.setDeposit(user.getDeposit() + refundAmount);
+        userRepository.save(user);
+        logger.info("사용자 예치금 환불 완료: 환불액={}, 업데이트 후 예치금={}", refundAmount, user.getDeposit());
+
+        participation.setStatus("취소");
+        participation.setUpdatedAt(LocalDateTime.now());
+        userChallengeRepository.save(participation);
+        logger.info("챌린지 참여 취소 완료: {}", participation);
+
+        // 거래내역 기록 (챌린지 참여 취소 환불)
+        AccountTransaction cancelTx = AccountTransaction.builder()
+                .userId(user.getUserId())
+                .transactionDate(LocalDateTime.now())
+                .category("CHALLENGE_CANCEL_REFUND")
+                .transactionType("REFUND")
+                .transactionBalance(refundAmount)
+                .transactionAfterBalance(user.getDeposit())
+                .description("챌린지 참여 취소: 예치금 환불")
+                .build();
+        accountTransactionRepository.save(cancelTx);
+        logger.info("챌린지 취소 환불 거래내역 기록됨: {}", cancelTx);
+    }
+
 }

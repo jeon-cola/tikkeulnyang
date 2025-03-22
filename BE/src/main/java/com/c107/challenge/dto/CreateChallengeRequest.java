@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Builder
 public class CreateChallengeRequest {
     private String challengeName;
-    private String targetAmount;
+    private Integer targetAmount;
     private LocalDate startDate;
     private LocalDate endDate;
     private String description;

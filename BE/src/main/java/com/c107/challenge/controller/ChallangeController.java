@@ -32,12 +32,9 @@ public class ChallangeController {
     @DeleteMapping("/{challengeId}")
     public ResponseEntity<String> deleteChallenge(@PathVariable Integer challengeId) {
         ChallengeResponseDto challenge = challengeService.getChallengeById(challengeId);
-
-        // 🔹 활성화된 챌린지는 삭제할 수 없음
         if (challenge.getActiveFlag()) {
             throw new CustomException(ErrorCode.VALIDATION_FAILED, "시작된 챌린지는 삭제할 수 없습니다.");
         }
-
         challengeService.deleteChallenge(challengeId);
         return ResponseEntity.ok("챌린지가 삭제되었습니다.");
     }
@@ -65,4 +62,19 @@ public class ChallangeController {
             @RequestParam(defaultValue = "4") int size) {
         return ResponseEntity.ok(challengeService.getUserChallenges(page, size));
     }
+
+    // 챌린지 참여 엔드포인트 (로그인한 유저 자동 적용)
+    @PostMapping("/{challengeId}/join")
+    public ResponseEntity<String> joinChallenge(@PathVariable Integer challengeId) {
+        challengeService.joinChallenge(challengeId);
+        return ResponseEntity.ok("챌린지 참여가 완료되었습니다.");
+    }
+
+    // 챌린지 참여 취소 엔드포인트 (로그인한 유저 자동 적용)
+    @PostMapping("/{challengeId}/cancel")
+    public ResponseEntity<String> cancelChallengeParticipation(@PathVariable Integer challengeId) {
+        challengeService.cancelChallengeParticipation(challengeId);
+        return ResponseEntity.ok("챌린지 참여 취소가 완료되었습니다.");
+    }
+
 }
