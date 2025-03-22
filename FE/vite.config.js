@@ -13,10 +13,10 @@ export default defineConfig({
     svgr(),
     VitePWA({
       registerType: "autoUpdate",
-      // npm run dev모드에서도 pwa환경과 동일하게 설정
-      devOptions: {
-        enabled: true,
-      },
+      // npm run dev모드에서도 pwa환경과 동일하게 설정 -> ignore에도 dev-dist폴더가 먹히지를 않아서, 주석처리한다.
+      // devOptions: {
+      //   enabled: true,
+      // },
       // pwa 다운로드후 오프라인인 상태에서도 표시
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg}"],
@@ -42,6 +42,15 @@ export default defineConfig({
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
-    extensions: [".js", ".jsx", ".ts", ".tsx"],
+    extensions: [".js", ".jsx"],
+  },
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        // "경로를 찾을 수 없음" 오류만 무시하고 나머지는 출력
+        if (warning.code === "UNRESOLVED_IMPORT") return;
+        warn(warning);
+      },
+    },
   },
 });

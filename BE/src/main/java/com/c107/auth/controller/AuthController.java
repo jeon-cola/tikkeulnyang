@@ -29,6 +29,12 @@ public class AuthController {
         authService.redirectToKakaoLogin(response);
     }
 
+    //
+    //
+    //
+    //
+    //
+    //
     /**
      * 카카오 로그인 후 콜백 (인가 코드 수신 → JWT 발급 혹은 신규회원 안내)
      */

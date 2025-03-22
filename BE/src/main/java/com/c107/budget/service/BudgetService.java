@@ -1,6 +1,7 @@
 package com.c107.budget.service;
 
 
+import com.c107.budget.dto.BudgetRemainResponseDto;
 import com.c107.budget.dto.BudgetRequestDto;
 import com.c107.budget.dto.BudgetResponseDto;
 import com.c107.budget.entity.BudgetEntity;
@@ -120,6 +121,44 @@ public class BudgetService {
                 .build();
 
         return BudgetResponseDto.builder()
+                .totals(totals)
+                .budgets(budgetDtos)
+                .build();
+    }
+
+    public BudgetRemainResponseDto getBudgetRemain(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        LocalDate now = LocalDate.now();
+        LocalDate startDate = now.withDayOfMonth(1);
+        LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth());
+
+        List<BudgetEntity> budgetEntities = budgetRepository.findByEmailAndStartDateAndEndDate(
+                email, startDate, endDate);
+
+        int totalRemainingAmount = 0;
+
+        List<BudgetRemainResponseDto.Budget> budgetDtos = new ArrayList<>();
+
+        for (BudgetEntity budget : budgetEntities) {
+            int remainingAmount = budget.getRemainingAmount() != null ? budget.getRemainingAmount() : 0;
+            totalRemainingAmount += remainingAmount;
+
+            BudgetRemainResponseDto.Budget budgetDto = BudgetRemainResponseDto.Budget.builder()
+                    .categoryId(budget.getCategoryId())
+                    .remainingAmount(remainingAmount)
+                    .build();
+
+            budgetDtos.add(budgetDto);
+        }
+
+        BudgetRemainResponseDto.Totals totals = BudgetRemainResponseDto.Totals.builder()
+                .totalRemainingAmount(totalRemainingAmount)
+                .build();
+
+        return BudgetRemainResponseDto.builder()
                 .totals(totals)
                 .budgets(budgetDtos)
                 .build();
