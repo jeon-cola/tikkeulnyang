@@ -105,14 +105,14 @@ public class AuthService {
         Map<String, Object> kakaoUser = getKakaoUserInfo(tokenResponse.getAccessToken());
         if (kakaoUser == null || !kakaoUser.containsKey("kakao_account")) {
             // 오류 발생 시, 로그인 페이지로 에러 메시지와 함께 리다이렉트
-            response.sendRedirect("http://localhost:5173/login?error=kakaoUserNotFound");
+            response.sendRedirect("http://j12c107.p.ssafy.io/login?error=kakaoUserNotFound");
             return;
         }
         Map<String, Object> kakaoAccount = (Map<String, Object>) kakaoUser.get("kakao_account");
         String email = (String) kakaoAccount.get("email");
 
         if (email == null || email.isBlank()) {
-            response.sendRedirect("http://localhost:5173/login?error=emailNotFound");
+            response.sendRedirect("http://j12c107.p.ssafy.io/login?error=emailNotFound");
             return;
         }
 
@@ -132,10 +132,10 @@ public class AuthService {
             System.out.println("백엔드용 accesstoken 확인 : " + accessTokenJwt);
 
             // (원래 ResponseUtil.success()를 호출했지만, 리다이렉트 방식에서는 JSON 대신 URL 이동)
-            response.sendRedirect("http://localhost:5173/home/");
+            response.sendRedirect("http://j12c107.p.ssafy.io/home/");
         } else {
             // 5. 신규 회원인 경우 -> 회원가입 요청 페이지로 리다이렉트 (쿼리 파라미터로 이메일 전달)
-            response.sendRedirect("http://localhost:5173/user/signup?email=" + email);
+            response.sendRedirect("http://j12c107.p.ssafy.io/user/signup?email=" + email);
         }
     }
 
@@ -165,7 +165,7 @@ public class AuthService {
         // 2. 카카오 로그아웃 URL 생성
         String kakaoLogoutUrl = "https://kauth.kakao.com/oauth/logout"
                 + "?client_id=" + kakaoClientId
-                + "&logout_redirect_uri=" + "http://localhost:8080/api/auth/logout/callback";
+                + "&logout_redirect_uri=" + "http://j12c107.p.ssafy.io/api/auth/logout/callback";
 
         return ResponseUtil.success("로그아웃 완료", Map.of("redirectUri", kakaoLogoutUrl));
     }
