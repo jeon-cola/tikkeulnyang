@@ -22,11 +22,14 @@ public class UserChallengeEntity {
     @JoinColumn(name = "challenge_id", nullable = false)
     private ChallengeEntity challenge; // 챌린지와 연관
 
+    @Column(name = "challenge_name", nullable = false)
+    private String challengeName;
+
     @Column(name = "user_id", nullable = false)
-    private Integer userId; // 이 필드가 있어야 함
+    private Integer userId;
 
     @Column(name = "deposit_amount", nullable = false)
-    private String depositAmount;
+    private Integer depositAmount;
 
     @Column(name = "status", nullable = false, length = 10)
     private String status;

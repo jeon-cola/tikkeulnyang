@@ -1,7 +1,6 @@
 package com.c107.accounts.controller;
 
 import com.c107.accounts.dto.DepositChargeRequest;
-import com.c107.accounts.entity.Account;
 import com.c107.accounts.service.AccountService;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
@@ -25,7 +24,7 @@ public class AccountController {
 
     // 계좌 동기화 엔드포인트: 한 번 호출로 모든 계좌가 DB에 등록/업데이트됨
     @GetMapping("/refresh")
-    public ResponseEntity<List<Account>> refreshAccounts(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<List<?>> refreshAccounts(@AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
             throw new CustomException(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다.");
         }
@@ -33,7 +32,7 @@ public class AccountController {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
         Integer userId = user.getUserId();
 
-        List<Account> updatedAccounts = accountService.refreshAccounts(userId);
+        List<?> updatedAccounts = accountService.refreshAccounts(userId);
         return ResponseEntity.ok(updatedAccounts);
     }
 
@@ -50,6 +49,21 @@ public class AccountController {
 
         accountService.depositCharge(userId, depositChargeRequest.getAmount());
         return ResponseEntity.ok("예치금 충전 요청이 완료되었습니다.");
+    }
+
+    // 예치금 환불 엔드포인트 (서비스 계좌에서 사용자 대표계좌로 이체)
+    @PostMapping("/refund-deposit")
+    public ResponseEntity<String> refundDeposit(@AuthenticationPrincipal UserDetails userDetails,
+                                                @RequestBody DepositChargeRequest depositChargeRequest) {
+        if (userDetails == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
+        Integer userId = user.getUserId();
+
+        accountService.refundDeposit(userId, depositChargeRequest.getAmount());
+        return ResponseEntity.ok("예치금 환불 요청이 완료되었습니다.");
     }
 
     // 대표계좌 설정 엔드포인트: 사용자가 가진 계좌 목록 중 하나를 대표계좌로 설정

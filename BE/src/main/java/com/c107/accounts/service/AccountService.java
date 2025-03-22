@@ -129,7 +129,7 @@ public class AccountService {
      */
     @Transactional
     public void depositCharge(Integer loggedInUserId, String amount) {
-        // 서비스 계좌번호 (예: 고정 값)
+        // 서비스 계좌번호 (고정 값)
         String serviceAccountNo = "0018031273647742";
 
         // 로그인한 사용자의 대표계좌 조회
@@ -140,10 +140,19 @@ public class AccountService {
         Account representativeAccount = repOpt.get();
         String representativeAccountNo = representativeAccount.getAccountNumber();
 
-        // Open API 호출로 이체 진행 (서비스 계좌로 이체)
+        // Open API 호출로 이체 진행 (서비스 계좌 → 대표계좌로 충전)
         Map<String, Object> response = transferDeposit(loggedInUserId, serviceAccountNo, representativeAccountNo, amount);
+        logger.info("예치금 이체 API 응답: {}", response);
 
-        // 이체 응답 확인 후 내부 거래내역 기록
+        // 대표계좌 잔액 직접 업데이트: 충전의 경우, 대표계좌에서 출금되므로 잔액 감소
+        int repBalance = Integer.parseInt(representativeAccount.getBalance());
+        int depositAmt = Integer.parseInt(amount);
+        int newRepBalance = repBalance - depositAmt;
+        representativeAccount.setBalance(String.valueOf(newRepBalance));
+        accountRepository.save(representativeAccount);
+        logger.info("대표계좌 잔액 업데이트 완료: 이전 잔액={} → 새로운 잔액={}", repBalance, newRepBalance);
+
+        // 최신 잔액을 거래 내역에 기록 (업데이트된 대표계좌 잔액 사용)
         AccountTransaction transaction = AccountTransaction.builder()
                 .accountId(getServiceAccountId()) // 서비스 계좌의 ID (DB에서 조회)
                 .userId(loggedInUserId)
@@ -151,28 +160,93 @@ public class AccountService {
                 .category("DEPOSIT_CHARGE")
                 .transactionType("DEPOSIT")
                 .transactionAccountNo(representativeAccountNo)
-                .transactionBalance(Integer.parseInt(amount))
+                .transactionBalance(depositAmt)
                 .description("예치금 충전: 대표 계좌 " + representativeAccountNo + " → 서비스 계좌 " + serviceAccountNo)
-                .transactionAfterBalance(calculateAfterBalance(loggedInUserId, amount)) // stub; 필요 시 수정
+                .transactionAfterBalance(newRepBalance)
                 .build();
         accountTransactionRepository.save(transaction);
         logger.info("예치금 충전 거래내역 기록됨: {}", transaction);
 
-        // 사용자 예치금(잔액) 업데이트
+        // 사용자 예치금 업데이트: 충전액 만큼 증가
         User user = userRepository.findById(loggedInUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
         int currentDeposit = (user.getDeposit() != null ? user.getDeposit() : 0);
-        int newDeposit = currentDeposit + Integer.parseInt(amount);
+        int newDeposit = currentDeposit + depositAmt;
         user.setDeposit(newDeposit);
         userRepository.save(user);
         logger.info("사용자 예치금 업데이트 완료: {}", newDeposit);
 
-        // 이체가 이루어진 대표계좌(및 기타 사용자 계좌) 잔액을 최신화하기 위해 동기화 API 호출
+        // (옵션) 계좌 잔액 동기화 호출
         List<Account> updatedAccounts = refreshAccounts(loggedInUserId);
         logger.info("계좌 잔액 동기화 완료: {}", updatedAccounts);
     }
 
+    /**
+     * 예치금 환불 (서비스 계좌에서 사용자 대표계좌로 이체) 처리
+     * 환불 요청 금액이 사용자의 현재 예치금보다 많지 않아야 하며,
+     * 외부 API를 통해 서비스 계좌에서 사용자 대표계좌로 환불 이체를 진행합니다.
+     * @param loggedInUserId 사용자 ID
+     * @param amount 환불할 금액 (예치금 환불액)
+     */
+    @Transactional
+    public void refundDeposit(Integer loggedInUserId, String amount) {
+        // 1. 사용자 정보 조회 및 예치금 검증
+        User user = userRepository.findById(loggedInUserId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
+        int currentDeposit = (user.getDeposit() != null ? user.getDeposit() : 0);
+        int refundAmt = Integer.parseInt(amount);
+        if (refundAmt > currentDeposit) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "환불 요청 금액이 예치금보다 많습니다.");
+        }
 
+        // 2. 로그인한 사용자의 대표계좌 조회
+        Optional<Account> repOpt = accountRepository.findByUserIdAndRepresentativeTrue(loggedInUserId);
+        if (repOpt.isEmpty()) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "대표계좌가 설정되어 있지 않습니다.");
+        }
+        Account representativeAccount = repOpt.get();
+        String representativeAccountNo = representativeAccount.getAccountNumber();
+
+        // 3. 서비스 계좌번호 (고정 값)
+        String serviceAccountNo = "0018031273647742";
+
+        // 4. 외부 API 호출: 환불 이체 (서비스 계좌 → 대표계좌)
+        //    파라미터 순서 변경: 입금 대상: 대표계좌, 출금 대상: 서비스 계좌
+        Map<String, Object> response = transferDeposit(loggedInUserId, representativeAccountNo, serviceAccountNo, amount);
+        logger.info("환불 이체 API 응답: {}", response);
+
+        // 5. 대표계좌 잔액 직접 업데이트: 환불의 경우, 대표계좌 잔액이 증가
+        int repBalance = Integer.parseInt(representativeAccount.getBalance());
+        int newRepBalance = repBalance + refundAmt;
+        representativeAccount.setBalance(String.valueOf(newRepBalance));
+        accountRepository.save(representativeAccount);
+        logger.info("대표계좌 잔액 업데이트 완료: 이전 잔액={} → 새로운 잔액={}", repBalance, newRepBalance);
+
+        // 6. 최신 잔액을 거래 내역에 기록
+        AccountTransaction transaction = AccountTransaction.builder()
+                .accountId(getServiceAccountId())  // 서비스 계좌의 ID (DB에서 조회)
+                .userId(loggedInUserId)
+                .transactionDate(LocalDateTime.now())
+                .category("DEPOSIT_REFUND")
+                .transactionType("REFUND")
+                .transactionAccountNo(representativeAccountNo)
+                .transactionBalance(refundAmt)
+                .description("예치금 환불: 서비스 계좌 " + serviceAccountNo + " → 대표 계좌 " + representativeAccountNo)
+                .transactionAfterBalance(newRepBalance)
+                .build();
+        accountTransactionRepository.save(transaction);
+        logger.info("예치금 환불 거래내역 기록됨: {}", transaction);
+
+        // 7. 사용자 예치금 업데이트: 환불액 만큼 차감
+        int newDeposit = currentDeposit - refundAmt;
+        user.setDeposit(newDeposit);
+        userRepository.save(user);
+        logger.info("사용자 예치금 환불 후 업데이트 완료: {}", newDeposit);
+
+        // 8. (옵션) 계좌 잔액 동기화 호출
+        List<Account> updatedAccounts = refreshAccounts(loggedInUserId);
+        logger.info("계좌 잔액 동기화 완료: {}", updatedAccounts);
+    }
 
     /**
      * 예치금 이체 Open API 호출 (transferDeposit)
@@ -267,10 +341,17 @@ public class AccountService {
         throw new CustomException(ErrorCode.NOT_FOUND, "서비스 계좌가 등록되어 있지 않습니다.");
     }
 
-
-    // 사용자의 잔액을 업데이트 후 반환하는 로직 (구현 필요)
+    // calculateAfterBalance는 대표계좌 잔액을 정수로 파싱하여 반환합니다.
     private Integer calculateAfterBalance(Integer loggedInUserId, String amount) {
-        // DB의 유저 예치금 정보를 업데이트하고, 이체 후 잔액을 계산
-        return 0;
+        Optional<Account> repOpt = accountRepository.findByUserIdAndRepresentativeTrue(loggedInUserId);
+        if (repOpt.isEmpty()) {
+            throw new CustomException(ErrorCode.NOT_FOUND, "대표계좌가 등록되어 있지 않습니다.");
+        }
+        Account representativeAccount = repOpt.get();
+        try {
+            return Integer.parseInt(representativeAccount.getBalance());
+        } catch (NumberFormatException e) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "잔액 정보가 올바르지 않습니다.");
+        }
     }
 }
