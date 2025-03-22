@@ -1,0 +1,28 @@
+{
+  "recommended_cards": [
+    {
+      "reco_card_id": 13,
+      "reco_card_name": "스타카드",
+      "card_type": "CREDIT",
+      "corp_name": "스타은행",
+      "image_url": "https://s3.amazonaws.com/your-bucket/card_images/card_13.png",
+      "benefits": [
+        {
+          "benefit_id": 1,
+          "description": "월납요금(공과금) 10% 할인서비스",
+          "category": "공과금"
+        },
+        {
+          "benefit_id": 2,
+          "description": "편의점 10% 할인",
+          "category": "편의점"
+        },
+        {
+          "benefit_id": 3,
+          "description": "병원/약국업종 10% 할인",
+          "category": "병원/약국"
+        }
+      ]
+    }
+  ]
+}
