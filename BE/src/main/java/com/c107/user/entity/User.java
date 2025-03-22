@@ -18,6 +18,11 @@ public class User {
     private String email;
     @Column(nullable = true)
     private String name;
+    private String financeUserKey;
+    private String role;
+
+    @Column(nullable = false)
+    private Integer deposit = 0;
 
     public Integer getUserId() {
         return userId;
@@ -31,4 +36,7 @@ public class User {
         return email;
     }
 
+    public String getRole() {
+        return role;
+    }
 }
