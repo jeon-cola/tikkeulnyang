@@ -20,6 +20,16 @@ export default defineConfig({
       // pwa 다운로드후 오프라인인 상태에서도 표시
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg}"],
+
+        // 1) SPA 라우팅용 navigateFallback
+        navigateFallback: "/index.html",
+
+        // 2) /api/ 경로는 fallback에서 제외시킴
+        //    즉, /api/ 요청은 서버로 그대로 가게 함
+        navigateFallbackDenylist: [
+          // 정규식: ^/api/ 로 시작하는 모든 요청
+          /^\/api\//,
+        ],
       },
       /* manifest 관련 설정 -> 아이콘 등이 나오면 하는걸로
       includeAssets: ['favicon.ico'],
