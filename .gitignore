@@ -3,3 +3,5 @@ BE/src/main/resources/application.properties
 FE/dev-dist/registerSW.js
 FE/dev-dist/sw.js
 FE/dev-dist/workbox-54d0af47.js
+
+.idea

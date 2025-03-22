@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Step from "../assets/step";
+import Step from "../assets/Step";
 import step1image from "../assets/step1.png"
 import { useNavigate } from "react-router-dom";
 
