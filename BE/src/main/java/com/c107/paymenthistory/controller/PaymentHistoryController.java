@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -22,7 +23,7 @@ public class PaymentHistoryController {
 
     @GetMapping("/consumption")
     public ResponseEntity<?> getConsumptionCalendar(
-            @RequestParam(required = false, defaultValue = "1") Integer userId,
+            @AuthenticationPrincipal String email,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false, defaultValue = "personal") String type
@@ -34,7 +35,7 @@ public class PaymentHistoryController {
             int targetMonth = (month != null) ? month : now.getMonthValue();
 
             PaymentHistoryResponseDto responseDto = paymentHistoryService.getConsumptionCalendar(
-                    userId, targetYear, targetMonth, type);
+                    email, targetYear, targetMonth, type);
 
             return ResponseEntity.ok(responseDto);
         } catch (Exception e) {
@@ -47,7 +48,7 @@ public class PaymentHistoryController {
 
     @GetMapping("/consumption/monthly")
     public ResponseEntity<?> getMonthlyConsumption(
-            @RequestParam(required = false, defaultValue = "1") Integer userId,
+            @AuthenticationPrincipal String email,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month
     ) {
@@ -57,7 +58,7 @@ public class PaymentHistoryController {
             int targetMonth = (month != null) ? month : now.getMonthValue();
 
             PaymentHistoryResponseDto responseDto = paymentHistoryService.getMonthlyConsumption(
-                    userId, targetYear, targetMonth);
+                    email, targetYear, targetMonth);
 
             return ResponseEntity.ok(responseDto);
         } catch (Exception e) {
@@ -68,12 +69,12 @@ public class PaymentHistoryController {
 
     @GetMapping("/consumption/daily/{date}")
     public ResponseEntity<?> getDailyConsumption(
-            @RequestParam(required = false, defaultValue = "1") Integer userId,
+            @AuthenticationPrincipal String email,
             @PathVariable String date
     ) {
         try {
             PaymentHistoryResponseDto responseDto = paymentHistoryService.getDailyConsumption(
-                    userId, date);
+                    email, date);
 
             return ResponseEntity.ok(responseDto);
         } catch (Exception e) {
