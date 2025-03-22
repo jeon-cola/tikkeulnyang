@@ -48,7 +48,7 @@ public class PaymentHistoryEntity {
     private String cardStatus;
 
     @Column(name = "is_waste")
-    private Boolean isWaste;
+    private Integer isWaste;
 
     @Column(name = "transaction_unique_no")
     private String transactionUniqueNo;
@@ -70,4 +70,16 @@ public class PaymentHistoryEntity {
 
     @Column(name = "bill_statements_status")
     private String billStatementsStatus;
+
+    public Boolean isWaste() {
+        if (isWaste == null) return null;
+        return isWaste == 1;
+    }
+    public void setIsWaste(Boolean waste) {
+        if (waste == null) {
+            this.isWaste = null;
+        } else {
+            this.isWaste = waste ? 1 : 0;
+        }
+    }
 }
