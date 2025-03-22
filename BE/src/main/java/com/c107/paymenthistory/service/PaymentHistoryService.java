@@ -129,6 +129,7 @@ public class PaymentHistoryService {
                         .categoryName(p.getCategoryName())
                         .merchantName(p.getMerchantName())
                         .transactionBalance(Math.abs(Integer.parseInt(p.getTransactionBalance())))
+                        .isWaste(p.getIsWaste())
                         .build())
                 .collect(Collectors.toList());
 
@@ -186,5 +187,50 @@ public class PaymentHistoryService {
                         Integer.parseInt(p.getTransactionBalance()) < 0)
                 .mapToInt(p -> Math.abs(Integer.parseInt(p.getTransactionBalance())))
                 .sum();
+    }
+
+    // 낭비 상태 토글
+    @Transactional
+    public PaymentHistoryResponseDto.WasteToggleResponse toggleWasteStatus(
+            String email,
+            PaymentHistoryResponseDto.WasteToggleRequest request
+    ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
+
+        PaymentHistoryEntity paymentHistory = paymentHistoryRepository
+                .findById(request.getPaymentHistoryId())
+                .orElseThrow(() -> new RuntimeException("결제 내역을 찾을 수 없습니다."));
+
+        CardEntity card = cardRepository.findById(paymentHistory.getCardId())
+                .orElseThrow(() -> new RuntimeException("카드 정보를 찾을 수 없습니다."));
+
+        if (!card.getUserId().equals(user.getUserId())) {
+            throw new RuntimeException("해당 결제 내역에 대한 권한이 없습니다.");
+        }
+
+        // isWaste가 null이거나 0이면 1로, 1이면 0으로 변경
+        Boolean currentWasteStatus = paymentHistory.isWaste();
+        paymentHistory.setIsWaste(currentWasteStatus == null || !currentWasteStatus);
+
+        PaymentHistoryEntity updatedPaymentHistory = paymentHistoryRepository.save(paymentHistory);
+
+        return PaymentHistoryResponseDto.WasteToggleResponse.builder()
+                .paymentHistoryId(updatedPaymentHistory.getPaymentHistoryId())
+                .build();
+    }
+
+    @Transactional
+    public Integer toggleWasteStatus(Integer paymentHistoryId) {
+        PaymentHistoryEntity paymentHistory = paymentHistoryRepository
+                .findById(paymentHistoryId)
+                .orElseThrow(() -> new RuntimeException("결제 내역을 찾을 수 없습니다."));
+
+        Boolean currentWasteStatus = paymentHistory.isWaste();
+        paymentHistory.setIsWaste(currentWasteStatus == null || !currentWasteStatus);
+
+        PaymentHistoryEntity updatedPaymentHistory = paymentHistoryRepository.save(paymentHistory);
+
+        return updatedPaymentHistory.getIsWaste();
     }
 }

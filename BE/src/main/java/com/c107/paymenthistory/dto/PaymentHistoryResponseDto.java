@@ -1,5 +1,6 @@
 package com.c107.paymenthistory.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,10 @@ public class PaymentHistoryResponseDto {
     private String status;
     private String message;
     private List<Transaction> transactions;
+    private Integer paymentHistoryId;
+    private String categoryId;
+    @JsonProperty("is_waste")
+    private Integer isWaste;
 
     @Getter
     @NoArgsConstructor
@@ -57,5 +62,23 @@ public class PaymentHistoryResponseDto {
         private String category;
         private Integer amount;
         private String description;
+        @JsonProperty("is_waste")
+        private Integer isWaste;
+    }
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class WasteToggleRequest {
+        @JsonProperty("payment_history_id")
+        private Integer paymentHistoryId;
+    }
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class WasteToggleResponse {
+        @JsonProperty("payment_history_id")
+        private Integer paymentHistoryId;
     }
 }
