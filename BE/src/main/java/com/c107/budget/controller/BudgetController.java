@@ -11,8 +11,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Map;
 
 @RestController
@@ -41,5 +43,22 @@ public class BudgetController {
     public ResponseEntity<?> getBudgetRemain(@AuthenticationPrincipal String email) {
         BudgetRemainResponseDto responseDto = budgetService.getBudgetRemain(email);
         return ResponseUtil.success("남은 예산 조회에 성공했습니다.", responseDto);
+    }
+
+    @GetMapping("/waste/money")
+    public ResponseEntity<?> getWasteMoney(
+            @AuthenticationPrincipal String email,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month
+    ) {
+        LocalDate now = LocalDate.now();
+        int targetYear = (year != null) ? year : now.getYear();
+        int targetMonth = (month != null) ? month : now.getMonthValue();
+
+        BudgetResponseDto.BudgetWaste responseDto = budgetService.getWasteMoney(
+                email, targetYear, targetMonth);
+
+        return ResponseUtil.success("낭비 금액 조회에 성공했습니다.", responseDto);
+
     }
 }
