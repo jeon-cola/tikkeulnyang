@@ -35,6 +35,8 @@ export default defineConfig({
         // 2) 새 워커가 설치되면 바로 모든 탭에 적용
         clientsClaim: true,
       },
+      // 파일 이름에 해시를 붙여 새 서비스 워커가 확실히 적용되도록 함
+      useFilenameHash: true,
       /* manifest 관련 설정 -> 아이콘 등이 나오면 하는걸로
       includeAssets: ['favicon.ico'],
       manifest: {
