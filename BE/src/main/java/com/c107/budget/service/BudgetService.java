@@ -7,16 +7,20 @@ import com.c107.budget.dto.BudgetResponseDto;
 import com.c107.budget.entity.BudgetEntity;
 import com.c107.budget.repository.BudgetRepository;
 import com.c107.common.util.JwtUtil;
+import com.c107.paymenthistory.entity.PaymentHistoryEntity;
+import com.c107.paymenthistory.entity.CardEntity;
+import com.c107.paymenthistory.repository.CardRepository;
+import com.c107.paymenthistory.repository.PaymentHistoryRepository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,10 @@ public class BudgetService {
     private final BudgetRepository budgetRepository;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+
+    private final CardRepository cardRepository;
+    private final PaymentHistoryRepository paymentHistoryRepository;
+
 
     @Transactional
     public BudgetResponseDto createBudget(String email, BudgetRequestDto requestDto) {
@@ -161,6 +169,36 @@ public class BudgetService {
         return BudgetRemainResponseDto.builder()
                 .totals(totals)
                 .budgets(budgetDtos)
+                .build();
+    }
+
+    // 낭비 금액 계산
+    public BudgetResponseDto.BudgetWaste getWasteMoney(String email, Integer year, Integer month) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        List<Integer> userCardIds = cardRepository.findByUserId(user.getUserId())
+                .stream()
+                .map(CardEntity::getCardId)
+                .collect(Collectors.toList());
+
+        List<PaymentHistoryEntity> wastePayments = paymentHistoryRepository
+                .findByCardIdInAndTransactionDateBetweenAndIsWaste(
+                        userCardIds, startDate, endDate, 1);
+
+        int totalWasteAmount = 0;
+        for (PaymentHistoryEntity payment : wastePayments) {
+            int amount = Math.abs(Integer.parseInt(payment.getTransactionBalance().trim().replace(",", "")));
+            totalWasteAmount += amount;
+        }
+
+        return BudgetResponseDto.BudgetWaste.builder()
+                .year(year)
+                .month(month)
+                .totalWasteAmount(totalWasteAmount)
                 .build();
     }
 }
