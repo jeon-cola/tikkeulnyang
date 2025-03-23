@@ -12,7 +12,7 @@ public class ChallengeResponseDto {
     private Integer challengeId;
     private String challengeName;
     private String challengeType;
-    private String targetAmount;
+    private Integer targetAmount;
     private LocalDate startDate;
     private LocalDate endDate;
     private String description;

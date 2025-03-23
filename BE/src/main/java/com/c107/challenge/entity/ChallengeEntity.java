@@ -26,7 +26,7 @@ public class ChallengeEntity {
     private String challengeType;
 
     @Column(name = "target_amount", nullable = false)
-    private String targetAmount;
+    private Integer targetAmount;
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;

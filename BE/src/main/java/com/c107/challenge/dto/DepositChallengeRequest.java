@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 public class DepositChallengeRequest {
     private Integer challengeId;
     private Integer userId;
-    private String depositAmount;
+    private Integer depositAmount;
 }

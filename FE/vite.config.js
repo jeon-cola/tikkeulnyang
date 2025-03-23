@@ -20,7 +20,23 @@ export default defineConfig({
       // pwa 다운로드후 오프라인인 상태에서도 표시
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg}"],
+
+        // 1) SPA 라우팅용 navigateFallback
+        navigateFallback: "/index.html",
+
+        // 2) /api/ 경로는 fallback에서 제외시킴
+        //    즉, /api/ 요청은 서버로 그대로 가게 함
+        navigateFallbackDenylist: [
+          // 정규식: ^/api/ 로 시작하는 모든 요청
+          /^\/api\//,
+        ],
+        // 1) 새 워커가 설치되면 기존 워커를 즉시 교체 (사용자 재접속 또는 새 탭 시점)
+        skipWaiting: true,
+        // 2) 새 워커가 설치되면 바로 모든 탭에 적용
+        clientsClaim: true,
       },
+      // 파일 이름에 해시를 붙여 새 서비스 워커가 확실히 적용되도록 함
+      useFilenameHash: true,
       /* manifest 관련 설정 -> 아이콘 등이 나오면 하는걸로
       includeAssets: ['favicon.ico'],
       manifest: {
