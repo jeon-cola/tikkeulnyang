@@ -9,7 +9,8 @@ export default function ChallengeCard2({
   title = "카페 방문 줄이기",
   category = "공식챌린지",
   amount = "10,000원",
-  period = "01-01 ~ 01-31",
+  startDate = "01-01",
+  endDate = "01-31",
 }) {
   return (
     <>
@@ -41,7 +42,9 @@ export default function ChallengeCard2({
           {/* 날짜 프레임 - 우측 하단 배치 */}
           {/* - 그림자, 배경색, 둥근 모서리 적용 */}
           <div className="absolute right-0 bottom-0 w-[69px] h-[15px] bg-gray-200 shadow-sm rounded-md flex items-center justify-center">
-            <div className="text-[8px] leading-tight text-black">{period}</div>
+            <div className="text-[8px] leading-tight text-black">
+              {startDate}~{endDate}
+            </div>
           </div>
         </div>
       </div>
