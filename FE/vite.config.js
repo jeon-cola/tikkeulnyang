@@ -30,6 +30,10 @@ export default defineConfig({
           // 정규식: ^/api/ 로 시작하는 모든 요청
           /^\/api\//,
         ],
+        // 1) 새 워커가 설치되면 기존 워커를 즉시 교체 (사용자 재접속 또는 새 탭 시점)
+        skipWaiting: true,
+        // 2) 새 워커가 설치되면 바로 모든 탭에 적용
+        clientsClaim: true,
       },
       /* manifest 관련 설정 -> 아이콘 등이 나오면 하는걸로
       includeAssets: ['favicon.ico'],
