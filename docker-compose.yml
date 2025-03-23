@@ -8,8 +8,9 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ksh147!!
       MYSQL_DATABASE: catcat
+      MYSQL_ROOT_HOST: "%" # 모든 호스트에서 접속 허용 (내부 네트워크 전용)
     ports:
-      - "3307:3306" # 외부(EC2) 3307 -> 컨테이너 3306 (원격접속용)
+      - "3307:3306" # 외부(EC2) 3307 → 컨테이너 3306 (원격 접속용)
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -20,9 +21,9 @@ services:
     container_name: backend
     depends_on:
       - mysql
-    environment: {}
+    environment: {} # application.properties의 DB 설정을 사용
     ports:
-      - "8081:8080" # 외부(EC2) 8081 -> 컨테이너 8080
+      - "8081:8080" # 외부(EC2) 8081 → 컨테이너 8080
     networks:
       - app_network
 
@@ -32,7 +33,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:80" # 외부(EC2) 3000 -> 컨테이너 80
+      - "3000:80" # 외부(EC2) 3000 → 컨테이너 80
     networks:
       - app_network
 
