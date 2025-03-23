@@ -20,10 +20,8 @@ services:
     container_name: backend
     depends_on:
       - mysql
-    environment:
-      # SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/catcat?serverTimezone=UTC&characterEncoding=UTF-8
-      # SPRING_DATASOURCE_USERNAME: root
-      # SPRING_DATASOURCE_PASSWORD: ksh147!!
+    # 환경변수가 필요 없다면 아래 라인을 삭제하거나 빈 객체로 설정
+    environment: {}
     ports:
       - "8081:8080"
     networks:
@@ -34,7 +32,6 @@ services:
     container_name: frontend
     depends_on:
       - backend
-    # 호스트: 3000 -> 컨테이너: 80
     ports:
       - "3000:80"
     networks:
