@@ -34,7 +34,7 @@ export default function Signup() {
     e.preventDefault();
     try {
       const response = await axios.get(
-        "http://localhost:8080/api/user/check-nickname",
+        "https://j12c107.p.ssafy.io/api/user/check-nickname",
         {
           params: {
             nickname: user.nickname,
@@ -62,7 +62,7 @@ export default function Signup() {
     e.preventDefault();
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/user/register",
+        "https://j12c107.p.ssafy.io/api/user/register",
         {
           name: user.name,
           nickname: user.nickname,
