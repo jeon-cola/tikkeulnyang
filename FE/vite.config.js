@@ -13,45 +13,24 @@ export default defineConfig({
     svgr(),
     VitePWA({
       registerType: "autoUpdate",
-      // npm run dev모드에서도 pwa환경과 동일하게 설정 -> ignore에도 dev-dist폴더가 먹히지를 않아서, 주석처리한다.
+      // npm run dev 모드에서의 PWA 동작: off
       devOptions: {
         enabled: false,
       },
-      // pwa 다운로드후 오프라인인 상태에서도 표시
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg}"],
-
-        // 1) SPA 라우팅용 navigateFallback
+        // SPA 라우팅 fallback
         navigateFallback: "/index.html",
-
-        // 2) /api/ 경로는 fallback에서 제외시킴
-        //    즉, /api/ 요청은 서버로 그대로 가게 함
-        navigateFallbackDenylist: [
-          // 정규식: ^/api/ 로 시작하는 모든 요청
-          /^\/api\//,
-        ],
-        // 1) 새 워커가 설치되면 기존 워커를 즉시 교체 (사용자 재접속 또는 새 탭 시점)
+        // /api/는 백엔드 요청 → fallback 제외
+        navigateFallbackDenylist: [/^\/api\//],
+        // 새 워커가 설치되면 즉시 교체
         skipWaiting: true,
-        // 2) 새 워커가 설치되면 바로 모든 탭에 적용
+        // 새 워커가 설치되면 모든 탭에 적용
         clientsClaim: true,
       },
-      // 파일 이름에 해시를 붙여 새 서비스 워커가 확실히 적용되도록 함
+      // 파일 이름에 해시를 붙여 SW 충돌 방지
       useFilenameHash: true,
-      /* manifest 관련 설정 -> 아이콘 등이 나오면 하는걸로
-      includeAssets: ['favicon.ico'],
-      manifest: {
-        name: '티끌냥',
-        short_name: '티끌냥',
-        description: '앱에 대한 간단한 설명',
-        theme_color: '#FF957A',
-        icons: [
-          {
-            src: '/pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-        ]
-      },*/
+      /* manifest 설정(아이콘 등) 필요 시 여기에 추가 */
     }),
   ],
   resolve: {
@@ -63,7 +42,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       onwarn(warning, warn) {
-        // "경로를 찾을 수 없음" 오류만 무시하고 나머지는 출력
+        // 특정 경고 무시
         if (warning.code === "UNRESOLVED_IMPORT") return;
         warn(warning);
       },

@@ -34,7 +34,7 @@ services:
     container_name: frontend
     depends_on:
       - backend
-    # 호스트에서 3000 -> 컨테이너(프론트) 80 포트로 매핑
+    # 호스트: 3000 -> 컨테이너: 80
     ports:
       - "3000:80"
     networks:
