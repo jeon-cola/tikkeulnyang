@@ -89,12 +89,12 @@ export default function Signup() {
     user.nickname && user.name && user.birthDate && nicknameCheck && isNickname;
 
   return (
-    <>
+    <div className="w-full flex flex-col gap-5">
       <CustomHeader title="회원가입" />
 
-      <form className="flex flex-col gap-[30px]">
+      <form className="flex flex-col gap-5">
         {/* 닉네임 */}
-        <div className="w-[364px] h-10 flex-none order-none flex-grow-0">
+        <div className="w-full h-10 flex-none order-none flex-grow-0 bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px]">
           <input
             type="text"
             placeholder="닉네임을 입력해주세요"
@@ -116,7 +116,7 @@ export default function Signup() {
         </div>
 
         {/* 이름 */}
-        <div className="w-[364px] h-10 flex-none order-none flex-grow-0">
+        <div className="w-full h-10 flex-none order-none flex-grow-0 bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px]">
           <input
             type="text"
             placeholder="이름을 입력해주세요"
@@ -128,12 +128,12 @@ export default function Signup() {
         </div>
 
         {/* 이메일(고정) */}
-        <div className="w-[364px] h-10 flex-none order-none flex-grow-0 mb-4 flex items-center px-3 bg-gray-200 rounded-md">
+        <div className="w-full h-10 flex-none order-none flex-grow-0 flex items-center px-3 bg-gray-200 rounded-md ">
           <p>{user.email}</p>
         </div>
 
         {/* 생년월일 */}
-        <div className="w-[364px] h-10 flex-none order-none flex-grow-0">
+        <div className="w-full h-10 flex-none order-none flex-grow-0 bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] ">
           <input
             type="date"
             name="birthDate"
@@ -145,13 +145,13 @@ export default function Signup() {
 
         {/* 회원가입 버튼 */}
         <button
-          className="longButton w-80 h-10 flex-none order-none flex-grow-0 text-center flex items-center justify-center bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed mx-auto"
+          className="longButton w-full h-10 flex-none order-none flex-grow-0 text-center flex items-center justify-center bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed mx-auto"
           onClick={signUpHandler}
           disabled={!isFormValid}
         >
           다음
         </button>
       </form>
-    </>
+    </div>
   );
 }

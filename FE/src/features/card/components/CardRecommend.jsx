@@ -21,7 +21,7 @@ export default function CardRecommend() {
   },[])
 
   return(
-    <div className="flex flex-col gap-5 mt-[45px]">
+    <div className="flex flex-col gap-5 mt-[50px]">
       <CustomHeader title="티끌냥"/>
 
       {/* 광고 이미지 */}
@@ -35,7 +35,7 @@ export default function CardRecommend() {
         </div>
       </div>
 
-      <div className="w-full">
+      <div className="w-full flex flex-col gap-5">
         {cardList.length > 0 ? (
           cardList.map((card, index ) => (
             <Link to={`detail_card/${card.reco_card_id}`} state={{ cardData: card}} key={card.reco_card_id}>
