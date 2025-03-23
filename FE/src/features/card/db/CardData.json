@@ -1,0 +1,211 @@
+{
+  "recommended_cards": [
+    {
+      "reco_card_id": 13,
+      "reco_card_name": "스타카드",
+      "card_type": "CREDIT",
+      "corp_name": "스타은행",
+      "image_url": "https://s3.amazonaws.com/your-bucket/card_images/card_13.png",
+      "benefits": [
+        {
+          "benefit_id": 1,
+          "description": "월납요금(공과금) 10% 할인서비스",
+          "category": "공과금"
+        },
+        {
+          "benefit_id": 2,
+          "description": "편의점 10% 할인",
+          "category": "편의점"
+        },
+        {
+          "benefit_id": 3,
+          "description": "병원/약국업종 10% 할인",
+          "category": "병원/약국"
+        }
+      ]
+    },
+    {
+      "reco_card_id": 21,
+      "reco_card_name": "쇼핑의 민족 카드",
+      "card_type": "CREDIT",
+      "corp_name": "국민은행",
+      "image_url": "https://s3.amazonaws.com/your-bucket/card_images/card_21.png",
+      "benefits": [
+        {
+          "benefit_id": 4,
+          "description": "온라인 쇼핑몰 15% 할인",
+          "category": "쇼핑"
+        },
+        {
+          "benefit_id": 5,
+          "description": "대형마트 10% 할인",
+          "category": "마트"
+        },
+        {
+          "benefit_id": 6,
+          "description": "해외직구 전 가맹점 5% 캐시백",
+          "category": "해외직구"
+        }
+      ]
+    },
+    {
+      "reco_card_id": 34,
+      "reco_card_name": "푸드 마스터 카드",
+      "card_type": "CREDIT",
+      "corp_name": "신한은행",
+      "image_url": "https://s3.amazonaws.com/your-bucket/card_images/card_34.png",
+      "benefits": [
+        {
+          "benefit_id": 7,
+          "description": "배달앱 20% 할인 (월 3회)",
+          "category": "배달"
+        },
+        {
+          "benefit_id": 8,
+          "description": "카페 최대 4,000원 할인 (월 10회)",
+          "category": "카페"
+        },
+        {
+          "benefit_id": 9,
+          "description": "레스토랑 12% 할인",
+          "category": "외식"
+        }
+      ]
+    },
+    {
+      "reco_card_id": 42,
+      "reco_card_name": "트래블러 카드",
+      "card_type": "CREDIT",
+      "corp_name": "우리은행",
+      "image_url": "https://s3.amazonaws.com/your-bucket/card_images/card_42.png",
+      "benefits": [
+        {
+          "benefit_id": 10,
+          "description": "해외 사용금액 2% 캐시백",
+          "category": "해외"
+        },
+        {
+          "benefit_id": 11,
+          "description": "국내 주요 호텔 20% 할인",
+          "category": "숙박"
+        },
+        {
+          "benefit_id": 12,
+          "description": "렌터카 서비스 15% 할인",
+          "category": "교통"
+        },
+        {
+          "benefit_id": 13,
+          "description": "해외 여행자보험 최대 3억원 제공",
+          "category": "보험"
+        }
+      ]
+    },
+    {
+      "reco_card_id": 55,
+      "reco_card_name": "모바일 라이프 카드",
+      "card_type": "DEBIT",
+      "corp_name": "하나은행",
+      "image_url": "https://s3.amazonaws.com/your-bucket/card_images/card_55.png",
+      "benefits": [
+        {
+          "benefit_id": 14,
+          "description": "통신요금 자동이체 15% 할인",
+          "category": "통신"
+        },
+        {
+          "benefit_id": 15,
+          "description": "스트리밍 서비스 10% 할인",
+          "category": "엔터테인먼트"
+        },
+        {
+          "benefit_id": 16,
+          "description": "앱마켓 결제 7% 캐시백",
+          "category": "디지털"
+        }
+      ]
+    },
+    {
+      "reco_card_id": 67,
+      "reco_card_name": "대학생 드림 카드",
+      "card_type": "DEBIT",
+      "corp_name": "농협은행",
+      "image_url": "https://s3.amazonaws.com/your-bucket/card_images/card_67.png",
+      "benefits": [
+        {
+          "benefit_id": 17,
+          "description": "버스/지하철 결제 시 20% 할인",
+          "category": "교통"
+        },
+        {
+          "benefit_id": 18,
+          "description": "도서 구매 15% 할인",
+          "category": "교육"
+        },
+        {
+          "benefit_id": 19,
+          "description": "편의점 5% 할인",
+          "category": "편의점"
+        }
+      ]
+    },
+    {
+      "reco_card_id": 73,
+      "reco_card_name": "프리미엄 플러스 카드",
+      "card_type": "CREDIT",
+      "corp_name": "카카오뱅크",
+      "image_url": "https://s3.amazonaws.com/your-bucket/card_images/card_73.png",
+      "benefits": [
+        {
+          "benefit_id": 20,
+          "description": "전 가맹점 0.7% 기본 적립",
+          "category": "기본적립"
+        },
+        {
+          "benefit_id": 21,
+          "description": "영화 예매 50% 할인 (월 2회)",
+          "category": "문화"
+        },
+        {
+          "benefit_id": 22,
+          "description": "프리미엄 라운지 무료 이용",
+          "category": "라이프스타일"
+        },
+        {
+          "benefit_id": 23,
+          "description": "교통비 10% 자동 할인",
+          "category": "교통"
+        }
+      ]
+    },
+    {
+      "reco_card_id": 89,
+      "reco_card_name": "환경 지킴이 카드",
+      "card_type": "CREDIT",
+      "corp_name": "기업은행",
+      "image_url": "https://s3.amazonaws.com/your-bucket/card_images/card_89.png",
+      "benefits": [
+        {
+          "benefit_id": 24,
+          "description": "전기차 충전소 20% 할인",
+          "category": "친환경"
+        },
+        {
+          "benefit_id": 25,
+          "description": "대중교통 이용 시 15% 환급",
+          "category": "교통"
+        },
+        {
+          "benefit_id": 26,
+          "description": "친환경 제품 구매 10% 할인",
+          "category": "쇼핑"
+        },
+        {
+          "benefit_id": 27,
+          "description": "결제금액의 0.1% 환경재단 기부",
+          "category": "기부"
+        }
+      ]
+    }
+  ]
+}
