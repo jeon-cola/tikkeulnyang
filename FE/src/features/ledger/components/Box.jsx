@@ -1,15 +1,16 @@
 export default function Box({ text, variant, children }) {
-  const baseStyles = "w-full h-[40px] flex items-center justify-between rounded-md shadow-sm pl-[10px] pr-[10px]"
+  const baseStyles =
+    "w-full h-[40px] flex items-center justify-between rounded-md shadow-sm px-[10px]";
   const variants = {
     title: "font-bold text-black bg-white",
-    highlight: "font-medium text-black bg-[#FFF0BA]"
-  }
+    highlight: "font-medium text-black bg-[#FFF0BA]",
+  };
+  // 유효성 검사
+  const selectedVariant = variants[variant] ?? variants.title;
   return (
-  <div className={`${baseStyles} ${variants[variant]}`}>
+    <div className={`${baseStyles} ${selectedVariant}`}>
       <span>{text}</span>
       <div className="flex justify-end items-center w-auto">{children}</div>
-          
-  </div>
-  )
+    </div>
+  );
 }
-
