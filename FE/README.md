@@ -40,3 +40,9 @@ npm install -D vite-plugin-pwa
 ```
 npm install chart.js react-chartjs-2
 ```
+
+### axios 설치
+
+```
+npm install axios
+```
