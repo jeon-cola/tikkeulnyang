@@ -32,6 +32,7 @@ export default function Signup() {
   // 닉네임 중복체크 로직
   async function nicknameCheckHandler(e) {
     e.preventDefault();
+    console.log("axios defaults:", axios.defaults);
     try {
       const response = await axios.get(
         "https://j12c107.p.ssafy.io/api/user/check-nickname",

@@ -23,10 +23,12 @@ export default function MyPageMenu() {
   const [userCost, setUserCost] = useState(10000);
   const nav = useNavigate();
 
+
+
   async function logoutHandler(e) {
     e.preventDefault();
       try {
-        const response = await axios.post("http://localhost:8080/api/auth/logout")
+        const response = await axios.post("https://j12c107.p.ssafy.io/api/auth/logout")
         if (response.status === "success") {
           window.alert("로그아웃 성공")
           nav("/user")
