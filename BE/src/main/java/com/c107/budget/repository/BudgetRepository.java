@@ -1,6 +1,7 @@
 package com.c107.budget.repository;
 
 import com.c107.budget.entity.BudgetEntity;
+import com.c107.paymenthistory.entity.PaymentHistoryEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
