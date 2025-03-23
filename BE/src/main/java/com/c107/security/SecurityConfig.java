@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                         .requestMatchers("api/auth/login", "api/user/register","/api/auth/callback","/api/user/check-nickname","/api/auth/callback/json").permitAll()
                         .requestMatchers("api/payment/**").permitAll()
+                        .requestMatchers("api/budget/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
