@@ -1,17 +1,13 @@
 import Container from "@/components/Container";
 import CustomCalendar from "@/components/CustomCalendar";
-import Box from "./components/Box";
-
-import purseImg from "./assets/purse.png"
+import LedgerHeader from "./components/LedgerHeader";
 
 export default function PersonalLedger() {
   return (
     <div className="w-full">
       <Container>
-        <Box text="유저님의 가계부" variant="title" />
-        <Box text="예산 설정하러 가기" variant="highlight">
-          <img src={purseImg} alt="돈주머니 사진" className="w-auto max-w-[50px] h-auto"/>
-        </Box>
+        {/* 헤더를 생성해서 달력 위 컴포넌트 관리 */}
+        <LedgerHeader />
         <CustomCalendar />
       </Container>
     </div>
