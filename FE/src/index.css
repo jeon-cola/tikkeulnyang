@@ -92,6 +92,41 @@ button {
   border-radius: 100px;
 }
 
+/* 작은 버튼 */
+.blackButton {
+  display: flex;
+  flex-direction: row;
+  color: white;
+  background: #3d3d3d;
+  border: none;
+  width: 50px;
+  height: 25px;
+  font-family: "Pretendard-thin";
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 4px;
+}
+/*button:hover 때문에 적용안됨*/
+.blackButton:hover {
+  border: #3d3d3d;
+}
+
+/* 작은 버튼 */
+.whiteButton {
+  display: flex;
+  flex-direction: center;
+  color: #3d3d3d;
+  background: white;
+  width: 50px;
+  height: 25px;
+  font-family: "Pretendard-thin";
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 4px;
+  /* 그림자효과 */
+  box-shadow: 1px 1px 2px 0px rgba(0, 0, 0, 15%);
+}
+
 button:hover {
   border-color: #646cff;
 }
