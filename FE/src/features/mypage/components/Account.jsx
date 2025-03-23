@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from "react"
 import CustomBackHeader from "../../../components/CustomBackHeader"
 import bankImage from "../assets/bank.png"
 import axios from "axios";
-// BankImg 컴포넌트 이름으로 올바르게 임포트
 import BankImg from "../assets/BankImgFunction"
 
 export default function Account() {
@@ -35,7 +34,7 @@ export default function Account() {
     useEffect(() => {
         const fetchData = async()=>{
             try {
-                const response = await axios.get("http://localhost:3000/account")    
+                const response = await axios.get("https://j12c107.p.ssafy.io/api/account/refresh")    
                 console.log(response.data)
                 setList(response.data);
             } catch (error) {
@@ -78,7 +77,6 @@ export default function Account() {
                                     className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
                                     onClick={() => handleBankSelect(bank.bankName)}
                                 >
-                                    {/* 컴포넌트 직접 렌더링 */}
                                     <span className="h-6 mr-2">
                                         <BankImg bankName={bank.bankName} />
                                     </span>
