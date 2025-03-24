@@ -5,18 +5,18 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "account_transactions")
+@Table(name = "service_transactions")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AccountTransaction {
+public class ServiceTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "account_transaction_id")
-    private Integer accountTransactionId;
+    @Column(name = "service_transaction_id")
+    private Integer serviceTransactionId;
 
     @Column(name = "account_id", nullable = false)
     private Integer accountId;
@@ -46,7 +46,7 @@ public class AccountTransaction {
     private String description;
 
     @Column(name = "is_waste", nullable = false, columnDefinition = "TINYINT(1) default 0")
-    private Boolean isWaste;
+    private Integer isWaste;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -60,7 +60,7 @@ public class AccountTransaction {
         this.createdAt = now;
         this.updatedAt = now;
         if(this.isWaste == null) {
-            this.isWaste = false;
+            this.isWaste = 0;
         }
     }
 

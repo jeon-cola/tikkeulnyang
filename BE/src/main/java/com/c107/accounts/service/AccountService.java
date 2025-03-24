@@ -1,7 +1,7 @@
 package com.c107.accounts.service;
 
 import com.c107.accounts.entity.Account;
-import com.c107.accounts.entity.AccountTransaction;
+import com.c107.accounts.entity.ServiceTransaction;
 import com.c107.accounts.repository.AccountRepository;
 import com.c107.accounts.repository.AccountTransactionRepository;
 import com.c107.common.exception.CustomException;
@@ -153,7 +153,7 @@ public class AccountService {
         logger.info("대표계좌 잔액 업데이트 완료: 이전 잔액={} → 새로운 잔액={}", repBalance, newRepBalance);
 
         // 최신 잔액을 거래 내역에 기록 (업데이트된 대표계좌 잔액 사용)
-        AccountTransaction transaction = AccountTransaction.builder()
+        ServiceTransaction transaction = ServiceTransaction.builder()
                 .accountId(getServiceAccountId()) // 서비스 계좌의 ID (DB에서 조회)
                 .userId(loggedInUserId)
                 .transactionDate(LocalDateTime.now())
@@ -223,7 +223,7 @@ public class AccountService {
         logger.info("대표계좌 잔액 업데이트 완료: 이전 잔액={} → 새로운 잔액={}", repBalance, newRepBalance);
 
         // 6. 최신 잔액을 거래 내역에 기록
-        AccountTransaction transaction = AccountTransaction.builder()
+        ServiceTransaction transaction = ServiceTransaction.builder()
                 .accountId(getServiceAccountId())  // 서비스 계좌의 ID (DB에서 조회)
                 .userId(loggedInUserId)
                 .transactionDate(LocalDateTime.now())
