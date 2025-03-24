@@ -1,10 +1,14 @@
 package com.c107.cards.service;
 
 import com.c107.cards.dto.CardResponseDto;
+import com.c107.cards.dto.CardTransactionResponseDto;
 import com.c107.cards.entity.CardInfoEntity;
 import com.c107.cards.repository.CardInfoRepository;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
+import com.c107.paymenthistory.entity.CardEntity;
+import com.c107.paymenthistory.entity.PaymentHistoryEntity;
+import com.c107.paymenthistory.repository.PaymentHistoryRepository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -30,6 +35,7 @@ public class CardService {
 
     private final CardInfoRepository cardInfoRepository;
     private final UserRepository userRepository;
+    private final PaymentHistoryRepository paymentHistoryRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
     /**
@@ -141,6 +147,239 @@ public class CardService {
 
         return CardResponseDto.builder()
                 .cards(cardInfos)
+                .build();
+    }
+
+    // 카드 거래내역 조회
+    @Transactional
+    public CardTransactionResponseDto getCardTransactions(String email, String cardNo, Integer year, Integer month) {
+        logger.info("카드 거래내역 조회 시작: {}", LocalDateTime.now());
+
+        // 로그인한 사용자의 정보와 카드 정보 조회
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        CardInfoEntity card = cardInfoRepository.findByUserIdAndCardNo(user.getUserId(), cardNo)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "해당 카드를 찾을 수 없습니다."));
+
+        String userKey = user.getFinanceUserKey();
+
+        // 조회 기간 설정
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        // API 요청 파라미터 구성
+        String startDateStr = startDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String endDateStr = endDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+        // Open API 호출 준비
+        String url = "https://finopenapi.ssafy.io/ssafy/api/v1/edu/creditCard/inquireCreditCardTransactionList";
+        LocalDateTime callTime = LocalDateTime.now();
+        String transmissionDate = callTime.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String transmissionTime = callTime.format(DateTimeFormatter.ofPattern("HHmmss"));
+        String institutionTransactionUniqueNo = transmissionDate + transmissionTime + String.format("%06d", new Random().nextInt(1000000));
+
+        Map<String, Object> header = new HashMap<>();
+        header.put("apiName", "inquireCreditCardTransactionList");
+        header.put("transmissionDate", transmissionDate);
+        header.put("transmissionTime", transmissionTime);
+        header.put("institutionCode", "00100");
+        header.put("fintechAppNo", "001");
+        header.put("apiServiceCode", "inquireCreditCardTransactionList");
+        header.put("institutionTransactionUniqueNo", institutionTransactionUniqueNo);
+        header.put("apiKey", financeApiKey);
+        header.put("userKey", userKey);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("Header", header);
+        requestBody.put("cardNo", cardNo);
+        requestBody.put("cvc", card.getCvc());
+        requestBody.put("startDate", startDateStr);
+        requestBody.put("endDate", endDateStr);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(requestBody, httpHeaders);
+
+        ResponseEntity<Map> responseEntity = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Map.class);
+        Map<String, Object> responseMap = responseEntity.getBody();
+
+        if (responseMap == null || !responseMap.containsKey("REC")) {
+            logger.error("카드 거래내역 조회 결과가 비어 있음");
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "카드 거래내역 조회 결과가 없습니다.");
+        }
+
+        // 응답에서 REC 객체와 거래 목록 추출
+        Map<String, Object> rec = (Map<String, Object>) responseMap.get("REC");
+        List<Map<String, Object>> transactionList = (List<Map<String, Object>>) rec.get("transactionList");
+
+        if (transactionList == null || transactionList.isEmpty()) {
+            logger.info("해당 기간에 거래 내역이 없습니다.");
+            return CardTransactionResponseDto.builder()
+                    .year(year)
+                    .month(month)
+                    .totalSpent(0)
+                    .transactions(new ArrayList<>())
+                    .build();
+        }
+
+        // REC에서 카드 정보 추출
+        String cardIssuerCode = (String) rec.get("cardIssuerCode");
+        String cardIssuerName = (String) rec.get("cardIssuerName");
+        String updatedCardName = (String) rec.get("cardName");
+
+        // 카드 정보 업데이트가 필요하면 수행
+        if (!updatedCardName.equals(card.getCardName())) {
+            card.setCardName(updatedCardName);
+            card.setUpdatedAt(LocalDateTime.now());
+            cardInfoRepository.save(card);
+            logger.info("카드 정보 업데이트: {}", cardNo);
+        }
+
+        // DB에 저장하고 응답 생성
+        List<PaymentHistoryEntity> savedTransactions = new ArrayList<>();
+        int totalAmount = 0;
+
+        for (Map<String, Object> transaction : transactionList) {
+            try {
+                // 거래내역 정보 추출
+                String transactionUniqueNo = (String) transaction.get("transactionUniqueNo");
+                String categoryId = (String) transaction.get("categoryId");
+                String categoryName = (String) transaction.get("categoryName");
+                String merchantId = (String) transaction.get("merchantId");
+                String merchantName = (String) transaction.get("merchantName");
+                String transactionDateStr = (String) transaction.get("transactionDate");
+                String transactionTimeStr = (String) transaction.get("transactionTime");
+                String transactionBalance = (String) transaction.get("transactionBalance");
+                String cardStatus = (String) transaction.get("cardStatus");
+                String billStatementsYn = (String) transaction.get("billStatementsYn");
+                String billStatementsStatus = (String) transaction.get("billStatementsStatus");
+
+                // categoryId가 null이면 기본값 설정 (NOT NULL 제약조건 때문)
+                if (categoryId == null || categoryId.trim().isEmpty()) {
+                    categoryId = "UNKNOWN";
+                    logger.warn("거래에 categoryId가 없어 기본값 설정: {}", transactionUniqueNo);
+                }
+
+                // 날짜 변환
+                LocalDate transactionDate = LocalDate.parse(
+                        transactionDateStr,
+                        DateTimeFormatter.ofPattern("yyyyMMdd")
+                );
+
+                // 해당 기간에 속하는 거래만 필터링
+                if (transactionDate.isBefore(startDate) || transactionDate.isAfter(endDate)) {
+                    continue;
+                }
+
+                // 기존 거래내역이 있는지 확인
+                Optional<PaymentHistoryEntity> existingTransaction =
+                        paymentHistoryRepository.findByTransactionUniqueNo(transactionUniqueNo);
+
+                if (existingTransaction.isPresent()) {
+                    // 복합 키로 인해 업데이트가 복잡하므로 삭제 후 재생성
+                    paymentHistoryRepository.delete(existingTransaction.get());
+                    logger.info("기존 거래내역 삭제: {}", transactionUniqueNo);
+                }
+
+                // 새 거래내역 생성
+                PaymentHistoryEntity paymentHistory = PaymentHistoryEntity.builder()
+                        .categoryId(categoryId)
+                        .merchantName(merchantName)
+                        .transactionDate(transactionDate)
+                        .transcationTime(transactionTimeStr)
+                        .transactionBalance(transactionBalance)
+                        .isWaste(0) // 기본값
+                        .transactionUniqueNo(transactionUniqueNo)
+                        .cardNo(cardNo)
+                        .cardName(updatedCardName)
+                        .cardIssuerCode(cardIssuerCode)
+                        .cardIssuerName(cardIssuerName)
+                        .cardStatus(cardStatus)
+                        .cardId(card.getCardId())
+                        .build();
+
+                try {
+                    paymentHistory = paymentHistoryRepository.save(paymentHistory);
+                    savedTransactions.add(paymentHistory);
+                    logger.info("거래내역 저장 성공: {}", transactionUniqueNo);
+
+                    // 총액 계산
+                    int amount = Math.abs(Integer.parseInt(transactionBalance.trim().replace(",", "")));
+                    totalAmount += amount;
+                } catch (Exception e) {
+                    logger.error("거래내역 저장 중 데이터베이스 오류: {} - {}", transactionUniqueNo, e.getMessage(), e);
+                }
+            } catch (Exception e) {
+                logger.error("거래내역 처리 중 오류 발생: {}", e.getMessage(), e);
+            }
+        }
+
+        // 응답 DTO 생성
+        List<CardTransactionResponseDto.Transaction> transactionDtos = savedTransactions.stream()
+                .map(CardTransactionResponseDto.Transaction::fromEntity)
+                .collect(Collectors.toList());
+
+        logger.info("카드 거래내역 조회 및 저장 완료: {} 건", savedTransactions.size());
+
+        return CardTransactionResponseDto.builder()
+                .year(year)
+                .month(month)
+                .totalSpent(totalAmount)
+                .transactions(transactionDtos)
+                .build();
+    }
+
+    /**
+     * 사용자의 모든 카드 거래내역 조회
+     */
+    @Transactional
+    public CardTransactionResponseDto getAllCardTransactions(String email, Integer year, Integer month) {
+        logger.info("사용자 모든 카드 거래내역 조회 시작: {}", LocalDateTime.now());
+
+        // 로그인한 사용자의 정보 조회
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        Integer userId = user.getUserId();
+
+        // 사용자의 모든 카드 조회
+        List<CardInfoEntity> userCards = cardInfoRepository.findByUserId(userId);
+
+        if (userCards.isEmpty()) {
+            logger.info("사용자의 카드가 없습니다.");
+            return CardTransactionResponseDto.builder()
+                    .year(year)
+                    .month(month)
+                    .totalSpent(0)
+                    .transactions(new ArrayList<>())
+                    .build();
+        }
+
+        // 각 카드에 대해 API를 호출하여 거래내역 조회 및 통합
+        List<CardTransactionResponseDto.Transaction> allTransactions = new ArrayList<>();
+        int totalAmount = 0;
+
+        for (CardInfoEntity card : userCards) {
+            try {
+                // 각 카드별로 거래내역 API 호출
+                CardTransactionResponseDto cardTransactions =
+                        getCardTransactions(email, card.getCardNo(), year, month);
+
+                // 거래내역 및 금액 합산
+                allTransactions.addAll(cardTransactions.getTransactions());
+                totalAmount += cardTransactions.getTotalSpent();
+
+            } catch (Exception e) {
+                logger.error("카드 {} 거래내역 조회 중 오류 발생: {}", card.getCardNo(), e.getMessage(), e);
+            }
+        }
+
+        return CardTransactionResponseDto.builder()
+                .year(year)
+                .month(month)
+                .totalSpent(totalAmount)
+                .transactions(allTransactions)
                 .build();
     }
 }
