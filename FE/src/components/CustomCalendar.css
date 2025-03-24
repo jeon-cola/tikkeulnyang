@@ -10,32 +10,15 @@
 
 .react-calendar__navigation {
   display: flex;
+  justify-content: flex-start; /* 왼쪽 정렬 */
+  align-items: center;
+  gap: 8px; /* 요소들 사이 간격 조정 (필요에 따라) */
 }
 
 .react-calendar__navigation button {
   color: #000000;
   text-decoration: none !important;
-}
-
-.react-calendar__tile {
-  color: #000000;
-  text-decoration: none !important;
-}
-
-.react-calendar__month-view__days__day--neighboringMonth {
-  color: #dfdfdf !important;
-}
-
-/* 일요일 날짜 빨간색 */
-/* 일요일 날짜 빨간색 */
-.react-calendar__month-view__weekdays__weekday:first-child abbr,
-.current-month-sunday {
-  color: #ff957a !important;
-}
-
-/*월 화 수 목 금 토 일 밑줄 없애기*/
-.react-calendar__month-view__weekdays__weekday abbr {
-  text-decoration: none;
+  width: 2px !important;
 }
 
 /* 년도 옮기는 버튼 없애기 */
@@ -47,8 +30,36 @@
 /* 년도 옮기는 버튼 없애기 */
 .react-calendar__navigation__next-button,
 .react-calendar__navigation__prev-button {
-  padding-right: 0px;
-  padding-left: 0px;
+  padding-right: 0px !important;
+  padding-left: 0px !important;
+}
+
+.react-calendar__navigation__label {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 20px !important; /* 요구사항에 맞게 폰트 크기도 조정 */
+}
+
+/* 빨간색 주말 날짜 -> 검정색으로 표시 */
+.react-calendar__month-view__days__day--weekend {
+  color: #000000 !important;
+  text-decoration: none !important;
+}
+
+/* 해당 월이 아닌 날짜 회색표시 */
+.react-calendar__month-view__days__day--neighboringMonth {
+  color: #dfdfdf !important;
+}
+
+/* 일요일 날짜 빨간색 */
+.react-calendar__month-view__weekdays__weekday:first-child abbr,
+.current-month-sunday {
+  color: #ff957a !important;
+}
+
+/*월 화 수 목 금 토 일 밑줄 없애기*/
+.react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none;
 }
 
 /* 오늘 날짜 표시 */
@@ -56,4 +67,9 @@
   background-color: #fff0ba;
   box-shadow: 2px 2px 12px 0px rgba(0, 0, 0, 10%);
   transform-origin: center;
+}
+
+.react-calendar__tile {
+  color: #000000;
+  text-decoration: none !important;
 }
