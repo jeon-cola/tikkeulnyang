@@ -71,6 +71,7 @@ public class AuthService {
         return response.getBody();
     }
 
+    //
     public Map<String, Object> getKakaoUserInfo(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
