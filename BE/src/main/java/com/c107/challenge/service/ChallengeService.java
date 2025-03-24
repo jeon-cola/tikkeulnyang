@@ -10,7 +10,7 @@ import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
-import com.c107.accounts.entity.AccountTransaction;
+import com.c107.accounts.entity.ServiceTransaction;
 import com.c107.accounts.repository.AccountTransactionRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -223,7 +223,7 @@ public class ChallengeService {
         logger.info("챌린지 참여 기록 생성됨: {}", participation);
 
         // 거래내역 기록 (챌린지 참여)
-        AccountTransaction joinTx = AccountTransaction.builder()
+        ServiceTransaction joinTx = ServiceTransaction.builder()
                 .userId(user.getUserId())
                 .transactionDate(LocalDateTime.now())
                 .category("CHALLENGE_JOIN")
@@ -264,7 +264,7 @@ public class ChallengeService {
         logger.info("챌린지 참여 취소 완료: {}", participation);
 
         // 거래내역 기록 (챌린지 참여 취소 환불)
-        AccountTransaction cancelTx = AccountTransaction.builder()
+        ServiceTransaction cancelTx = ServiceTransaction.builder()
                 .userId(user.getUserId())
                 .transactionDate(LocalDateTime.now())
                 .category("CHALLENGE_CANCEL_REFUND")
