@@ -35,4 +35,10 @@ public interface PaymentHistoryRepository extends JpaRepository<PaymentHistoryEn
             Integer isWaste
     );
 
+    Optional<PaymentHistoryEntity> findByTransactionUniqueNo(String transactionUniqueNo);
+    List<PaymentHistoryEntity> findByCardId(Integer cardId);
+    List<PaymentHistoryEntity> findByCardNo(String cardNo);
+    List<PaymentHistoryEntity> findByCardNoAndTransactionDateBetween(String cardNo, LocalDate startDate, LocalDate endDate);
+
+
 }
