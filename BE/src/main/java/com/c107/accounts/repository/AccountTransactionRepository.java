@@ -10,6 +10,4 @@ import java.util.Optional;
 public interface AccountTransactionRepository extends JpaRepository<ServiceTransaction, Integer> {
     Optional<ServiceTransaction> findTopByAccountIdOrderByTransactionDateDesc(Integer accountId);
 
-    Optional<ServiceTransaction> findByTransactionUniqueNo(String transactionUniqueNo);
-    // 추가적인 조회 메서드가 필요하면 여기에 정의합니다.
 }
