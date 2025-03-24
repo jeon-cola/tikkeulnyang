@@ -55,25 +55,18 @@ public class UserController {
             return ResponseUtil.badRequest("토큰 검증에 실패하였습니다.", null);
         }
 
-        if (email == null) {
-            return ResponseUtil.badRequest("토큰에서 이메일을 추출할 수 없습니다.", null);
-        }
-
         Optional<LoginUserEntity> userOpt = loginUserRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
             return ResponseUtil.badRequest("사용자 정보를 찾을 수 없습니다.", null);
         }
+
         LoginUserEntity user = userOpt.get();
-
-        // (선택 사항) 응답 후 Access Token 쿠키 삭제 (재사용 방지)
-        Cookie cookie = new Cookie("accessToken", null);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        cookie.setHttpOnly(true);
-        response.addCookie(cookie);
-
-        // 필요시, 사용자 ID나 원하는 정보를 JSON으로 반환
-        Map<String, Object> responseBody = Map.of("id", user.getUserId(), "email", user.getEmail(), "nickname", user.getNickname());
+        Map<String, Object> responseBody = Map.of(
+                "id", user.getUserId(),
+                "email", user.getEmail(),
+                "nickname", user.getNickname(),
+                "role", user.getRole()
+        );
         return ResponseEntity.ok(ResponseUtil.success("현재 사용자 정보", responseBody));
     }
 }
