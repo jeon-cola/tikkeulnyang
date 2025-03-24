@@ -1,9 +1,17 @@
 package com.c107.paymenthistory.service;
 
+import com.c107.budget.dto.BudgetResponseDto;
+import com.c107.budget.entity.BudgetEntity;
+import com.c107.budget.repository.BudgetRepository;
+import com.c107.paymenthistory.dto.CategoryStatisticsResponseDto;
 import com.c107.paymenthistory.dto.PaymentHistoryResponseDto;
+import com.c107.paymenthistory.entity.BudgetCategoryEntity;
 import com.c107.paymenthistory.entity.CardEntity;
+import com.c107.paymenthistory.entity.CategoryEntity;
 import com.c107.paymenthistory.entity.PaymentHistoryEntity;
+import com.c107.paymenthistory.repository.BudgetCategoryRepository;
 import com.c107.paymenthistory.repository.CardRepository;
+import com.c107.paymenthistory.repository.CategoryRepository;
 import com.c107.paymenthistory.repository.PaymentHistoryRepository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
@@ -25,6 +33,9 @@ public class PaymentHistoryService {
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final CardRepository cardRepository;
     private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
+    private final BudgetRepository budgetRepository;
+    private final BudgetCategoryRepository budgetCategoryRepository;
 
 
     @Transactional(readOnly = true)
@@ -209,7 +220,7 @@ public class PaymentHistoryService {
             throw new RuntimeException("해당 결제 내역에 대한 권한이 없습니다.");
         }
 
-        // isWaste가 null이거나 0이면 1로, 1이면 0으로 변경
+        // isWaste가 0이면 1로, 1이면 0으로 변경
         Boolean currentWasteStatus = paymentHistory.isWaste();
         paymentHistory.setIsWaste(currentWasteStatus == null || !currentWasteStatus);
 
@@ -232,5 +243,113 @@ public class PaymentHistoryService {
         PaymentHistoryEntity updatedPaymentHistory = paymentHistoryRepository.save(paymentHistory);
 
         return updatedPaymentHistory.getIsWaste();
+    }
+
+
+    // 카테고리별 통계
+    @Transactional(readOnly = true)
+    public CategoryStatisticsResponseDto getCategoryStatistics(String email, Integer year, Integer month) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
+
+        List<Integer> userCardIds = cardRepository.findByUserId(user.getUserId())
+                .stream()
+                .map(CardEntity::getCardId)
+                .collect(Collectors.toList());
+
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        List<BudgetEntity> budgets = budgetRepository.findByEmailAndStartDateAndEndDate(
+                email, startDate, endDate);
+
+        int goalAmount = budgets.stream()
+                .mapToInt(budget -> budget.getAmount() != null ? budget.getAmount() : 0)
+                .sum();
+
+        List<PaymentHistoryEntity> payments = paymentHistoryRepository
+                .findByCardIdInAndTransactionDateBetween(userCardIds, startDate, endDate);
+
+        Map<Integer, String> budgetCategoryMap = new HashMap<>();
+        List<BudgetCategoryEntity> allBudgetCategories = budgetCategoryRepository.findAll();
+        for (BudgetCategoryEntity bc : allBudgetCategories) {
+            budgetCategoryMap.put(bc.getBudgetCategoryId(), bc.getCategoryName());
+        }
+
+
+        Map<String, Integer> categoryAmounts = new HashMap<>();
+        int totalSpent = 0;
+
+        for (PaymentHistoryEntity payment : payments) {
+            try {
+                String categoryIdStr = payment.getCategoryId();
+                Integer categoryId = null;
+
+                try {
+                    categoryId = Integer.parseInt(categoryIdStr);
+                } catch (NumberFormatException e) {
+                    log.warn("카테고리 ID를 파싱할 수 없습니다: {}", categoryIdStr);
+                    continue;
+                }
+
+                CategoryEntity category = categoryId != null ?
+                        categoryRepository.findById(categoryId).orElse(null) : null;
+
+                int amount = Math.abs(Integer.parseInt(payment.getTransactionBalance().trim().replace(",", "")));
+                totalSpent += amount;
+
+                // 예산 카테고리 매핑
+                String budgetCategoryName = "결제";
+                if (category != null && category.getBudgetCategory() != null) {
+                    // 이미 Integer 타입이므로 parseInt 사용 X
+                    Integer budgetCategoryId = category.getBudgetCategory();
+                    budgetCategoryName = budgetCategoryMap.get(budgetCategoryId);
+
+                    if (budgetCategoryName == null) {
+                        log.warn("budget_category ID {}에 해당하는 이름을 찾을 수 없습니다. categoryId: {}",
+                                budgetCategoryId, categoryId);
+                        budgetCategoryName = "기타";
+                    } else {
+                        log.debug("카테고리 매핑 성공: ID={}, 예산카테고리ID={}, 예산카테고리명={}, 결제내역ID={}",
+                                categoryId, budgetCategoryId, budgetCategoryName, payment.getPaymentHistoryId());
+                    }
+                } else {
+                    log.warn("카테고리 ID {}에 해당하는 정보가 없거나 budget_category가 null입니다. 결제내역ID: {}",
+                            categoryId, payment.getPaymentHistoryId());
+                }
+
+                // 카테고리별 금액 누적
+                categoryAmounts.put(budgetCategoryName,
+                        categoryAmounts.getOrDefault(budgetCategoryName, 0) + amount);
+
+            } catch (Exception e) {
+                log.error("결제 내역 처리 중 오류 발생: {}", payment.getPaymentHistoryId(), e);
+            }
+        }
+
+        List<CategoryStatisticsResponseDto.CategoryData> categories = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : categoryAmounts.entrySet()) {
+            double percentage = totalSpent > 0 ? (entry.getValue() * 100.0) / totalSpent : 0;
+
+            categories.add(CategoryStatisticsResponseDto.CategoryData.builder()
+                    .name(entry.getKey())
+                    .amount(entry.getValue())
+                    .percentage(Math.round(percentage * 10) / 10.0) // 소수점 첫째 자리까지
+                    .build());
+        }
+
+        categories.sort((a, b) -> b.getAmount().compareTo(a.getAmount()));
+
+        int remainingAmount = goalAmount - totalSpent;
+
+        return CategoryStatisticsResponseDto.builder()
+                .year(year)
+                .month(month)
+                .goalAmount(goalAmount)
+                .spentAmount(totalSpent)
+                .remainingAmount(remainingAmount)
+                .categories(categories)
+                .build();
     }
 }
