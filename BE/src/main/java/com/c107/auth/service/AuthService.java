@@ -43,9 +43,6 @@ public class AuthService {
     @Value("${spring.security.oauth2.client.provider.kakao.user-info-uri}")
     private String kakaoUserInfoUri;
 
-    /**
-     * [1] 카카오 로그인 페이지로 바로 리다이렉트
-     */
     public void redirectToKakaoLogin(HttpServletResponse response) throws IOException {
         String loginUrl = "https://kauth.kakao.com/oauth/authorize"
                 + "?client_id=" + kakaoClientId
@@ -54,9 +51,6 @@ public class AuthService {
         response.sendRedirect(loginUrl);
     }
 
-    /**
-     * [2] 카카오 액세스 토큰 요청
-     */
     public KakaoTokenResponseDto getKakaoAccessToken(String code) {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
@@ -77,9 +71,6 @@ public class AuthService {
         return response.getBody();
     }
 
-    /**
-     * [3] 카카오 사용자 정보 조회
-     */
     public Map<String, Object> getKakaoUserInfo(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
@@ -97,20 +88,17 @@ public class AuthService {
     public void authenticateWithKakaoAndRedirect(String code, HttpServletResponse response) throws IOException {
         System.out.println("백엔드용 인가 코드: " + code);
 
-        // 1. 카카오 액세스 토큰 받기
         KakaoTokenResponseDto tokenResponse = getKakaoAccessToken(code);
-
-        // 2. 카카오 사용자 정보 요청
         Map<String, Object> kakaoUser = getKakaoUserInfo(tokenResponse.getAccessToken());
         if (kakaoUser == null || !kakaoUser.containsKey("kakao_account")) {
-            response.sendRedirect("https://j12c107.p.ssafy.io/login?error=kakaoUserNotFound");
+            response.sendRedirect("http://localhost:3000/login?error=kakaoUserNotFound");
             return;
         }
         Map<String, Object> kakaoAccount = (Map<String, Object>) kakaoUser.get("kakao_account");
         String email = (String) kakaoAccount.get("email");
 
         if (email == null || email.isBlank()) {
-            response.sendRedirect("https://j12c107.p.ssafy.io/login?error=emailNotFound");
+            response.sendRedirect("http://localhost:3000/login?error=emailNotFound");
             return;
         }
 
@@ -126,16 +114,16 @@ public class AuthService {
 
             System.out.println("백엔드용 accesstoken 확인 : " + accessTokenJwt);
 
-            response.sendRedirect("https://j12c107.p.ssafy.io/home/");
+            response.sendRedirect("http://localhost:3000/home/");
         } else {
-            response.sendRedirect("https://j12c107.p.ssafy.io/user/signup?email=" + email);
+            response.sendRedirect("http://localhost:3000/user/signup?email=" + email);
         }
     }
 
     private void setRefreshTokenCookie(String refreshToken, HttpServletResponse response) {
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
         refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true);
+        refreshTokenCookie.setSecure(false); // localhost 개발 시엔 false 권장
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
         response.addCookie(refreshTokenCookie);
@@ -150,7 +138,7 @@ public class AuthService {
 
         String kakaoLogoutUrl = "https://kauth.kakao.com/oauth/logout"
                 + "?client_id=" + kakaoClientId
-                + "&logout_redirect_uri=" + "https://j12c107.p.ssafy.io/api/auth/logout/callback";
+                + "&logout_redirect_uri=" + "http://localhost:8080/api/auth/logout/callback";
 
         return ResponseUtil.success("로그아웃 완료", Map.of("redirectUri", kakaoLogoutUrl));
     }
@@ -195,7 +183,7 @@ public class AuthService {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshTokenJwt)
                 .httpOnly(true)
-                .secure(true)
+                .secure(false) // 개발환경에선 false
                 .path("/")
                 .maxAge(7 * 24 * 60 * 60)
                 .build();

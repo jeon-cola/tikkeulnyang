@@ -64,7 +64,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
         } catch (Exception e) {
-            logger.warn("JWT 인증 처리 중 예외 발생: {}", e.getMessage());
+            // SLF4J 포맷 오류 방지: {} 사용 안 함
+            logger.warn("JWT 인증 처리 중 예외 발생: " + e.getMessage());
         }
 
         chain.doFilter(request, response);
@@ -89,8 +90,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (Exception e) {
-            // 유저 없거나 기타 에러 → 인증 없이 진행
-            logger.warn("setAuthentication 실패 - 사용자 없음 또는 오류: {}", e.getMessage());
+            logger.warn("setAuthentication 실패 - 사용자 없음 또는 오류: " + e.getMessage());
         }
     }
 }
