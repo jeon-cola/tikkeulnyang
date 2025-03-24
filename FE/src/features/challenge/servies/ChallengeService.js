@@ -15,6 +15,21 @@ export const ChallengeService = {
     }
   },
 
+  // 유저 챌린지 조회
+  getUser: async (page, size) => {
+    try {
+      const response = await Api.get(
+        //`/api/challenge/user?page=${page}&size=${size}`
+        `/api_challenge_user?page=${page}&size=${size}`
+      );
+
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
+
   // 참여이력 전체조회
   getHistory: async (page, size) => {
     try {
