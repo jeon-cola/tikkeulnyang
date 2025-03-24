@@ -64,7 +64,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
         } catch (Exception e) {
-            // SLF4J 포맷 오류 방지: {} 사용 안 함
+            // SLF4J 포맷 오류 방지: {} 사용 대신 문자열 연결 사용
             logger.warn("JWT 인증 처리 중 예외 발생: " + e.getMessage());
         }
 
