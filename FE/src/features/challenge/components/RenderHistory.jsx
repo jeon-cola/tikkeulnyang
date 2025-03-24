@@ -28,6 +28,7 @@ export default function RenderHistory() {
           amount={challenge.limitAmount}
           startDate={challenge.startDate}
           endDate={challenge.endDate}
+          challengeId={challenge.challengeId}
         />
       ))}
     </>
