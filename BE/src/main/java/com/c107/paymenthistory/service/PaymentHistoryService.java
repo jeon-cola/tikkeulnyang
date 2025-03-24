@@ -1,6 +1,5 @@
 package com.c107.paymenthistory.service;
 
-import com.c107.budget.dto.BudgetResponseDto;
 import com.c107.budget.entity.BudgetEntity;
 import com.c107.budget.repository.BudgetRepository;
 import com.c107.paymenthistory.dto.CategoryStatisticsResponseDto;
