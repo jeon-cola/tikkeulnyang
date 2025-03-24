@@ -1,5 +1,7 @@
 export default function HomeMain() {
     return (
-        <>HomeMain</>
+        <>
+            <button className="longButton"></button>
+        </>
     )
 }
