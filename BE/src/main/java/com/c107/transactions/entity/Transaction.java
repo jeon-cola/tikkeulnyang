@@ -2,6 +2,7 @@ package com.c107.transactions.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,8 +25,9 @@ public class Transaction {
     @Column(name = "transaction_date", nullable = false)
     private LocalDateTime transactionDate;
 
-    @Column(name = "category", length = 20)
-    private String category;
+    // 🔄 기존 category (varchar) 제거하고 categoryId 추가
+    @Column(name = "category_id", nullable = false)
+    private Integer categoryId;
 
     @Column(name = "amount", length = 255)
     private String amount;
