@@ -91,14 +91,14 @@ public class AuthService {
         KakaoTokenResponseDto tokenResponse = getKakaoAccessToken(code);
         Map<String, Object> kakaoUser = getKakaoUserInfo(tokenResponse.getAccessToken());
         if (kakaoUser == null || !kakaoUser.containsKey("kakao_account")) {
-            response.sendRedirect("http://localhost:3000/login?error=kakaoUserNotFound");
+            response.sendRedirect("https://j12c107.p.ssafy.io/login?error=kakaoUserNotFound");
             return;
         }
         Map<String, Object> kakaoAccount = (Map<String, Object>) kakaoUser.get("kakao_account");
         String email = (String) kakaoAccount.get("email");
 
         if (email == null || email.isBlank()) {
-            response.sendRedirect("http://localhost:3000/login?error=emailNotFound");
+            response.sendRedirect("https://j12c107.p.ssafy.io/login?error=emailNotFound");
             return;
         }
 
@@ -114,16 +114,16 @@ public class AuthService {
 
             System.out.println("백엔드용 accesstoken 확인 : " + accessTokenJwt);
 
-            response.sendRedirect("http://localhost:3000/home/");
+            response.sendRedirect("https://j12c107.p.ssafy.io/home/");
         } else {
-            response.sendRedirect("http://localhost:3000/user/signup?email=" + email);
+            response.sendRedirect("https://j12c107.p.ssafy.io/user/signup?email=" + email);
         }
     }
 
     private void setRefreshTokenCookie(String refreshToken, HttpServletResponse response) {
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
         refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(false); // localhost 개발 시엔 false 권장
+        refreshTokenCookie.setSecure(true); // 서버 배포 환경
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
         response.addCookie(refreshTokenCookie);
@@ -138,7 +138,7 @@ public class AuthService {
 
         String kakaoLogoutUrl = "https://kauth.kakao.com/oauth/logout"
                 + "?client_id=" + kakaoClientId
-                + "&logout_redirect_uri=" + "http://localhost:8080/api/auth/logout/callback";
+                + "&logout_redirect_uri=" + "https://j12c107.p.ssafy.io/api/auth/logout/callback";
 
         return ResponseUtil.success("로그아웃 완료", Map.of("redirectUri", kakaoLogoutUrl));
     }
@@ -183,7 +183,7 @@ public class AuthService {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshTokenJwt)
                 .httpOnly(true)
-                .secure(false) // 개발환경에선 false
+                .secure(true)
                 .path("/")
                 .maxAge(7 * 24 * 60 * 60)
                 .build();
