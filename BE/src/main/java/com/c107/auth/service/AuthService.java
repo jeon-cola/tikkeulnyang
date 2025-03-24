@@ -71,7 +71,6 @@ public class AuthService {
         return response.getBody();
     }
 
-    //
     public Map<String, Object> getKakaoUserInfo(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
@@ -110,8 +109,9 @@ public class AuthService {
             String accessTokenJwt = jwtUtil.generateAccessToken(user.getRole(), user.getEmail(), user.getNickname());
             String refreshTokenJwt = jwtUtil.generateRefreshToken(user.getRole(), user.getEmail(), user.getNickname());
 
+            // Access Token과 Refresh Token 모두 HttpOnly 쿠키에 저장
+            setAccessTokenCookie(accessTokenJwt, response);
             setRefreshTokenCookie(refreshTokenJwt, response);
-            response.setHeader("Authorization", "Bearer " + accessTokenJwt);
 
             System.out.println("백엔드용 accesstoken 확인 : " + accessTokenJwt);
 
@@ -121,13 +121,28 @@ public class AuthService {
         }
     }
 
+    private void setAccessTokenCookie(String accessToken, HttpServletResponse response) {
+        Cookie cookie = new Cookie("accessToken", accessToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true); // 서버 배포 환경
+        cookie.setPath("/");
+        // 예: 1시간 유효 (JwtUtil의 access-token.expiration 값과 동일)
+        cookie.setMaxAge((int)(accessTokenExpiration() / 1000));
+        response.addCookie(cookie);
+    }
+
     private void setRefreshTokenCookie(String refreshToken, HttpServletResponse response) {
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true); // 서버 배포 환경
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
-        response.addCookie(refreshTokenCookie);
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true); // 서버 배포 환경
+        cookie.setPath("/");
+        cookie.setMaxAge(7 * 24 * 60 * 60);
+        response.addCookie(cookie);
+    }
+
+    // Access Token 만료 시간 (JwtUtil의 access-token.expiration 값과 일치해야 함)
+    private long accessTokenExpiration() {
+        return 3600000L; // 예: 1시간
     }
 
     public ResponseEntity<Map<String, Object>> logout(HttpServletResponse response, String email) {
