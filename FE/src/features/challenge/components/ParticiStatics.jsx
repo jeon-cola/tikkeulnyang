@@ -3,7 +3,10 @@ import RoundChart from "@/features/challenge/components/RoundChart";
  *참가자들의 현황 보여주는 컴포넌트
  추후 axios로 수정해주어야 할 부분 : 총 참가자수, 평균 예상 달성률, 각 구간별 예상 달성자수
  */
-export default function ParticiStatics() {
+export default function ParticiStatics({
+  participantCount = 100,
+  averageExpectedSuccessRate = 50,
+}) {
   return (
     <>
       <div className="flex flex-col items-center p-[30px_12px_30px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
@@ -24,7 +27,7 @@ export default function ParticiStatics() {
                 총 참가자수
               </p>
               <p className="absolute w-[56.74px] h-[23px] left-0 top-[21px] font-['Prompt'] font-normal text-[15px] leading-[23px] text-black">
-                100명
+                {participantCount}명
               </p>
             </div>
 
@@ -34,14 +37,16 @@ export default function ParticiStatics() {
                 평균 예상 달성률
               </p>
               <p className="absolute w-[30px] h-[23px] right-[14px] top-[21px] font-['Prompt'] font-normal text-[15px] leading-[23px] text-black">
-                50%
+                {averageExpectedSuccessRate}%
               </p>
             </div>
           </div>
         </div>
 
         {/* 원형 차트 */}
-        <RoundChart data={[50, 50]}></RoundChart>
+        <RoundChart
+          data={[averageExpectedSuccessRate, 100 - averageExpectedSuccessRate]}
+        ></RoundChart>
         {/* 참가자 현황 상세 */}
         <div className="relative w-[293px] h-[143px] bg-white shadow-sm rounded-md">
           <div className="absolute w-[248px] h-[116px] left-[23px] top-[13px]">
