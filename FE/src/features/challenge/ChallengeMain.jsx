@@ -16,7 +16,7 @@ export default function ChallengeMain() {
   const [officialChallenges, setOfficialChallenges] = useState([]);
   const [userChallenges, setUserChallenges] = useState([]);
 
-  const [officialPage, setOfficialPage] = useState(0);
+  const [officialPageCnt, setOfficialPageCnt] = useState(0);
 
   const dispatch = useDispatch();
   const challengeType = useSelector((state) => state.challenge.challengeType);
@@ -37,10 +37,10 @@ export default function ChallengeMain() {
 
   // 페이지가 실행되자마자 우선 추천, 공식, 유저 챌린지를 4개씩 불러온다.
   useEffect(() => {
-    fetchOfficialChallenge(officialPage, 4);
+    fetchOfficialChallenge(officialPageCnt, 4);
     fetchUserChallenge();
-    console.log(officialPage);
-  }, [officialPage]);
+    console.log(officialPageCnt);
+  }, [officialPageCnt]);
 
   const renderOfficialChallenge = () => {
     const cardElements = [];
@@ -75,34 +75,9 @@ export default function ChallengeMain() {
             <BasicContainer>
               <ChallengeDesc type="추천 챌린지" button="전체보기 >" />
 
-              {/* <CardBox>
-                {officialChallenges.slice(0, 2).map((challenge) => (
-                  <ChallengeCard
-                    imageUrl={challenge.imageUrl}
-                    type="공식챌린지"
-                    title={challenge.challengeName}
-                    startDate={challenge.startDate}
-                    endDate={challenge.endDate}
-                    challengeId={challenge.challengeId}
-                  />
-                ))}
-              </CardBox>
-
-              <CardBox>
-                {officialChallenges.slice(2, 4).map((challenge) => (
-                  <ChallengeCard
-                    imageUrl={challenge.imageUrl}
-                    type="공식챌린지"
-                    title={challenge.challengeName}
-                    startDate={challenge.startDate}
-                    endDate={challenge.endDate}
-                    challengeId={challenge.challengeId}
-                  />
-                ))}
-              </CardBox> */}
               {renderOfficialChallenge()}
               <ViewMoreButton
-                onIncrease={() => setOfficialPage(officialPage + 1)}
+                onIncrease={() => setOfficialPageCnt(officialPageCnt + 1)}
               />
             </BasicContainer>
 
