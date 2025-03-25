@@ -1,6 +1,8 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import CustomBackHeader from "../../../components/CustomBackHeader"
 import baseImg from "/userProfile.png"
+import { useSelector } from "react-redux"
+import axios from "axios"
 
 export default function Correction() {
     const [userImg, setUserImg] = useState(baseImg)
@@ -10,6 +12,28 @@ export default function Correction() {
     const [userBirth, setUserBirth] = useState("2006.01.01")
     const [correctionCheck, setCorrectionCheck] = useState(false)
     
+    useEffect(()=> {
+        const fetchData = async () => {
+                try {
+                const response = await axios.get("http://localhost:8080/api/user",{
+                    withCredentials:true
+                })
+                console.log(response.data)
+                if (response.data.status === "success") {
+                    const userData = response.data
+                    setUserName(userData.name)
+                    setUserNcikName(userData.nickname)
+                    setUserEmail(userData.email)
+                    setUserBirth(userData.birthDate)
+                }
+            } catch (error) {
+                console.log(error)
+                window.alert("서버에러 잠시후 시도해 주세요")
+        } 
+        }
+        fetchData()
+    },[])
+
     function CorrectionHandler(e){
         e.preventDefault();
         setCorrectionCheck(!correctionCheck)
