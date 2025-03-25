@@ -25,8 +25,12 @@ export default function HomeMain() {
     },[])
     return (
         <>
+<<<<<<< HEAD
             {email}
             {nickName}
+=======
+            <button className="longButton"></button>
+>>>>>>> f56c715cb2b809e933d71b32b678eaec47ee6b14
         </>
     )
 }
