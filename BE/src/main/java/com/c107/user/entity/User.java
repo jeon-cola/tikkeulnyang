@@ -33,6 +33,7 @@ public class User{
 
     private String role;
 
+    @Builder.Default
     @Column(nullable = false)
     private Integer deposit = 0;
 }
