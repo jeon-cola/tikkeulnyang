@@ -11,6 +11,8 @@ import ChallengeDesc from "@/features/challenge/components/ChallengeDesc";
 export default function ChallengeTotal() {
   const { type } = useParams();
   const [challengeList, setChallengeList] = useState([]);
+  const [challengeType, setChallengeType] = useState("");
+
   useEffect(() => {
     fetchChallengeList();
   }, []);
@@ -20,10 +22,13 @@ export default function ChallengeTotal() {
     try {
       if (type == "official") {
         response = await ChallengeService.getOfficial(1, 10);
+        setChallengeType("공식챌린지");
       } else if (type == "user") {
         response = await ChallengeService.getUser(1, 10);
+        setChallengeType("유저챌린지");
       } else if (type == "recommend") {
         response = await ChallengeService.getUser(1, 10); // 추후에 recommend로 바꿀것
+        setChallengeType("추천챌린지");
       }
       console.log(response.data.content);
       setChallengeList(response.data.content);
@@ -42,7 +47,7 @@ export default function ChallengeTotal() {
           {challengeList.slice(i, i + 2).map((challenge) => (
             <ChallengeCard
               imageUrl={challenge.imageUrl}
-              type="공식챌린지"
+              type={challengeType}
               title={challenge.challengeName}
               startDate={challenge.startDate}
               endDate={challenge.endDate}
@@ -63,7 +68,7 @@ export default function ChallengeTotal() {
       <CustomHeader title="챌린지" />
       <div className="flex flex-col items-start p-[30px_10px_12px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
         <BasicContainer>
-          <ChallengeDesc type="추천 챌린지" button="" />
+          <ChallengeDesc type={challengeType} button="" />
           {renderChallenge()}
         </BasicContainer>
       </div>
