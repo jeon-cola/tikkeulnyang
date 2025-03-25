@@ -1,12 +1,11 @@
 package com.c107.user.controller;
 
-import com.c107.auth.entity.LoginUserEntity;
-import com.c107.auth.repository.LoginUserRepository;
 import com.c107.common.util.JwtUtil;
 import com.c107.common.util.ResponseUtil;
 import com.c107.user.dto.UserRegistrationRequestDto;
+import com.c107.user.entity.User;
+import com.c107.user.repository.UserRepository;
 import com.c107.user.service.UserService;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +20,7 @@ import java.util.Optional;
 public class UserController {
 
     private final UserService userService;
-    private final LoginUserRepository loginUserRepository; // 추가
+    private final UserRepository userRepository; // 추가
     private final JwtUtil  jwtUtil;
 
     @PostMapping("/register")
@@ -31,7 +30,7 @@ public class UserController {
 
     @GetMapping("/check-nickname")
     public ResponseEntity<?> checkNickname(@RequestParam("nickname") String nickname) {
-        Optional<LoginUserEntity> existingUser = loginUserRepository.findByNickname(nickname);
+        Optional<User> existingUser = userRepository.findByNickname(nickname);
         if (existingUser.isPresent()) {
             // 닉네임 중복
             return ResponseUtil.badRequest("사용중인 닉네임입니다.", null);
@@ -55,12 +54,12 @@ public class UserController {
             return ResponseUtil.badRequest("토큰 검증에 실패하였습니다.", null);
         }
 
-        Optional<LoginUserEntity> userOpt = loginUserRepository.findByEmail(email);
+        Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
             return ResponseUtil.badRequest("사용자 정보를 찾을 수 없습니다.", null);
         }
 
-        LoginUserEntity user = userOpt.get();
+        User user = userOpt.get();
         Map<String, Object> responseBody = Map.of(
                 "id", user.getUserId(),
                 "email", user.getEmail(),

@@ -1,10 +1,10 @@
 package com.c107.auth.service;
 
 import com.c107.auth.dto.KakaoTokenResponseDto;
-import com.c107.auth.entity.LoginUserEntity;
-import com.c107.auth.repository.LoginUserRepository;
 import com.c107.common.util.JwtUtil;
 import com.c107.common.util.ResponseUtil;
+import com.c107.user.entity.User;
+import com.c107.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final LoginUserRepository loginUserRepository;
+    private final UserRepository loginUserRepository;
     private final JwtUtil jwtUtil;
     private final FinanceService financeService;
     private final RestTemplate restTemplate = new RestTemplate();
@@ -91,21 +91,21 @@ public class AuthService {
         KakaoTokenResponseDto tokenResponse = getKakaoAccessToken(code);
         Map<String, Object> kakaoUser = getKakaoUserInfo(tokenResponse.getAccessToken());
         if (kakaoUser == null || !kakaoUser.containsKey("kakao_account")) {
-            response.sendRedirect("https://j12c107.p.ssafy.io/login?error=kakaoUserNotFound");
+            response.sendRedirect("http://localhost:5173/login?error=kakaoUserNotFound");
             return;
         }
         Map<String, Object> kakaoAccount = (Map<String, Object>) kakaoUser.get("kakao_account");
         String email = (String) kakaoAccount.get("email");
 
         if (email == null || email.isBlank()) {
-            response.sendRedirect("https://j12c107.p.ssafy.io/login?error=emailNotFound");
+            response.sendRedirect("http://localhost:5173/login?error=emailNotFound");
             return;
         }
 
-        Optional<LoginUserEntity> existingUserOpt = loginUserRepository.findByEmail(email);
+        Optional<User> existingUserOpt = loginUserRepository.findByEmail(email);
 
         if (existingUserOpt.isPresent()) {
-            LoginUserEntity user = existingUserOpt.get();
+            User user = existingUserOpt.get();
             String accessTokenJwt = jwtUtil.generateAccessToken(user.getRole(), user.getEmail(), user.getNickname());
             String refreshTokenJwt = jwtUtil.generateRefreshToken(user.getRole(), user.getEmail(), user.getNickname());
 
@@ -115,18 +115,17 @@ public class AuthService {
 
             System.out.println("백엔드용 accesstoken 확인 : " + accessTokenJwt);
 
-            response.sendRedirect("https://j12c107.p.ssafy.io/home/");
+            response.sendRedirect("http://localhost:5173/home");
         } else {
-            response.sendRedirect("https://j12c107.p.ssafy.io/user/signup?email=" + email);
+            response.sendRedirect("http://localhost:5173/signup?email=" + email);
         }
     }
 
     private void setAccessTokenCookie(String accessToken, HttpServletResponse response) {
         Cookie cookie = new Cookie("accessToken", accessToken);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true); // 서버 배포 환경
+        cookie.setSecure(true);
         cookie.setPath("/");
-        // 예: 1시간 유효 (JwtUtil의 access-token.expiration 값과 동일)
         cookie.setMaxAge((int)(accessTokenExpiration() / 1000));
         response.addCookie(cookie);
     }
@@ -134,15 +133,14 @@ public class AuthService {
     private void setRefreshTokenCookie(String refreshToken, HttpServletResponse response) {
         Cookie cookie = new Cookie("refreshToken", refreshToken);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true); // 서버 배포 환경
+        cookie.setSecure(true);
         cookie.setPath("/");
         cookie.setMaxAge(7 * 24 * 60 * 60);
         response.addCookie(cookie);
     }
 
-    // Access Token 만료 시간 (JwtUtil의 access-token.expiration 값과 일치해야 함)
     private long accessTokenExpiration() {
-        return 3600000L; // 예: 1시간
+        return 3600000L;
     }
 
     public ResponseEntity<Map<String, Object>> logout(HttpServletResponse response, String email) {
@@ -154,7 +152,7 @@ public class AuthService {
 
         String kakaoLogoutUrl = "https://kauth.kakao.com/oauth/logout"
                 + "?client_id=" + kakaoClientId
-                + "&logout_redirect_uri=" + "https://j12c107.p.ssafy.io/api/auth/logout/callback";
+                + "&logout_redirect_uri=" + "http://localhost:5173/logout/callback";
 
         return ResponseUtil.success("로그아웃 완료", Map.of("redirectUri", kakaoLogoutUrl));
     }
@@ -189,11 +187,11 @@ public class AuthService {
             return ResponseEntity.badRequest().body("이메일 정보 없음");
         }
 
-        Optional<LoginUserEntity> existingUserOpt = loginUserRepository.findByEmail(email);
+        Optional<User> existingUserOpt = loginUserRepository.findByEmail(email);
         if (existingUserOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("신규 회원입니다. 가입 필요");
         }
-        LoginUserEntity user = existingUserOpt.get();
+        User user = existingUserOpt.get();
         String accessTokenJwt = jwtUtil.generateAccessToken(user.getRole(), user.getEmail(), user.getNickname());
         String refreshTokenJwt = jwtUtil.generateRefreshToken(user.getRole(), user.getEmail(), user.getNickname());
 
