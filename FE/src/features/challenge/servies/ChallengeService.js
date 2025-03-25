@@ -1,6 +1,7 @@
 import Api from "@/services/Api";
 
 export const ChallengeService = {
+  // 유저 챌린지 조회
   getOfficial: async (page, size) => {
     try {
       const response = await Api.get(

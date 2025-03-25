@@ -28,7 +28,7 @@ export default function ChallengeMake() {
             <div className="box-border w-full h-[38px] bg-white border border-[#DFDFDF] shadow-[0px_0.5px_2px_rgba(0,0,0,0.25)] rounded-[6px] order-1 flex-none">
               <input
                 type="email"
-                placeholder="이메일을 입력해주세요"
+                placeholder="챌린지 제목을 입력해주세요"
                 className="w-full h-full px-[5px] pt-[5px] font-pretendard font-thin text-[20px] leading-[24px] placeholder-[#DFDFDF] text-black focus:outline-none bg-transparent"
               />
             </div>
