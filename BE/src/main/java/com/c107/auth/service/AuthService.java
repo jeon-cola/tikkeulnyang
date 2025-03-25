@@ -43,6 +43,10 @@ public class AuthService {
     @Value("${spring.security.oauth2.client.provider.kakao.user-info-uri}")
     private String kakaoUserInfoUri;
 
+    // base URL를 properties 파일에서 주입받음
+    @Value("${app.base.url}")
+    private String baseUrl;
+
     public void redirectToKakaoLogin(HttpServletResponse response) throws IOException {
         String loginUrl = "https://kauth.kakao.com/oauth/authorize"
                 + "?client_id=" + kakaoClientId
@@ -91,14 +95,14 @@ public class AuthService {
         KakaoTokenResponseDto tokenResponse = getKakaoAccessToken(code);
         Map<String, Object> kakaoUser = getKakaoUserInfo(tokenResponse.getAccessToken());
         if (kakaoUser == null || !kakaoUser.containsKey("kakao_account")) {
-            response.sendRedirect("https://j12c107.p.ssafy.io/login?error=kakaoUserNotFound");
+            response.sendRedirect(baseUrl + "/login?error=kakaoUserNotFound");
             return;
         }
         Map<String, Object> kakaoAccount = (Map<String, Object>) kakaoUser.get("kakao_account");
         String email = (String) kakaoAccount.get("email");
 
         if (email == null || email.isBlank()) {
-            response.sendRedirect("https://j12c107.p.ssafy.io/login?error=emailNotFound");
+            response.sendRedirect(baseUrl + "/login?error=emailNotFound");
             return;
         }
 
@@ -115,10 +119,9 @@ public class AuthService {
 
             System.out.println("백엔드용 accesstoken 확인 : " + accessTokenJwt);
 
-            response.sendRedirect("https://j12c107.p.ssafy.io/home/");
-//            response.sendRedirect("http://localhost:5173/home/");
+            response.sendRedirect(baseUrl + "/home/");
         } else {
-            response.sendRedirect("https://j12c107.p.ssafy.io/user/signup?email=" + email);
+            response.sendRedirect(baseUrl + "/user/signup?email=" + email);
         }
     }
 
@@ -153,7 +156,7 @@ public class AuthService {
 
         String kakaoLogoutUrl = "https://kauth.kakao.com/oauth/logout"
                 + "?client_id=" + kakaoClientId
-                + "&logout_redirect_uri=" + "https://j12c107.p.ssafy.io/logout/callback";
+                + "&logout_redirect_uri=" + baseUrl + "/logout/callback";
 
         return ResponseUtil.success("로그아웃 완료", Map.of("redirectUri", kakaoLogoutUrl));
     }
