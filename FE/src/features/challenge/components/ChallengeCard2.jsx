@@ -1,7 +1,9 @@
+import { useNavigate } from "react-router-dom";
+
 {
   /**
     챌린지 메인페이지에서, 
-    참여중 챌린지, 참여이력을 탭했을 시에 보여지는 챌린지 카드 컴포넌트트
+    참여중 챌린지, 참여이력을 탭했을 시에 보여지는 챌린지 카드 컴포넌트
     */
 }
 export default function ChallengeCard2({
@@ -11,10 +13,19 @@ export default function ChallengeCard2({
   amount = "10,000원",
   startDate = "01-01",
   endDate = "01-31",
+  challengeId = 1,
 }) {
+  const navigate = useNavigate();
+  const handleClick = () => {
+    navigate(`/challenge/${challengeId}`);
+  };
+
   return (
     <>
-      <div className="flex flex-col items-start px-3 py-5 pl-4 gap-2.5 w-full max-w-sm bg-white rounded-md">
+      <div
+        onClick={handleClick}
+        className="flex flex-col items-start px-3 py-5 pl-4 gap-2.5 w-full max-w-sm bg-white rounded-md"
+      >
         {/* 내부 컨텐츠 영역 - 상대적 위치 지정으로 레이아웃 구성 */}
         <div className="relative w-full h-[74px]">
           {/* 이미지 영역 - 절대 위치로 배치 */}

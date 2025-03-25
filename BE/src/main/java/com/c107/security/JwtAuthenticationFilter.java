@@ -32,44 +32,59 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
+
         try {
-            // 1. Authorization 헤더에서 Access Token 추출
-            String authHeader = request.getHeader("Authorization");
-            String accessToken = (authHeader != null && authHeader.startsWith("Bearer "))
-                    ? authHeader.substring(7) : null;
+            // 쿠키에서 Access Token / Refresh Token 추출
+            String accessToken = null;
+            String refreshToken = null;
+            Cookie[] cookies = request.getCookies();
 
-            // 2. HttpOnly 쿠키에서 Refresh Token 가져오기
-            String refreshToken = Arrays.stream(request.getCookies() != null ? request.getCookies() : new Cookie[]{})
-                    .filter(cookie -> "refreshToken".equals(cookie.getName()))
-                    .map(Cookie::getValue)
-                    .findFirst()
-                    .orElse(null);
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("accessToken".equals(cookie.getName())) {
+                        accessToken = cookie.getValue();
+                    } else if ("refreshToken".equals(cookie.getName())) {
+                        refreshToken = cookie.getValue();
+                    }
+                }
+            }
 
-            // 3. Access Token 검증
+            // 1. Access Token이 유효한지 체크
             if (accessToken != null && jwtUtil.validateToken(accessToken)) {
                 setAuthentication(accessToken, request);
-            } else if (refreshToken != null && jwtUtil.validateToken(refreshToken)) {
-                // 4. Access Token이 만료되었지만 Refresh Token이 유효한 경우
+            }
+            // 2. Access Token 만료됐고, Refresh Token이 유효하면 새로운 Access Token 발급
+            else if (refreshToken != null && jwtUtil.validateToken(refreshToken)) {
                 Claims claims = jwtUtil.parseClaims(refreshToken);
                 String email = claims.getSubject();
                 String role = claims.get("role", String.class);
+                String nickname = claims.get("nickname", String.class);
 
-                // 5. 새로운 Access Token 생성
-                String newAccessToken = jwtUtil.generateAccessToken(role, email, "nickname");
+                // 새 Access Token 생성
+                String newAccessToken = jwtUtil.generateAccessToken(role, email, nickname);
 
-                // 6. 응답 헤더에 새로운 Access Token 추가
-                response.setHeader("Authorization", "Bearer " + newAccessToken);
+                // 재발급된 Access Token을 쿠키로 내려주기
+                Cookie newAccessTokenCookie = new Cookie("accessToken", newAccessToken);
+                newAccessTokenCookie.setHttpOnly(true);
+                newAccessTokenCookie.setSecure(true);
+                newAccessTokenCookie.setPath("/");
+                // accessToken 유효시간만큼
+                newAccessTokenCookie.setMaxAge( (int)(/*accessTokenExpiration*/3600L ) );
+                response.addCookie(newAccessTokenCookie);
 
+                // 다시 SecurityContext 세팅
                 setAuthentication(newAccessToken, request);
             }
 
+            // Access Token과 Refresh Token 둘 다 없거나 유효하지 않으면 -> 그냥 지나감(에러 핸들링은 Security 쪽에서)
+
         } catch (Exception e) {
-            // SLF4J 포맷 오류 방지: {} 사용 대신 문자열 연결 사용
             logger.warn("JWT 인증 처리 중 예외 발생: " + e.getMessage());
         }
 
         chain.doFilter(request, response);
     }
+
 
     /**
      * SecurityContextHolder에 인증 정보 저장
