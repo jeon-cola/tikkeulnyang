@@ -2,16 +2,18 @@ import { useState } from "react";
 import CustomCalendar from "@/components/CustomCalendar";
 import Container from "@/components/Container";
 import LedgerHeader from "./components/LedgerHeader";
+import CategoryBox from "./components/CategoryBox";
 
 export default function LedgerDetail() {
   const [calendarVisible, setCalendarVisible] = useState(false);
   const totalIncome = 0;
-  const totalExpense = 0;
+  const totalSpense = 0;
 
   return (
     <div>
       <Container>
         <LedgerHeader />
+        <CategoryBox />
 
         {/* 수입/지출 요약 카드 */}
         <div className="w-full bg-white rounded-lg shadow-sm p-4 flex flex-col gap-3">
@@ -32,7 +34,7 @@ export default function LedgerDetail() {
               </div>
               <div className="text-right">
                 <p className="text-[#A2A2A2] text-xs">총 지출</p>
-                <p className="text-[#64C9F5] font-semibold">{totalExpense}</p>
+                <p className="text-[#64C9F5] font-semibold">{totalSpense}</p>
               </div>
             </div>
           </div>
