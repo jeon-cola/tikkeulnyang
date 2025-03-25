@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import CustomHeader from "@/components/CustomHeader";
 import ChallengeDetailImg from "@/features/challenge/components/ChallengeDetailImg";
@@ -7,6 +7,7 @@ import MyCurrentStatus from "@/features/challenge/components/MyCurrentStatus";
 import ParticiStatics from "./components/ParticiStatics";
 import { useNavigate } from "react-router-dom";
 import { ChallengeService } from "@/features/challenge/servies/ChallengeService";
+
 /*
   추후에 axios로 채워넣을 데이터: 
   title, imageInfo, challengeType, challengeName, currentParticipants, startDate, endDate,
@@ -14,11 +15,14 @@ import { ChallengeService } from "@/features/challenge/servies/ChallengeService"
    deposit, currentProgress, 
 */
 export default function ChallengeDetail() {
-  const { ChallengeId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const challengeId = useRef(ChallengeId);
   const handleClick = () => {
-    navigate(`/challenge/enter/${challengeId}`);
+    navigate(`/challenge/enter/${id}`, {
+      state: {
+        challengeData: currChallenge,
+      },
+    });
   };
   const [currChallenge, setCurrChallenge] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +30,7 @@ export default function ChallengeDetail() {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await ChallengeService.getCurrChallenge(challengeId);
+      const response = await ChallengeService.getCurrChallenge(id);
       console.log(response.data);
       setCurrChallenge(response.data);
       setIsLoading(false);
