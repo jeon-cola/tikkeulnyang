@@ -10,12 +10,16 @@ export default function HomeMain() {
     useEffect(()=> {
         const fetchData = async ()=> {
             try {
-                const response = await axios.get("http://localhost:8080/api/user/me")
-                if (response.status === "success") {
-                    dispatch(setEmail(response.data.email))
-                    console.log("email",response.data.email)
-                    dispatch(setNickName(response.data.nickname))
-                    console.log("nickname",response.data.nickname)
+                const response = await axios.get("http://localhost:8080/api/user/me", {
+                    withCredentials:true
+                })
+                console.log(response.data)
+                if (response.data.body.status === "success") {
+                    const userData = response.data.body.data
+                    dispatch(setEmail(userData.email))
+                    console.log("email",userData.email)
+                    dispatch(setNickName(userData.nickname))
+                    console.log("nickname",userData.nickname)
                 }
             } catch (error) {
                 console.log(error)
