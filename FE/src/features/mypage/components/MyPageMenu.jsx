@@ -1,5 +1,6 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom";
+import { resetUser } from "../../user/UserSlice.js"
 import userProfile from "/userProfile.png"
 import CorrectionIcon from "../assets/CorrectionIcon";
 import MyCatIcon from "../assets/MyCatIcon";
@@ -11,27 +12,44 @@ import YellowCat from "../../../../public/YellowCat.jsx";
 import AttendanceIcon from "../assets/AttendanceIcon.jsx";
 import LogoutIcon from "../assets/LogoutIcon.jsx";
 import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import Api from "../../../services/Api.jsx";
 
 export default function MyPageMenu() {
+  const dispatch = useDispatch();
+  const {nickName, email, } = useSelector(state => state.user);
   const [userImage, setUserImage] = useState(userProfile);
-  const [userName, setUserName] = useState("길동홍");
   const [userLevel, setUserLevel] = useState("LV.1");
-  const [userEmail, setUserEmail] = useState("abc@naver.com");
   const [pendingChallenges, setPendingChallenges] = useState(0);
   const [activeChallenges, setActiveChallenges] = useState(0);
   const [completedChallenges, setCompletedChallenges] = useState(0);
   const [userCost, setUserCost] = useState(10000);
   const nav = useNavigate();
 
+  useEffect(() => {
+    const chanllengHistory = async() => {
+      try {
+        const response = await Api.get("/api/challenge/history");
+        console.log(response);
+      } catch (error) {
+        console.log(error);
+      }
+      chanllengHistory();
+    }
+  },[]);
 
-
+  // 로그아웃 핸들러
   async function logoutHandler(e) {
     e.preventDefault();
       try {
-        const response = await axios.post("https://j12c107.p.ssafy.io/api/auth/logout")
-        if (response.status === "success") {
+        // const response = await axios.post("http://localhost:8080/api/auth/logout",{},{
+        //   withCredentials:true
+        // })
+        const response = await Api.post("api/auth/logout")
+        if (response.data.status === "success") {
+          dispatch(resetUser())
           window.alert("로그아웃 성공")
-          nav("/user")
+          nav("/home")
         }
       } catch (error) {
         console.log(error)
@@ -51,11 +69,11 @@ export default function MyPageMenu() {
           </div>
           <div className="flex flex-col">
             <div className="flex items-center mb-1 gap-3">
-              <span className="font-semibold">{userName}</span>
+              <span className="font-semibold">{nickName}</span>
               <span className="font-semibold text-xs">{userLevel}</span>
             </div>
             <div>
-              <span className="font-regular text-x">{userEmail}</span>
+              <span className="font-regular text-x">{email}</span>
             </div>
           </div>
         </div>

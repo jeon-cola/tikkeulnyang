@@ -115,7 +115,8 @@ public class AuthService {
 
             System.out.println("백엔드용 accesstoken 확인 : " + accessTokenJwt);
 
-            response.sendRedirect("http://localhost:5173/home");
+            response.sendRedirect("https://j12c107.p.ssafy.io/home/");
+//            response.sendRedirect("http://localhost:5173/home/");
         } else {
             response.sendRedirect("http://localhost:5173/signup?email=" + email);
         }
