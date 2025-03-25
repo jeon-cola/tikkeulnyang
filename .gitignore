@@ -6,3 +6,4 @@ FE/dev-dist/workbox-54d0af47.js
 
 .idea
 db.json
+.env.local

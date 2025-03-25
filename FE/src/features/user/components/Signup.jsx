@@ -3,6 +3,7 @@ import "/src/index.css";
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import CustomHeader from "../../../components/CustomHeader";
+import Api from "../../../services/Api";
 
 export default function Signup() {
   const [nicknameCheck, setNicknameCheck] = useState(false);
@@ -34,14 +35,11 @@ export default function Signup() {
     e.preventDefault();
     console.log("axios defaults:", axios.defaults);
     try {
-      const response = await axios.get(
-        "https://j12c107.p.ssafy.io/api/user/check-nickname",
-        {
-          params: {
-            nickname: user.nickname,
-          },
-        }
-      );
+      const response = await Api.get("/api/user/check-nickname", {
+        params: {
+          nickname: user.nickname,
+        },
+      });
       if (response.data.status === "success") {
         // 사용 가능
         setNicknameCheck(true);
@@ -62,15 +60,12 @@ export default function Signup() {
   async function signUpHandler(e) {
     e.preventDefault();
     try {
-      const response = await axios.post(
-        "https://j12c107.p.ssafy.io/api/user/register",
-        {
-          name: user.name,
-          nickname: user.nickname,
-          email: user.email,
-          birthDate: user.birthDate,
-        }
-      );
+      const response = await Api.post("/api/user/register", {
+        name: user.name,
+        nickname: user.nickname,
+        email: user.email,
+        birthDate: user.birthDate,
+      });
       if (response.status == 200) {
         if (response.data.status === "success") {
           window.alert("회원가입에 성공하셨습니다");
