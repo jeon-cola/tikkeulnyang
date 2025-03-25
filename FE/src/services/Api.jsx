@@ -6,5 +6,6 @@ const Api = axios.create({
 });
 
 export default Api;
+
 // 응답 인터셉터
 Api.interceptors.response.use();
