@@ -91,14 +91,14 @@ public class AuthService {
         KakaoTokenResponseDto tokenResponse = getKakaoAccessToken(code);
         Map<String, Object> kakaoUser = getKakaoUserInfo(tokenResponse.getAccessToken());
         if (kakaoUser == null || !kakaoUser.containsKey("kakao_account")) {
-            response.sendRedirect("http://localhost:5173/login?error=kakaoUserNotFound");
+            response.sendRedirect("https://j12c107.p.ssafy.io/login?error=kakaoUserNotFound");
             return;
         }
         Map<String, Object> kakaoAccount = (Map<String, Object>) kakaoUser.get("kakao_account");
         String email = (String) kakaoAccount.get("email");
 
         if (email == null || email.isBlank()) {
-            response.sendRedirect("http://localhost:5173/login?error=emailNotFound");
+            response.sendRedirect("https://j12c107.p.ssafy.io/login?error=emailNotFound");
             return;
         }
 
@@ -118,7 +118,7 @@ public class AuthService {
             response.sendRedirect("https://j12c107.p.ssafy.io/home/");
 //            response.sendRedirect("http://localhost:5173/home/");
         } else {
-            response.sendRedirect("http://localhost:5173/signup?email=" + email);
+            response.sendRedirect("https://j12c107.p.ssafy.io/signup?email=" + email);
         }
     }
 
@@ -153,7 +153,7 @@ public class AuthService {
 
         String kakaoLogoutUrl = "https://kauth.kakao.com/oauth/logout"
                 + "?client_id=" + kakaoClientId
-                + "&logout_redirect_uri=" + "http://localhost:5173/logout/callback";
+                + "&logout_redirect_uri=" + "https://j12c107.p.ssafy.io/logout/callback";
 
         return ResponseUtil.success("로그아웃 완료", Map.of("redirectUri", kakaoLogoutUrl));
     }
