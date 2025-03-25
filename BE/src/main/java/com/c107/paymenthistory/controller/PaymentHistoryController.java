@@ -76,11 +76,9 @@ public class PaymentHistoryController {
             @AuthenticationPrincipal String email,
             @PathVariable String date
     ) {
+        Map<String, Object> data = paymentHistoryService.getDailyConsumption(email, date);
 
-        PaymentHistoryResponseDto responseDto = paymentHistoryService.getDailyConsumption(
-                email, date);
-
-        return ResponseUtil.success("일별 소비 내역 조회에 성공했습니다.", responseDto);
+        return ResponseUtil.success("일별 소비 내역 조회 성공", data);
     }
 
     @PostMapping("/waste")
