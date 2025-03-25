@@ -1,10 +1,10 @@
 package com.c107.user.service;
 
-import com.c107.auth.entity.LoginUserEntity;
-import com.c107.auth.repository.LoginUserRepository;
 import com.c107.auth.service.FinanceService;
 import com.c107.common.util.ResponseUtil;
 import com.c107.user.dto.UserRegistrationRequestDto;
+import com.c107.user.entity.User;
+import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -13,20 +13,23 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserService {
 
-    private final LoginUserRepository loginUserRepository;
+    private final UserRepository userRepository;
     private final FinanceService financeService;
 
     public ResponseEntity<?> registerUser(UserRegistrationRequestDto request) {
         // 1. DB에서 유저 존재 여부 확인
-        LoginUserEntity user = loginUserRepository.findByEmail(request.getEmail()).orElse(null);
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
 
         if (user == null) {
             // 신규 유저 생성 (필요에 따라 request의 name, birthDate 등도 저장 가능)
-            user = LoginUserEntity.builder()
+            user = User.builder()
                     .email(request.getEmail())
                     .nickname(request.getNickname())
+                    .name(request.getName())                  // ✅ 이름 저장
+                    .birthDate(request.getBirthDate())        // ✅ 생년월일 저장
                     .role("USER")
                     .build();
+
         } else {
             // 기존 유저 -> 닉네임 업데이트
             user.setNickname(request.getNickname());
@@ -41,7 +44,7 @@ public class UserService {
         }
 
         // 3. DB 저장 (financeUserKey 포함)
-        loginUserRepository.save(user);
+        userRepository.save(user);
 
         return ResponseUtil.success("회원가입 완료", user.getEmail());
     }
