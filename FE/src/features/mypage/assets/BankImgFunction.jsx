@@ -16,6 +16,7 @@ import Nh from "../../../assets/bank/Nh"
 import Sc from "../../../assets/bank/Sc"
 import Shinhan from "../../../assets/bank/Shinhan"
 import Woori from "../../../assets/bank/Woori"
+import Korea from "../../../assets/bank/Korea"
 
 export default function BankImg({ bankName }) {
     // SVG 컴포넌트를 직접 반환하는 대신 렌더링하도록 수정
@@ -51,6 +52,8 @@ export default function BankImg({ bankName }) {
         return <Shinhan />;
     } else if (bankName === "카카오뱅크") {
         return <Kakao />;
+    } else if (bankName === "한국은행") {
+        return <Korea/>
     }
     // 기본값 반환 추가
     return null;
