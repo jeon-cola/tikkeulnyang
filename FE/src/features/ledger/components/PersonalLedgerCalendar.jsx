@@ -11,7 +11,7 @@ export default function PersonalLedgerCalendar() {
 
   const handleDateClick = (date) => {
     const formatted = date.toISOString().split("T")[0];
-    // 같은 날짜를 클릭하면 토글하여 닫기
+    // 같은 날짜를 클릭하면 토글해서 닫기
     if (selectedDate === formatted) {
       setSelectedDate(null);
     } else {

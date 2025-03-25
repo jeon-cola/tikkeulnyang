@@ -57,8 +57,6 @@ export default function LedgerHeader() {
               </button>
             </div>
           </Box>
-
-          <Box></Box>
         </>
       )}
     </div>
