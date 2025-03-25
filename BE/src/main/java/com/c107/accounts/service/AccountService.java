@@ -118,7 +118,7 @@ public class AccountService {
             }
         }
         logger.info("수동 계좌 동기화 완료");
-        return accountRepository.findAll();
+        return accountRepository.findByUserId(loggedInUserId);
     }
 
     /**
