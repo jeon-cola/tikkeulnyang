@@ -2,8 +2,8 @@ import '/src/index.css'
 
 export default function Login() {
     function KakaoLogin() {
-        window.location.href = "https://j12c107.p.ssafy.io/api/auth/login"
-        // window.location.href = "http://localhost:8080/api/auth/login"
+        // window.location.href = "https://j12c107.p.ssafy.io/api/auth/login"
+        window.location.href = "http://localhost:8080/api/auth/login"
     }
     
     return(

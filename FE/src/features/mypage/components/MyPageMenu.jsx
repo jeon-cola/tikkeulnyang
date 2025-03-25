@@ -27,25 +27,28 @@ export default function MyPageMenu() {
   const nav = useNavigate();
 
   useEffect(() => {
-    const chanllengHistory = async() => {
-      try {
-        const response = await Api.get("/api/challenge/history");
-        console.log(response);
-      } catch (error) {
-        console.log(error);
-      }
-      chanllengHistory();
-    }
+    // const fetchChallengeHistory  = async() => {
+    //   try {
+    //     // const response = await Api.get("/api/challenge/history");
+    //     const response = await axios.get("http://localhost:8080/api/challenge/history",{
+    //       withCredentials:true
+    //     })
+    //     console.log(response);
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // }
+    // fetchChallengeHistory ();
   },[]);
 
   // 로그아웃 핸들러
   async function logoutHandler(e) {
     e.preventDefault();
       try {
-        // const response = await axios.post("http://localhost:8080/api/auth/logout",{},{
-        //   withCredentials:true
-        // })
-        const response = await Api.post("api/auth/logout")
+        const response = await axios.post("http://localhost:8080/api/auth/logout",{},{
+          withCredentials:true
+        })
+        // const response = await Api.post("api/auth/logout")
         if (response.data.status === "success") {
           dispatch(resetUser())
           window.alert("로그아웃 성공")
