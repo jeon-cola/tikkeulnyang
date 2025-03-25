@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -135,32 +136,51 @@ public class PaymentHistoryService {
         // 현재는 카드 거래에서 수입을 처리하지 않음 (필요시 변경)
         int totalIncome = 0;
 
-        List<PaymentHistoryResponseDto.Transaction> transactions = paymentHistories.stream()
-                .map(p -> {
-                    int transactionAmount = Math.abs(Integer.parseInt(p.getTransactionBalance().trim().replace(",", "")));
-                    return PaymentHistoryResponseDto.Transaction.builder()
-                            .paymentHistoryId(p.getPaymentHistoryId())
-                            .date(p.getTransactionDate().toString())
-                            .categoryId(p.getCategoryId())
-                            .categoryName(p.getCategoryName())
-                            .merchantId(p.getMerchantId())
-                            .merchantName(p.getMerchantName())
-                            .transactionBalance(transactionAmount)
-                            .amount(transactionAmount)
-                            .category(p.getCategoryName())
-                            .description(p.getMerchantName())
-                            .transactionUniqueNo(p.getTransactionUniqueNo())
-                            .isWaste(p.getIsWaste())
-                            .build();
-                })
-                .collect(Collectors.toList());
+        List<Map<String, Object>> transactionsMap = new ArrayList<>();
+
+        // Map을 사용하여 categoryId를 Integer로 직접 처리
+        for (PaymentHistoryEntity p : paymentHistories) {
+            try {
+                int transactionAmount = Math.abs(Integer.parseInt(p.getTransactionBalance().trim().replace(",", "")));
+                Map<String, Object> transaction = new HashMap<>();
+
+                // 기본 필드 설정
+                transaction.put("paymentHistoryId", p.getPaymentHistoryId());
+                transaction.put("date", p.getTransactionDate().toString());
+                transaction.put("categoryName", p.getCategoryName());
+                transaction.put("merchantId", p.getMerchantId());
+                transaction.put("merchantName", p.getMerchantName());
+                transaction.put("transactionBalance", transactionAmount);
+                transaction.put("amount", transactionAmount);
+                transaction.put("category", p.getCategoryName());
+                transaction.put("description", p.getMerchantName());
+                transaction.put("transactionUniqueNo", p.getTransactionUniqueNo());
+                transaction.put("is_waste", p.getIsWaste());
+
+                // categoryId 처리 - 숫자로 변환 시도
+                if (p.getCategoryId() != null && !p.getCategoryId().isEmpty()) {
+                    try {
+                        transaction.put("categoryId", Integer.parseInt(p.getCategoryId()));
+                    } catch (NumberFormatException e) {
+                        // 숫자로 변환 불가능한 경우 원래 값 사용
+                        transaction.put("categoryId", p.getCategoryId());
+                    }
+                } else {
+                    transaction.put("categoryId", null);
+                }
+
+                transactionsMap.add(transaction);
+            } catch (Exception e) {
+                log.error("결제 내역 처리 중 오류: {}", p.getPaymentHistoryId(), e);
+            }
+        }
 
         return PaymentHistoryResponseDto.builder()
                 .year(year)
                 .month(month)
                 .totalSpent(totalSpent)
                 .totalIncome(totalIncome)
-                .transactions(transactions)
+                .transactionsMap(transactionsMap) // Map 리스트 직접 사용
                 .build();
     }
 
@@ -169,6 +189,7 @@ public class PaymentHistoryService {
             String email,
             String date
     ) {
+        // 기존 코드 유지...
         // 익명 사용자 체크
         if ("anonymousUser".equals(email)) {
             throw new RuntimeException("로그인이 필요한 서비스입니다.");
@@ -195,7 +216,21 @@ public class PaymentHistoryService {
                 .map(p -> {
                     int transactionAmount = Math.abs(Integer.parseInt(p.getTransactionBalance().trim().replace(",", "")));
                     Map<String, Object> transaction = new HashMap<>();
-                    transaction.put("categoryId", p.getCategoryId());
+
+                    // 여기만 수정: categoryId를 Integer로 변환 시도
+                    try {
+                        if (p.getCategoryId() != null && !p.getCategoryId().isEmpty()) {
+                            // categoryId를 Integer로 변환
+                            transaction.put("categoryId", Integer.parseInt(p.getCategoryId()));
+                        } else {
+                            // null이거나 빈 문자열이면 null로 설정
+                            transaction.put("categoryId", null);
+                        }
+                    } catch (NumberFormatException e) {
+                        // 숫자 형식이 아니면 원본 문자열 그대로 유지
+                        transaction.put("categoryId", p.getCategoryId());
+                    }
+
                     transaction.put("category", p.getCategoryName());
                     transaction.put("merchantName", p.getMerchantName());
                     transaction.put("description", p.getMerchantName());

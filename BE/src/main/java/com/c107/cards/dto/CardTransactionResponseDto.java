@@ -30,6 +30,9 @@ public class CardTransactionResponseDto {
     public static class Transaction {
         private String date;
 
+        @JsonProperty("category_id")
+        private String categoryId;
+
         @JsonProperty("merchant_name")
         private String merchantName;
 
@@ -45,6 +48,7 @@ public class CardTransactionResponseDto {
         public static Transaction fromEntity(PaymentHistoryEntity entity) {
             return Transaction.builder()
                     .date(entity.getTransactionDate().toString())
+                    .categoryId(entity.getCategoryId())
                     .merchantName(entity.getMerchantName())
                     .categoryName(entity.getCategoryName())
                     .transactionBalance(Integer.parseInt(entity.getTransactionBalance().trim().replace(",", "")))

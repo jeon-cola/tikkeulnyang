@@ -23,6 +23,7 @@ public class PaymentHistoryResponseDto {
     private String status;
     private String message;
     private List<Transaction> transactions;
+    private List<Map<String, Object>> transactionsMap;
     private Integer paymentHistoryId;
     private String categoryId;
     @JsonProperty("is_waste")
