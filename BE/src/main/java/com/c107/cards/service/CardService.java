@@ -6,8 +6,12 @@ import com.c107.cards.entity.CardInfoEntity;
 import com.c107.cards.repository.CardInfoRepository;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
+import com.c107.paymenthistory.entity.BudgetCategoryEntity;
 import com.c107.paymenthistory.entity.CardEntity;
+import com.c107.paymenthistory.entity.CategoryEntity;
 import com.c107.paymenthistory.entity.PaymentHistoryEntity;
+import com.c107.paymenthistory.repository.BudgetCategoryRepository;
+import com.c107.paymenthistory.repository.CategoryRepository;
 import com.c107.paymenthistory.repository.PaymentHistoryRepository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
@@ -35,6 +39,8 @@ public class CardService {
 
     private final CardInfoRepository cardInfoRepository;
     private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
+    private final BudgetCategoryRepository budgetCategoryRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -255,9 +261,55 @@ public class CardService {
                 String billStatementsYn = (String) transaction.get("billStatementsYn");
                 String billStatementsStatus = (String) transaction.get("billStatementsStatus");
 
+                // 가맹점명(merchantName)으로 카테고리 매핑 시도
+                String finalCategoryId = categoryId; // 기본값은 API에서 받은 categoryId
+
+                try {
+                    if (merchantName != null && !merchantName.isEmpty()) {
+                        // merchantName과 일치하는 CategoryEntity를 검색
+                        List<CategoryEntity> matchingCategories = categoryRepository.findAllByMerchantName(merchantName);
+
+                        if (!matchingCategories.isEmpty()) {
+                            // 일치하는 가맹점을 찾았으면 첫 번째 카테고리의 budget_category_id를 사용
+                            CategoryEntity matchingCategory = matchingCategories.get(0);
+                            Integer budgetCategoryId = matchingCategory.getBudgetCategory();
+
+                            if (budgetCategoryId != null) {
+                                finalCategoryId = budgetCategoryId.toString();
+                                categoryName = matchingCategory.getCategoryName(); // 카테고리 이름도 업데이트
+                                logger.info("가맹점 '{}' 매핑: categoryId {} -> budgetCategoryId {}",
+                                        merchantName, categoryId, finalCategoryId);
+                            }
+                        } else {
+                            // 일치하는 가맹점이 없으면 "결제" 카테고리의 budget_category_id를 가져옴
+                            // 수정: findByBudgetCategoryName -> findByCategoryName
+                            Optional<BudgetCategoryEntity> defaultCategory = budgetCategoryRepository.findByCategoryName("결제");
+
+                            if (defaultCategory.isPresent()) {
+                                finalCategoryId = defaultCategory.get().getBudgetCategoryId().toString();
+                                logger.info("가맹점 '{}' 매핑 없음, 기본 '결제' 카테고리 사용: budgetCategoryId {}",
+                                        merchantName, finalCategoryId);
+                            } else {
+                                // "결제" 카테고리가 없으면 첫 번째 카테고리 사용
+                                List<BudgetCategoryEntity> allBudgetCategories = budgetCategoryRepository.findAll();
+                                if (!allBudgetCategories.isEmpty()) {
+                                    BudgetCategoryEntity firstCategory = allBudgetCategories.get(0);
+                                    finalCategoryId = firstCategory.getBudgetCategoryId().toString();
+                                    logger.info("'결제' 카테고리를 찾을 수 없음, 첫 번째 카테고리 사용: budgetCategoryId {}", finalCategoryId);
+                                } else {
+                                    logger.warn("사용 가능한 예산 카테고리가 없음, 원본 categoryId 유지: {}", categoryId);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("카테고리 매핑 중 오류 발생: {}", e.getMessage());
+                    // 오류 발생 시 원본 categoryId 유지
+                }
+
                 // categoryId가 null이면 기본값 설정 (NOT NULL 제약조건 때문)
-                if (categoryId == null || categoryId.trim().isEmpty()) {
-                    categoryId = "UNKNOWN";
+                if (finalCategoryId == null || finalCategoryId.trim().isEmpty()) {
+                    finalCategoryId = "UNKNOWN";
                     logger.warn("거래에 categoryId가 없어 기본값 설정: {}", transactionUniqueNo);
                 }
 
@@ -284,10 +336,13 @@ public class CardService {
 
                 // 새 거래내역 생성
                 PaymentHistoryEntity paymentHistory = PaymentHistoryEntity.builder()
-                        .categoryId(categoryId)
+                        .categoryId(finalCategoryId) // 매핑된 budgetCategoryId 또는 기본 "결제" 카테고리 ID
+                        .categoryName(categoryName)
+                        .merchantId(merchantId)
                         .merchantName(merchantName)
                         .transactionDate(transactionDate)
                         .transcationTime(transactionTimeStr)
+                        .transactionType("") // 필요한 경우 채워넣기
                         .transactionBalance(transactionBalance)
                         .isWaste(0) // 기본값
                         .transactionUniqueNo(transactionUniqueNo)
@@ -296,6 +351,8 @@ public class CardService {
                         .cardIssuerCode(cardIssuerCode)
                         .cardIssuerName(cardIssuerName)
                         .cardStatus(cardStatus)
+                        .billStatementsYn(billStatementsYn)
+                        .billStatementsStatus(billStatementsStatus)
                         .cardId(card.getCardId())
                         .build();
 
