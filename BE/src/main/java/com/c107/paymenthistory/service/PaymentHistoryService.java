@@ -130,17 +130,29 @@ public class PaymentHistoryService {
         List<PaymentHistoryEntity> paymentHistories = paymentHistoryRepository
                 .findByCardIdInAndTransactionDateBetween(userCardIds, startDate, endDate);
 
+        // 카드 거래는 모두 지출로 처리
         int totalSpent = calculateTotalAmount(paymentHistories, false);
-        int totalIncome = calculateTotalAmount(paymentHistories, true);
+        // 현재는 카드 거래에서 수입을 처리하지 않음 (필요시 변경)
+        int totalIncome = 0;
 
         List<PaymentHistoryResponseDto.Transaction> transactions = paymentHistories.stream()
-                .map(p -> PaymentHistoryResponseDto.Transaction.builder()
-                        .date(p.getTransactionDate().toString())
-                        .categoryName(p.getCategoryName())
-                        .merchantName(p.getMerchantName())
-                        .transactionBalance(Math.abs(Integer.parseInt(p.getTransactionBalance())))
-                        .isWaste(p.getIsWaste())
-                        .build())
+                .map(p -> {
+                    int transactionAmount = Math.abs(Integer.parseInt(p.getTransactionBalance().trim().replace(",", "")));
+                    return PaymentHistoryResponseDto.Transaction.builder()
+                            .paymentHistoryId(p.getPaymentHistoryId())
+                            .date(p.getTransactionDate().toString())
+                            .categoryId(p.getCategoryId())
+                            .categoryName(p.getCategoryName())
+                            .merchantId(p.getMerchantId())
+                            .merchantName(p.getMerchantName())
+                            .transactionBalance(transactionAmount)
+                            .amount(transactionAmount)
+                            .category(p.getCategoryName())
+                            .description(p.getMerchantName())
+                            .transactionUniqueNo(p.getTransactionUniqueNo())
+                            .isWaste(p.getIsWaste())
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         return PaymentHistoryResponseDto.builder()
@@ -153,10 +165,15 @@ public class PaymentHistoryService {
     }
 
     @Transactional(readOnly = true)
-    public PaymentHistoryResponseDto getDailyConsumption(
+    public Map<String, Object> getDailyConsumption(
             String email,
             String date
     ) {
+        // 익명 사용자 체크
+        if ("anonymousUser".equals(email)) {
+            throw new RuntimeException("로그인이 필요한 서비스입니다.");
+        }
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
         Integer userId = user.getUserId();
@@ -172,31 +189,49 @@ public class PaymentHistoryService {
                 .findByCardIdInAndTransactionDate(userCardIds, targetDate);
 
         int totalSpent = calculateTotalAmount(paymentHistories, false);
-        int totalIncome = calculateTotalAmount(paymentHistories, true);
+        int totalIncome = 0; // 카드 거래는 모두 지출로 처리
 
-        List<PaymentHistoryResponseDto.Transaction> transactions = paymentHistories.stream()
-                .map(p -> PaymentHistoryResponseDto.Transaction.builder()
-                        .category(p.getCategoryName())
-                        .amount(-Math.abs(Integer.parseInt(p.getTransactionBalance())))
-                        .description(p.getMerchantName())
-                        .build())
+        List<Map<String, Object>> transactions = paymentHistories.stream()
+                .map(p -> {
+                    int transactionAmount = Math.abs(Integer.parseInt(p.getTransactionBalance().trim().replace(",", "")));
+                    Map<String, Object> transaction = new HashMap<>();
+                    transaction.put("categoryId", p.getCategoryId());
+                    transaction.put("category", p.getCategoryName());
+                    transaction.put("merchantName", p.getMerchantName());
+                    transaction.put("description", p.getMerchantName());
+                    transaction.put("transactionBalance", transactionAmount);
+                    transaction.put("is_waste", p.getIsWaste());
+                    return transaction;
+                })
                 .collect(Collectors.toList());
 
-        return PaymentHistoryResponseDto.builder()
-                .date(date)
-                .totalSpent(totalSpent)
-                .totalIncome(totalIncome)
-                .transactions(transactions)
-                .build();
+        Map<String, Object> response = new HashMap<>();
+        response.put("date", date);
+        response.put("totalIncome", totalIncome);
+        response.put("totalSpent", totalSpent);
+        response.put("transactions", transactions);
+
+        return response;
     }
 
     private int calculateTotalAmount(List<PaymentHistoryEntity> paymentHistories, boolean isIncome) {
-        return paymentHistories.stream()
-                .filter(p -> isIncome ?
-                        Integer.parseInt(p.getTransactionBalance()) > 0 :
-                        Integer.parseInt(p.getTransactionBalance()) < 0)
-                .mapToInt(p -> Math.abs(Integer.parseInt(p.getTransactionBalance())))
-                .sum();
+        int total = 0;
+        for (PaymentHistoryEntity payment : paymentHistories) {
+            try {
+                int amount = Math.abs(Integer.parseInt(payment.getTransactionBalance().trim().replace(",", "")));
+
+                // 카드 거래는 기본적으로 지출로 처리 (수입이 아닌 경우)
+                if (!isIncome) {
+                    total += amount;
+                }
+                // 수입 계산 로직이 필요하다면 여기에 추가 (현재는 카드 거래를 모두 지출로 간주)
+
+            } catch (Exception e) {
+                // 로그 추가
+                log.error("금액 변환 중 오류 발생: {}", payment.getTransactionBalance(), e);
+            }
+        }
+        return total;
     }
 
     // 낭비 상태 토글
