@@ -10,7 +10,7 @@ export default function HomeMain() {
     useEffect(()=> {
         const fetchData = async ()=> {
             try {
-                const response = await axios.get("http://localhost:8080/api/user/me", {
+                const response = await Api.get("/api/user/me", {
                     withCredentials:true
                 })
                 console.log(response.data)
@@ -29,8 +29,12 @@ export default function HomeMain() {
     },[])
     return (
         <>
-            {email}
+        <p>
             {nickName}
+        </p>
+        <p>
+            {email}
+        </p>
         </>
     )
 }
