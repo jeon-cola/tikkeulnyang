@@ -56,9 +56,13 @@ public class PaymentHistoryResponseDto {
     @Builder
     public static class Transaction {
         private String date;
+        private String categoryId;
         private String categoryName;
         private String merchantName;
+        private String merchantId;
         private Integer transactionBalance;
+        private Integer paymentHistoryId;
+        private String transactionUniqueNo;
         private String category;
         private Integer amount;
         private String description;
