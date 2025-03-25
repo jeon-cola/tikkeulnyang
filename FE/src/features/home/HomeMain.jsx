@@ -10,9 +10,7 @@ export default function HomeMain() {
     useEffect(()=> {
         const fetchData = async ()=> {
             try {
-                const response = await Api.get("/api/user/me", {
-                    withCredentials:true
-                })
+                const response = await Api.get("/api/user/me")
                 console.log(response.data)
                 if (response.data.body.status === "success") {
                     const userData = response.data.body.data
