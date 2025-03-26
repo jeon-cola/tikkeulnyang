@@ -1,5 +1,8 @@
 package com.c107.challenge.service;
 
+import com.c107.accounts.entity.ServiceTransaction;
+import com.c107.accounts.repository.AccountTransactionRepository;
+import com.c107.accounts.service.AccountService;
 import com.c107.challenge.dto.ChallengeResponseDto;
 import com.c107.challenge.dto.CreateChallengeRequest;
 import com.c107.challenge.entity.ChallengeEntity;
@@ -10,8 +13,6 @@ import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
-import com.c107.accounts.entity.ServiceTransaction;
-import com.c107.accounts.repository.AccountTransactionRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -21,12 +22,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +41,8 @@ public class ChallengeService {
     private final UserChallengeRepository userChallengeRepository;
     private final UserRepository userRepository;
     private final AccountTransactionRepository accountTransactionRepository;
+    // AccountService 주입 (서비스 계좌 ID를 가져오기 위해)
+    private final AccountService accountService;
 
     // 챌린지 생성 (로그인한 유저 정보 자동 등록)
     @Transactional
@@ -110,10 +115,23 @@ public class ChallengeService {
         return challenges.map(this::mapToDto);
     }
 
-    // 로그인한 사용자 이메일 조회
+    // 인증 정보에서 로그인한 사용자 이메일 조회 (UserDetails 혹은 String으로 처리)
     private String getAuthenticatedUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getName();
+        if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal() == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
+        } else if (principal instanceof String) {
+            String username = (String) principal;
+            if ("anonymousUser".equals(username)) {
+                throw new CustomException(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다.");
+            }
+            return username;
+        }
+        throw new CustomException(ErrorCode.UNAUTHORIZED, "유효하지 않은 사용자 정보입니다.");
     }
 
     // 로그인한 User 객체 조회
@@ -176,6 +194,7 @@ public class ChallengeService {
                 .activeFlag(entity.getActiveFlag())
                 .challengeCategory(entity.getChallengeCategory())
                 .createdAt(entity.getCreatedAt())
+                .limitAmount(entity.getLimitAmount())
                 .build();
     }
 
@@ -222,8 +241,9 @@ public class ChallengeService {
         userChallengeRepository.save(participation);
         logger.info("챌린지 참여 기록 생성됨: {}", participation);
 
-        // 거래내역 기록 (챌린지 참여)
+        // 거래내역 기록 (챌린지 참여) - AccountService의 public getServiceAccountId() 사용
         ServiceTransaction joinTx = ServiceTransaction.builder()
+                .accountId(accountService.getServiceAccountId())
                 .userId(user.getUserId())
                 .transactionDate(LocalDateTime.now())
                 .category("CHALLENGE_JOIN")
@@ -265,6 +285,7 @@ public class ChallengeService {
 
         // 거래내역 기록 (챌린지 참여 취소 환불)
         ServiceTransaction cancelTx = ServiceTransaction.builder()
+                .accountId(accountService.getServiceAccountId())
                 .userId(user.getUserId())
                 .transactionDate(LocalDateTime.now())
                 .category("CHALLENGE_CANCEL_REFUND")
@@ -277,4 +298,12 @@ public class ChallengeService {
         logger.info("챌린지 취소 환불 거래내역 기록됨: {}", cancelTx);
     }
 
+    @Transactional(readOnly = true)
+    public List<ChallengeResponseDto> getParticipatedChallenges() {
+        User user = getAuthenticatedUser();
+        List<UserChallengeEntity> participations = userChallengeRepository.findByUserIdAndStatus(user.getUserId(), "진행중");
+        return participations.stream()
+                .map(participation -> mapToDto(participation.getChallenge()))
+                .collect(Collectors.toList());
+    }
 }

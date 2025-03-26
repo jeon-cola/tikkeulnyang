@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/challenge")
@@ -75,6 +76,12 @@ public class ChallangeController {
     public ResponseEntity<String> cancelChallengeParticipation(@PathVariable Integer challengeId) {
         challengeService.cancelChallengeParticipation(challengeId);
         return ResponseEntity.ok("챌린지 참여 취소가 완료되었습니다.");
+    }
+
+    @GetMapping("/participated")
+    public ResponseEntity<List<ChallengeResponseDto>> getParticipatedChallenges() {
+        List<ChallengeResponseDto> participatedChallenges = challengeService.getParticipatedChallenges();
+        return ResponseEntity.ok(participatedChallenges);
     }
 
 }
