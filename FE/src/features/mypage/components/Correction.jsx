@@ -3,6 +3,7 @@ import CustomBackHeader from "../../../components/CustomBackHeader"
 import baseImg from "/userProfile.png"
 import { useSelector } from "react-redux"
 import axios from "axios"
+import Api from "../../../services/Api"
 
 export default function Correction() {
     const [userImg, setUserImg] = useState(baseImg)
@@ -15,9 +16,10 @@ export default function Correction() {
     useEffect(()=> {
         const fetchData = async () => {
                 try {
-                const response = await axios.get("http://localhost:8080/api/user",{
-                    withCredentials:true
-                })
+                // const response = await axios.get("http://localhost:8080/api/user",{
+                //     withCredentials:true
+                // })
+                const response = await Api.get("api/user")
                 console.log(response.data)
                 if (response.data.status === "success") {
                     const userData = response.data
