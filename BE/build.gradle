@@ -15,18 +15,16 @@ java {
 
 repositories {
 	mavenCentral()
+	// Spring Cloud AWS 관련 아티팩트가 있을 수 있으므로 추가
+	maven { url "https://repo.spring.io/release" }
 }
 
 dependencies {
-
+	// 기본 스타터 및 공통 의존성
 	implementation 'org.springframework.boot:spring-boot-starter'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
-
+	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.674'
 
 	// Spring Boot Starters
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -35,7 +33,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
-	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
 	// Database
 	runtimeOnly 'com.mysql:mysql-connector-j'
@@ -43,11 +40,11 @@ dependencies {
 	// DevTools (핫 리로드 기능)
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-	// Lombok
+	// Lombok (중복 선언 제거 - 버전만 한 번 지정)
 	compileOnly 'org.projectlombok:lombok:1.18.30'
 	annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
-	// Testing
+	// Testing (중복 선언 제거)
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
@@ -62,7 +59,6 @@ dependencies {
 	implementation 'org.glassfish:jakarta.el:4.0.2'
 
 	implementation 'org.slf4j:jul-to-slf4j:2.0.7'
-
 }
 
 tasks.named('test') {
