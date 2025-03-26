@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface BucketRepository extends JpaRepository<BucketEntity, Integer> {
     List<BucketEntity> findByUserId(Integer userId);
     Optional<BucketEntity> findByBucketIdAndUserId(Integer bucketId, Integer userId);
+    Optional<BucketEntity> findTopByUserIdOrderByCreatedAtDesc(Integer userId);
+
 }
