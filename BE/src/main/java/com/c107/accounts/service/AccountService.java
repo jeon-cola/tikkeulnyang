@@ -443,7 +443,7 @@ public class AccountService {
     /**
      * 서비스 계좌의 ID를 가져오는 헬퍼 메서드
      */
-    private Integer getServiceAccountId() {
+    public Integer getServiceAccountId() {
         Optional<Account> serviceAccount = accountRepository.findByUserIdIsNullAndAccountType("SERVICE");
         if (serviceAccount.isPresent()) {
             return serviceAccount.get().getAccountId();
