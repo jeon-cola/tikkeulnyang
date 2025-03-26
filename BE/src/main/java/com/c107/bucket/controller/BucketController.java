@@ -5,9 +5,11 @@ import com.c107.bucket.enums.DayOfWeek;
 import com.c107.bucket.service.BucketService;
 import com.c107.common.util.ResponseUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -83,4 +85,16 @@ public class BucketController {
         bucketService.deleteBucket(email, bucketId);
         return ResponseUtil.success("버킷리스트 삭제 성공", null);
     }
+
+    // 계좌 이체
+    @PostMapping("/saving")
+    public ResponseEntity<Map<String, Object>> processBucketSaving(
+            @AuthenticationPrincipal String email,
+            @RequestBody BucketSavingDto.Request request) {
+
+        BucketSavingDto.Response response = bucketService.processBucketSaving(email, request);
+
+        return ResponseUtil.success("저축이 성공적으로 완료되었습니다.", response);
+    }
+
 }
