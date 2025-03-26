@@ -45,10 +45,10 @@ export default function MyPageMenu() {
   async function logoutHandler(e) {
     e.preventDefault();
       try {
-        const response = await axios.post("http://localhost:8080/api/auth/logout",{},{
-          withCredentials:true
-        })
-        // const response = await Api.post("api/auth/logout")
+        // const response = await axios.post("http://localhost:8080/api/auth/logout",{},{
+        //   withCredentials:true
+        // })
+        const response = await Api.post("api/auth/logout")
         if (response.data.status === "success") {
           dispatch(resetUser())
           window.alert("로그아웃 성공")
