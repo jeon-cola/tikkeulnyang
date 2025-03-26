@@ -404,5 +404,54 @@ public class ChallengeService {
                 .collect(Collectors.toList());
     }
 
+    // 챌린지 종료 후, 성공한 참여자에게 환불 처리 (예: 총 예치금 풀을 성공자에게 나눠줌)
+    @Transactional
+    public void settleChallenge(Integer challengeId) {
+        // 챌린지가 종료되었는지 확인
+        ChallengeEntity challenge = findChallengeById(challengeId);
+        if (!challenge.getEndDate().isBefore(LocalDate.now())) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "챌린지가 아직 종료되지 않았습니다.");
+        }
+        // 해당 챌린지의 모든 참여 내역(상태 관계없이)
+        List<UserChallengeEntity> allParticipants = userChallengeRepository.findByChallenge_ChallengeId(challengeId);
+        if (allParticipants.isEmpty()) {
+            throw new CustomException(ErrorCode.NOT_FOUND, "참여 기록이 없습니다.");
+        }
+        // 성공한 참여자 선별 (상태가 "성공")
+        List<UserChallengeEntity> successfulParticipants = allParticipants.stream()
+                .filter(p -> "성공".equals(p.getStatus()))
+                .collect(Collectors.toList());
+        if (successfulParticipants.isEmpty()) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "성공한 참여자가 없어 환불할 수 없습니다.");
+        }
+        // 총 예치금 풀 계산
+        int totalPool = allParticipants.stream()
+                .mapToInt(UserChallengeEntity::getDepositAmount)
+                .sum();
+        // 성공자 1인당 환불 금액
+        int refundPerParticipant = totalPool / successfulParticipants.size();
+
+        // 각 성공자에게 환불 처리
+        for (UserChallengeEntity participation : successfulParticipants) {
+            User user = userRepository.findById(participation.getUserId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "참여자의 사용자 정보를 찾을 수 없습니다."));
+            user.setDeposit(user.getDeposit() + refundPerParticipant);
+            userRepository.save(user);
+            // 환불 거래내역 기록
+            ServiceTransaction refundTx = ServiceTransaction.builder()
+                    .accountId(accountService.getServiceAccountId())
+                    .userId(user.getUserId())
+                    .transactionDate(LocalDateTime.now())
+                    .category("CHALLENGE_SETTLE_REFUND")
+                    .transactionType("REFUND")
+                    .transactionBalance(refundPerParticipant)
+                    .transactionAfterBalance(user.getDeposit())
+                    .description("챌린지 [" + challenge.getChallengeName() + "] 성공 환불")
+                    .build();
+            accountTransactionRepository.save(refundTx);
+            logger.info("환불 거래내역 기록됨: {}", refundTx);
+        }
+    }
+
 
 }
