@@ -16,4 +16,6 @@ public interface UserChallengeRepository extends JpaRepository<UserChallengeEnti
 
     List<UserChallengeEntity> findByUserIdAndStatusNot(Integer userId, String status);
 
+    List<UserChallengeEntity> findByChallenge_ChallengeId(Integer challengeId);
+
 }
