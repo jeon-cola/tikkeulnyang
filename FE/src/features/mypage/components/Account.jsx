@@ -14,7 +14,6 @@ export default function Account() {
     });
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
-    const nav = useNavigate();
 
     function handleBankSelect(bank) {
         setAccount({
@@ -35,7 +34,6 @@ export default function Account() {
             const response = await Api.post(`http://localhost:8080/api/account/set-representative?accountNo=${account.bankImformation.accountNumber}`)
             console.log(response.data)
             window.alert("대표계좌로 설정되었습니다")
-            nav("/mypage")
         }
         fetchData();
     }
