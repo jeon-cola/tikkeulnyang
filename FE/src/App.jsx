@@ -12,10 +12,10 @@ function App() {
   useEffect(()=> {
       const fetchData = async ()=> {
           try {
-              // const response = await Api.get("/api/user/me")
-              const response = await axios.get("http://localhost:8080/api/user/me",{
-                  withCredentials:true
-              })
+              const response = await Api.get("/api/user/me")
+              // const response = await axios.get("http://localhost:8080/api/user/me",{
+              //     withCredentials:true
+              // })
               if (response.data.body.status === "success") {
                   const userData = response.data.body.data
                   dispatch(setEmail(userData.email))
@@ -27,6 +27,7 @@ function App() {
       }
       fetchData();
   },[dispatch])
+  
   return (
     <>
       <Router />
