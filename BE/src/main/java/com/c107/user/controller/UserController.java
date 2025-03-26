@@ -64,7 +64,8 @@ public class UserController {
                 "id", user.getUserId(),
                 "email", user.getEmail(),
                 "nickname", user.getNickname(),
-                "role", user.getRole()
+                "role", user.getRole(),
+                "deposit", user.getDeposit()
         );
         return ResponseEntity.ok(ResponseUtil.success("현재 사용자 정보", responseBody));
     }
