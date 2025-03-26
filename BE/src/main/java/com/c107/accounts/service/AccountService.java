@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -449,5 +450,24 @@ public class AccountService {
             return serviceAccount.get().getAccountId();
         }
         throw new CustomException(ErrorCode.NOT_FOUND, "서비스 계좌가 등록되어 있지 않습니다.");
+    }
+
+    // 계좌 조회
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getAccountList(Integer userId) {
+        List<Account> accounts = accountRepository.findByUserId(userId);
+
+        return accounts.stream()
+                .map(account -> {
+                    Map<String, Object> accountMap = new HashMap<>();
+                    accountMap.put("account_id", account.getAccountId());
+                    accountMap.put("bank_name", account.getBankName());
+                    accountMap.put("account_number", account.getAccountNumber());
+                    accountMap.put("balance", account.getBalance());
+                    accountMap.put("account_type", account.getAccountType());
+                    accountMap.put("representative", account.isRepresentative());
+                    return accountMap;
+                })
+                .collect(Collectors.toList());
     }
 }

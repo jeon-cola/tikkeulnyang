@@ -1,8 +1,7 @@
 package com.c107.bucket.controller;
 
-import com.c107.bucket.dto.BucketCategoryResponseDto;
-import com.c107.bucket.dto.BucketListResponseDto;
-import com.c107.bucket.dto.BucketResponseDto;
+import com.c107.bucket.dto.*;
+import com.c107.bucket.enums.DayOfWeek;
 import com.c107.bucket.service.BucketService;
 import com.c107.common.util.ResponseUtil;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +35,35 @@ public class BucketController {
         BucketResponseDto.Response response = bucketService.createBucket(email, request);
 
         return ResponseUtil.success("버킷리스트 항목이 성공적으로 생성되었습니다.", response);
+    }
+
+    // 저축할 금액과 날짜 선택
+    @PostMapping("/date")
+    public ResponseEntity<Map<String, Object>> setBucketDate(
+            @AuthenticationPrincipal String email,
+            @RequestBody BucketDateDto.Request request) {
+
+        BucketDateDto.Response response = bucketService.setBucketSavingConfig(email, request);
+
+        return ResponseUtil.success("저축 설정이 성공적으로 업데이트되었습니다.", response);
+    }
+
+    // 요일 목록api
+    @GetMapping("/days")
+    public ResponseEntity<Map<String, Object>> getDaysOfWeek() {
+        List<String> daysOfWeek = DayOfWeek.getAllKoreanNames();
+        return ResponseUtil.success("요일 목록 조회 성공", Map.of("days", daysOfWeek));
+    }
+
+    //
+    @PostMapping("/account")
+    public ResponseEntity<Map<String, Object>> setBucketAccounts(
+            @AuthenticationPrincipal String email,
+            @RequestBody BucketAccountDto.Request request) {
+
+        BucketAccountDto.Response response = bucketService.setBucketAccounts(email, request);
+
+        return ResponseUtil.success("계좌 설정이 성공적으로 업데이트되었습니다.", response);
     }
 
 

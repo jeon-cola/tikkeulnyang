@@ -4,6 +4,7 @@ import com.c107.accounts.dto.DepositChargeRequest;
 import com.c107.accounts.service.AccountService;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
+import com.c107.common.util.ResponseUtil;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/account")
@@ -87,5 +89,17 @@ public class AccountController {
             throw new CustomException(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다.");
         }
         return (String) authentication.getPrincipal();
+    }
+
+    // 계좌 조회
+    @GetMapping("/list")
+    public ResponseEntity<Map<String, Object>> getAccountList(Authentication authentication) {
+        String email = getEmailFromAuthentication(authentication);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
+        Integer userId = user.getUserId();
+
+        List<Map<String, Object>> accountList = accountService.getAccountList(userId);
+        return ResponseUtil.success("계좌 목록 조회 성공", Map.of("accounts", accountList));
     }
 }
