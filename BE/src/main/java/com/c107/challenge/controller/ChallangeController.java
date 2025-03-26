@@ -99,5 +99,11 @@ public class ChallangeController {
         return ResponseEntity.ok(pastChallenges);
     }
 
+    // 챌린지 종료 후 환불 정산 엔드포인트
+    @PostMapping("/{challengeId}/settle")
+    public ResponseEntity<String> settleChallenge(@PathVariable Integer challengeId) {
+        challengeService.settleChallenge(challengeId);
+        return ResponseEntity.ok("챌린지 환불 정산이 완료되었습니다.");
+    }
 
 }
