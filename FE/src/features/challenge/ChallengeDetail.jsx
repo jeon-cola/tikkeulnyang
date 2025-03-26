@@ -47,7 +47,7 @@ export default function ChallengeDetail() {
 
   return (
     <>
-      <CustomHeader title="챌린지 상세" />
+      <CustomHeader title="챌린지 상세" showCreateButton="true" />
       <div className="flex flex-col items-start p-[30px_20px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
         {isLoading ? (
           <></>
