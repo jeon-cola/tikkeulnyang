@@ -3,8 +3,10 @@ package com.c107.challenge.service;
 import com.c107.accounts.entity.ServiceTransaction;
 import com.c107.accounts.repository.AccountTransactionRepository;
 import com.c107.accounts.service.AccountService;
+import com.c107.challenge.dto.ChallengeDetailResponseDto;
 import com.c107.challenge.dto.ChallengeResponseDto;
 import com.c107.challenge.dto.CreateChallengeRequest;
+import com.c107.challenge.dto.PastChallengeResponseDto;
 import com.c107.challenge.entity.ChallengeEntity;
 import com.c107.challenge.entity.UserChallengeEntity;
 import com.c107.challenge.repository.ChallengeRepository;
@@ -306,4 +308,101 @@ public class ChallengeService {
                 .map(participation -> mapToDto(participation.getChallenge()))
                 .collect(Collectors.toList());
     }
+
+    /**
+     * 챌린지 상세조회
+     * - 챌린지 기본 정보
+     * - 참가자 수
+     * - 각 참가자의 과거 챌린지 성공률을 계산하여 아래 구간별 분포 산출:
+     *      100~85%, 84~50%, 49~25%, 24~0%
+     * - 전체 참가자의 평균 성공률 산출
+     */
+    @Transactional(readOnly = true)
+    public ChallengeDetailResponseDto getChallengeDetail(Integer challengeId) {
+        // 챌린지 기본 정보 조회
+        ChallengeEntity challenge = findChallengeById(challengeId);
+        // 현재 이 챌린지에 참가한(참가 상태가 "진행중") 모든 참가자 조회
+        List<UserChallengeEntity> participants = userChallengeRepository.findByChallenge_ChallengeIdAndStatus(challengeId, "진행중");
+
+        // 각 참가자의 과거 챌린지 참여 내역(진행중 제외)을 통해 성공률 계산
+        double totalSuccessRateSum = 0.0;
+        int count = 0;
+        int bucket1 = 0; // 100 ~ 85%
+        int bucket2 = 0; // 84 ~ 50%
+        int bucket3 = 0; // 49 ~ 25%
+        int bucket4 = 0; // 24 ~ 0%
+
+        for (UserChallengeEntity participation : participants) {
+            Integer userId = participation.getUserId();
+            // 해당 사용자의 과거 참여 내역 조회(진행중 제외)
+            List<UserChallengeEntity> history = userChallengeRepository.findByUserIdAndStatusNot(userId, "진행중");
+            double successRate = 0.0;
+            if (!history.isEmpty()) {
+                long successCount = history.stream()
+                        .filter(h -> "성공".equals(h.getStatus()))
+                        .count();
+                long total = history.size();
+                successRate = ((double) successCount / total) * 100;
+            }
+            totalSuccessRateSum += successRate;
+            count++;
+            if (successRate >= 85) {
+                bucket1++;
+            } else if (successRate >= 50) {
+                bucket2++;
+            } else if (successRate >= 25) {
+                bucket3++;
+            } else {
+                bucket4++;
+            }
+        }
+        double averageSuccessRate = count > 0 ? totalSuccessRateSum / count : 0.0;
+
+        // 기본 챌린지 DTO로 변환
+        ChallengeResponseDto challengeDto = mapToDto(challenge);
+        return ChallengeDetailResponseDto.builder()
+                .challenge(challengeDto)
+                .participantCount(participants.size())
+                .bucket100to85(bucket1)
+                .bucket84to50(bucket2)
+                .bucket49to25(bucket3)
+                .bucket24to0(bucket4)
+                .averageSuccessRate(averageSuccessRate)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<PastChallengeResponseDto> getPastParticipatedChallenges() {
+        User user = getAuthenticatedUser();
+        // "진행중"과 "취소" 상태를 제외한 참여 내역 조회
+        List<UserChallengeEntity> participations = userChallengeRepository.findByUserIdAndStatusNot(user.getUserId(), "진행중");
+        LocalDate today = LocalDate.now();
+        return participations.stream()
+                // 챌린지 종료일이 오늘 이전이고, 상태가 "취소"가 아닌 경우
+                .filter(participation -> participation.getChallenge().getEndDate().isBefore(today)
+                        && !participation.getStatus().equals("취소"))
+                .map(participation -> {
+                    ChallengeEntity challenge = participation.getChallenge();
+                    return PastChallengeResponseDto.builder()
+                            .challengeId(challenge.getChallengeId())
+                            .challengeName(challenge.getChallengeName())
+                            .challengeType(challenge.getChallengeType())
+                            .targetAmount(challenge.getTargetAmount())
+                            .startDate(challenge.getStartDate())
+                            .endDate(challenge.getEndDate())
+                            .description(challenge.getDescription())
+                            .createdBy(challenge.getCreatedBy())
+                            .maxParticipants(challenge.getMaxParticipants())
+                            .activeFlag(challenge.getActiveFlag())
+                            .challengeCategory(challenge.getChallengeCategory())
+                            .createdAt(challenge.getCreatedAt())
+                            .limitAmount(challenge.getLimitAmount())
+                            // 참여 결과 상태 (예: "성공" 또는 "실패")
+                            .participationStatus(participation.getStatus())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+
 }

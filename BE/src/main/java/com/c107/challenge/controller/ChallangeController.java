@@ -1,7 +1,9 @@
 package com.c107.challenge.controller;
 
+import com.c107.challenge.dto.ChallengeDetailResponseDto;
 import com.c107.challenge.dto.ChallengeResponseDto;
 import com.c107.challenge.dto.CreateChallengeRequest;
+import com.c107.challenge.dto.PastChallengeResponseDto;
 import com.c107.challenge.service.ChallengeService;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
@@ -83,5 +85,19 @@ public class ChallangeController {
         List<ChallengeResponseDto> participatedChallenges = challengeService.getParticipatedChallenges();
         return ResponseEntity.ok(participatedChallenges);
     }
+
+    // 챌린지 상세조회 엔드포인트 (기존 정보 + 참가자수, 성공률 구간별 분포, 평균 성공률)
+    @GetMapping("/{challengeId}/detail")
+    public ResponseEntity<ChallengeDetailResponseDto> getChallengeDetail(@PathVariable Integer challengeId) {
+        ChallengeDetailResponseDto detail = challengeService.getChallengeDetail(challengeId);
+        return ResponseEntity.ok(detail);
+    }
+
+    @GetMapping("/past")
+    public ResponseEntity<List<PastChallengeResponseDto>> getPastParticipatedChallenges() {
+        List<PastChallengeResponseDto> pastChallenges = challengeService.getPastParticipatedChallenges();
+        return ResponseEntity.ok(pastChallenges);
+    }
+
 
 }
