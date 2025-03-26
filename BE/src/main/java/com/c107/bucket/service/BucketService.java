@@ -15,12 +15,21 @@ import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
+import org.springframework.http.HttpHeaders;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +42,11 @@ public class BucketService {
     private final BucketCategoryRepository bucketCategoryRepository;
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
+
+    @Value("${finance.api.key}")
+    private String financeApiKey;
+
+    private final RestTemplate restTemplate = new RestTemplate();
 
     // 카테고리 목록 조회 메서드
     @Transactional(readOnly = true)
@@ -192,5 +206,138 @@ public class BucketService {
 
         bucketRepository.delete(bucket);
         logger.info("버킷리스트 삭제 완료: {}", bucketId);
+    }
+
+
+    // 계좌이체
+    @Transactional
+    public BucketSavingDto.Response processBucketSaving(String email, BucketSavingDto.Request request) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        BucketEntity bucket = bucketRepository.findByBucketIdAndUserId(request.getBucketId(), user.getUserId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "버킷리스트를 찾을 수 없습니다."));
+
+        Integer savingAmount = bucket.getSavingAmount();
+        if (savingAmount == null || savingAmount <= 0) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "저축 금액이 설정되어 있지 않습니다.");
+        }
+
+        String withdrawalAccountNo = bucket.getWithdrawalAccount();
+        String savingAccountNo = bucket.getSavingAccount();
+
+        if (withdrawalAccountNo == null || savingAccountNo == null) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "출금계좌 또는 저축계좌가 설정되어 있지 않습니다.");
+        }
+
+        // 계좌 이체 API 호출
+        transferMoney(user.getFinanceUserKey(), withdrawalAccountNo, savingAccountNo,
+                String.valueOf(savingAmount));
+
+        Integer currentSavedAmount = bucket.getSavedAmount() != null ? bucket.getSavedAmount() : 0;
+        Integer newSavedAmount = currentSavedAmount + savingAmount;
+        bucket.setSavedAmount(newSavedAmount);
+
+        Integer currentCount = bucket.getCount() != null ? bucket.getCount() : 0;
+        bucket.setCount(currentCount + 1);
+
+        LocalDate expectedCompletionDate = calculateExpectedCompletionDate(bucket);
+        String description = "예상 완료일: " + expectedCompletionDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        bucket.setDescription(description);
+
+        boolean isCompleted = newSavedAmount >= bucket.getAmount();
+        if (isCompleted) {
+            bucket.setStatus("완료");
+        }
+
+        BucketEntity updatedBucket = bucketRepository.save(bucket);
+
+        return BucketSavingDto.Response.builder()
+                .bucketId(updatedBucket.getBucketId())
+                .withdrawalAccount(withdrawalAccountNo)
+                .savingAccount(savingAccountNo)
+                .totalSavedAmount(updatedBucket.getSavedAmount())
+                .targetAmount(updatedBucket.getAmount())
+                .count(updatedBucket.getCount())
+                .status(updatedBucket.getStatus())
+                .expectedCompletionDate(expectedCompletionDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                .isCompleted(isCompleted)
+                .build();
+    }
+
+    // 계좌 이체 API 호출
+    private void transferMoney(String userKey, String withdrawalAccountNo, String savingAccountNo, String amount) {
+        String url = "https://finopenapi.ssafy.io/ssafy/api/v1/edu/demandDeposit/updateDemandDepositAccountTransfer";
+        LocalDateTime now = LocalDateTime.now();
+        String transmissionDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String transmissionTime = now.format(DateTimeFormatter.ofPattern("HHmmss"));
+        String institutionTransactionUniqueNo = transmissionDate + transmissionTime
+                + String.format("%06d", new Random().nextInt(1000000));
+
+        Map<String, Object> header = new HashMap<>();
+        header.put("apiName", "updateDemandDepositAccountTransfer");
+        header.put("transmissionDate", transmissionDate);
+        header.put("transmissionTime", transmissionTime);
+        header.put("institutionCode", "00100");
+        header.put("fintechAppNo", "001");
+        header.put("apiServiceCode", "updateDemandDepositAccountTransfer");
+        header.put("institutionTransactionUniqueNo", institutionTransactionUniqueNo);
+        header.put("apiKey", financeApiKey);
+        header.put("userKey", userKey);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("Header", header);
+        requestBody.put("depositAccountNo", savingAccountNo);
+        requestBody.put("depositTransactionSummary", "(수시입출금) : 입금(이체)");
+        requestBody.put("transactionBalance", amount);
+        requestBody.put("withdrawalAccountNo", withdrawalAccountNo);
+        requestBody.put("withdrawalTransactionSummary", "(수시입출금) : 출금(이체)");
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(requestBody, httpHeaders);
+
+        logger.info("계좌 이체 요청 시작: {}", LocalDateTime.now());
+        ResponseEntity<Map> responseEntity = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Map.class);
+        Map<String, Object> responseMap = responseEntity.getBody();
+
+        if (responseMap == null) {
+            logger.error("계좌 이체 응답이 비어 있습니다.");
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "계좌 이체 응답이 비어 있습니다.");
+        }
+        logger.info("계좌 이체 완료: {}", responseMap);
+    }
+
+    // 예상 완료일 계산 메서드
+    private LocalDate calculateExpectedCompletionDate(BucketEntity bucket) {
+        Integer savedAmount = bucket.getSavedAmount() != null ? bucket.getSavedAmount() : 0;
+        Integer count = bucket.getCount() != null ? bucket.getCount() : 0;
+        Integer targetAmount = bucket.getAmount();
+
+        // 저축 기록이 없는 경우
+        if (count == 0) {
+            // 기본값으로 3개월 후를 반환
+            return LocalDate.now().plusMonths(3);
+        }
+
+        // 평균 저축 금액 계산
+        double avgSavingAmount = (double) savedAmount / count;
+
+        // 목표까지 남은 금액
+        double remainingAmount = targetAmount - savedAmount;
+
+        // 목표 달성까지 필요한 저축 횟수
+        double requiredSavings = remainingAmount / avgSavingAmount;
+
+        // 평균 저축 주기 계산 (첫 저축일로부터 지금까지 평균)
+        LocalDateTime firstSavingDate = bucket.getCreatedAt(); // 첫 저축일을 생성일로 가정
+        long daysSinceFirstSaving = ChronoUnit.DAYS.between(firstSavingDate.toLocalDate(), LocalDate.now());
+        double avgSavingInterval = count > 1 ? (double) daysSinceFirstSaving / (count - 1) : 7; // 최소 일주일 간격으로 가정
+
+        // 예상 완료일 계산
+        long daysToCompletion = (long) Math.ceil(requiredSavings * avgSavingInterval);
+
+        return LocalDate.now().plusDays(daysToCompletion);
     }
 }
