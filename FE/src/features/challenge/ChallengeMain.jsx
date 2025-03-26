@@ -5,7 +5,6 @@ import ChallengeCard from "@/features/challenge/components/ChallengeCard";
 import ChallengeNav from "@/features/challenge/components/ChallengeNav";
 import ViewMoreButton from "@/features/challenge/components/ViewMoreButton";
 import ChallengeDesc from "@/features/challenge/components/ChallengeDesc";
-import ChallengeCard2 from "./components/ChallengeCard2";
 import CustomHeader from "@/components/CustomHeader";
 import { ChallengeService } from "@/features/challenge/servies/ChallengeService";
 import { useSelector, useDispatch } from "react-redux";
@@ -17,6 +16,7 @@ export default function ChallengeMain() {
   const [userChallenges, setUserChallenges] = useState([]);
 
   const [officialPageCnt, setOfficialPageCnt] = useState(0);
+  const [userPageCnt, setUserPageCnt] = useState(0);
 
   const dispatch = useDispatch();
   const challengeType = useSelector((state) => state.challenge.challengeType);
@@ -28,19 +28,18 @@ export default function ChallengeMain() {
     setOfficialChallenges([...officialChallenges, ...response.data.content]);
   };
 
-  const fetchUserChallenge = async () => {
-    const response = await ChallengeService.getUser(1, 4);
+  const fetchUserChallenge = async (page, size) => {
+    const response = await ChallengeService.getUser(page, size);
     console.log(response.data.content);
-    // dispatch(addOfficialChallenge(response.data.content));
-    setUserChallenges(response.data.content);
+    setUserChallenges([...userChallenges, ...response.data.content]);
   };
 
   // 페이지가 실행되자마자 우선 추천, 공식, 유저 챌린지를 4개씩 불러온다.
   useEffect(() => {
     fetchOfficialChallenge(officialPageCnt, 4);
-    fetchUserChallenge();
+    fetchUserChallenge(userPageCnt, 4);
     console.log(officialPageCnt);
-  }, [officialPageCnt]);
+  }, [officialPageCnt, userPageCnt]);
 
   const renderOfficialChallenge = () => {
     const cardElements = [];
@@ -109,7 +108,9 @@ export default function ChallengeMain() {
                 ))}
               </CardBox>
 
-              <ViewMoreButton />
+              <ViewMoreButton
+                onIncrease={() => setUserPageCnt(userPageCnt + 1)}
+              />
             </BasicContainer>
             <BasicContainer>
               <ChallengeDesc type="유저 챌린지" button="전체보기 >" />
