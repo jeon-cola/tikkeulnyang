@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react"
 import CustomBackHeader from "../../../components/CustomBackHeader"
 import bankImage from "../assets/bank.png"
 import axios from "axios";
+import Api from "../../../services/Api";
+
 export default function Card() {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
