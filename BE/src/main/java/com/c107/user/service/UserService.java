@@ -2,10 +2,12 @@ package com.c107.user.service;
 
 import com.c107.auth.service.FinanceService;
 import com.c107.common.util.ResponseUtil;
+import com.c107.s3.repository.S3Repository;
 import com.c107.user.dto.UserRegistrationRequestDto;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,17 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final FinanceService financeService;
+    private final S3Repository s3Repository;
+
+    @Value("${default.profile.image.url}")
+    private String defaultProfileImageUrl;
+
+
+    public String getProfileImageUrl(Integer userId) {
+        return s3Repository.findByUsageTypeAndUsageId("PROFILE", userId)
+                .map(image -> image.getUrl())
+                .orElse(defaultProfileImageUrl);
+    }
 
     public ResponseEntity<?> registerUser(UserRegistrationRequestDto request) {
         // 1. DB에서 유저 존재 여부 확인
