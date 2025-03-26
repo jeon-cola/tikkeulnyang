@@ -10,7 +10,10 @@ public interface UserChallengeRepository extends JpaRepository<UserChallengeEnti
     Optional<UserChallengeEntity> findByUserIdAndChallenge_ChallengeId(Integer userId, Integer challengeId);
     Optional<UserChallengeEntity> findByUserIdAndChallenge_ChallengeIdAndStatus(Integer userId, Integer challengeId, String status);
 
-    List<UserChallengeEntity> findByChallenge_ChallengeIdAndStatus(Integer challengeId, String 진행중);
+    List<UserChallengeEntity> findByChallenge_ChallengeIdAndStatus(Integer challengeId, String status);
 
-    List<UserChallengeEntity> findByUserIdAndStatus(Integer userId, String 진행중);
+    List<UserChallengeEntity> findByUserIdAndStatus(Integer userId, String status);
+
+    List<UserChallengeEntity> findByUserIdAndStatusNot(Integer userId, String status);
+
 }
