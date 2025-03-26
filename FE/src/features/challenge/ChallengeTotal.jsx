@@ -65,7 +65,7 @@ export default function ChallengeTotal() {
   // 전체 페이지 렌더링
   return (
     <>
-      <CustomHeader title="챌린지" />
+      <CustomHeader title="챌린지" showCreateButton="true" />
       <div className="flex flex-col items-start p-[30px_10px_12px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
         <BasicContainer>
           <ChallengeDesc type={challengeType} button="" />
