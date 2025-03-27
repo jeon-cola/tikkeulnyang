@@ -1,8 +1,11 @@
 package com.c107.user.controller;
 
+import com.c107.common.exception.CustomException;
+import com.c107.common.exception.ErrorCode;
 import com.c107.common.util.ResponseUtil;
 import com.c107.s3.service.S3Service;
 import com.c107.user.dto.UserRegistrationRequestDto;
+import com.c107.user.dto.UserUpdateRequestDto;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
 import com.c107.user.service.UserService;
@@ -69,26 +72,43 @@ public class UserController {
         return ResponseEntity.ok(ResponseUtil.success("현재 사용자 정보", responseBody));
     }
 
-    // 프로필 이미지 업로드
     @PostMapping("/profile-image")
     public ResponseEntity<?> uploadProfileImage(@AuthenticationPrincipal String email,
                                                 @RequestParam("file") MultipartFile file) {
         if (email == null) {
-            return ResponseUtil.badRequest("인증된 사용자가 없습니다.", null);
+            throw new CustomException(ErrorCode.UNAUTHORIZED, "인증된 사용자가 없습니다.");
         }
 
-        Optional<User> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isEmpty()) {
-            return ResponseUtil.badRequest("사용자 정보를 찾을 수 없습니다.", null);
-        }
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보를 찾을 수 없습니다."));
 
-        User user = userOpt.get();
         try {
             String fileUrl = s3Service.uploadProfileImage(file, "PROFILE", user.getUserId());
             return ResponseUtil.success("프로필 이미지 업로드 성공", fileUrl);
         } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseUtil.badRequest("파일 업로드 실패", null);
+            throw new CustomException(ErrorCode.INTERNAL_ERROR, "파일 업로드 실패: " + e.getMessage());
         }
     }
+
+    // 회원 정보 조회
+    @GetMapping("/info")
+    public ResponseEntity<?> getUserInfo(@AuthenticationPrincipal String email) {
+        if (email == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED, "인증된 사용자가 없습니다.");
+        }
+        return ResponseUtil.success("회원 정보 조회 완료", userService.getUserInfo(email));
+    }
+
+    // 회원 정보 수정
+    @PutMapping("/update")
+    public ResponseEntity<?> updateUserInfo(@AuthenticationPrincipal String email,
+                                            @RequestBody UserUpdateRequestDto request) {
+        if (email == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED, "인증된 사용자가 없습니다.");
+        }
+
+        Map<String, Object> updatedUser = userService.updateUserInfo(email, request);
+        return ResponseUtil.success("회원 정보가 수정되었습니다.", updatedUser);
+    }
+
 }
