@@ -37,7 +37,7 @@ export default function SharedLedger() {
         {isModalOpen && (
           <Modal
             title="친구초대 링크생성"
-            description="sflaskl;dskfl;dskfl;dkfl;afklaskf;laskf;lasdkf;lasdkflsdk"
+            description="테스트입니단"
             onClose={() => setIsModalOpen(false)}
           />
         )}
