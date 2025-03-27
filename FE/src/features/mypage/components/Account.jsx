@@ -28,10 +28,7 @@ export default function Account() {
         e.preventDefault()
         const fetchData = async () => {
             console.log(account.bankImformation.accountNumber)
-            // const response = await axios.post(`http://localhost:8080/api/account/set-representative?accountNo=${account.bankImformation.accountNumber}`,{},{
-            //     withCredentials:true
-            // })
-            const response = await Api.post(`api/account/set-representative?accountNo=${account.bankImformation.accountNumber}`)
+            const response = await Api.post(`/api/account/set-representative?accountNo=${account.bankImformation.accountNumber}`)
             console.log(response.data)
             window.alert("대표계좌로 설정되었습니다")
         }
