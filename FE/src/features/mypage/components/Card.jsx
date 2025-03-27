@@ -17,9 +17,9 @@ export default function Card() {
         const fetchData = async() => {
             try {
                 const response = await Api.get("api/card/refresh")
-                console.log(response)
+                const cardData = response.data.data.cards
+                console.log(cardData)
                 if (response.data.status === "success") {
-                    const cardData = response.data.data.cards
                     setList(cardData)
                 }               
             } catch (error) {
