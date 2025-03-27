@@ -10,9 +10,9 @@
 
 .react-calendar__navigation {
   display: flex;
-  justify-content: flex-start; /* 왼쪽 정렬 */
+  justify-content: flex-start;
   align-items: center;
-  gap: 8px; /* 요소들 사이 간격 조정 (필요에 따라) */
+  gap: 8px;
 }
 
 .react-calendar__navigation button {
@@ -37,7 +37,7 @@
 .react-calendar__navigation__label {
   margin: 0 !important;
   padding: 0 !important;
-  font-size: 20px !important; /* 요구사항에 맞게 폰트 크기도 조정 */
+  font-size: 20px !important;
 }
 
 /* 빨간색 주말 날짜 -> 검정색으로 표시 */
@@ -72,4 +72,7 @@
 .react-calendar__tile {
   color: #000000;
   text-decoration: none !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
