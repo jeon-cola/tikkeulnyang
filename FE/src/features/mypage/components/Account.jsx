@@ -50,9 +50,7 @@ export default function Account() {
     useEffect(() => {
         const fetchData = async()=>{
             try {
-                const response = await axios.get("http://localhost:8080/api/account/refresh",{
-                    withCredentials:true
-                })    
+                const response = await Api.get("/api/account/refresh")    
                 console.log(response.data)
                 setList(response.data);
             } catch (error) {
