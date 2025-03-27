@@ -166,15 +166,18 @@ public class AuthService {
         accessTokenCookie.setMaxAge(0);
         accessTokenCookie.setPath("/");
         accessTokenCookie.setHttpOnly(true);
+        accessTokenCookie.setSecure(true);  // Secure 플래그 추가
 
         Cookie refreshTokenCookie = new Cookie("refreshToken", null);
         refreshTokenCookie.setMaxAge(0);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true);  // Secure 플래그 추가
 
         response.addCookie(accessTokenCookie);
         response.addCookie(refreshTokenCookie);
     }
+
 
     public ResponseEntity<?> authenticateWithKakaoAndReturnJson(String code) {
         System.out.println("Received authorization code: " + code);
