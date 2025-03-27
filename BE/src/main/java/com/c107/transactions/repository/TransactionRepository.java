@@ -4,9 +4,16 @@ import com.c107.transactions.entity.Transaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
     Optional<Transaction> findTopByAccountIdOrderByTransactionDateDesc(String accountNo);
+    boolean existsByCardIdAndTransactionDateAndAmountAndMerchantName(
+            Integer cardId,
+            LocalDateTime transactionDate,
+            Integer amount,
+            String merchantName
+    );
 }
