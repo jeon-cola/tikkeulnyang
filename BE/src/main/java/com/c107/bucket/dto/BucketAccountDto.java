@@ -1,6 +1,7 @@
 package com.c107.bucket.dto;
 
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 public class BucketAccountDto {
@@ -9,9 +10,18 @@ public class BucketAccountDto {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
+    public static class AccountObject {
+        private String bank_name;
+        private String account_number;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class Request {
-        private String saving_account;
-        private String withdrawal_account;
+        private AccountObject saving_account;
+        private AccountObject withdrawal_account;
     }
 
     @Getter

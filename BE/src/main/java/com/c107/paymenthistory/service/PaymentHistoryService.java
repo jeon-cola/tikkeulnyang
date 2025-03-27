@@ -189,7 +189,6 @@ public class PaymentHistoryService {
             String email,
             String date
     ) {
-        // 기존 코드 유지...
         // 익명 사용자 체크
         if ("anonymousUser".equals(email)) {
             throw new RuntimeException("로그인이 필요한 서비스입니다.");
