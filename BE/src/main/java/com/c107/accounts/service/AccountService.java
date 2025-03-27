@@ -46,9 +46,13 @@ public class AccountService {
     @Transactional
     public List<Account> refreshAccounts(Integer loggedInUserId) {
         logger.info("수동 계좌 동기화 시작: {}", LocalDateTime.now());
+
         User user = userRepository.findById(loggedInUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
+
         String userKey = user.getFinanceUserKey();
+        logger.debug("finance.api.key: {}", financeApiKey);
+        logger.debug("사용자 financeUserKey: {}", userKey);
 
         String url = "https://finopenapi.ssafy.io/ssafy/api/v1/edu/demandDeposit/inquireDemandDepositAccountList";
         LocalDateTime now = LocalDateTime.now();
@@ -75,8 +79,15 @@ public class AccountService {
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(requestBody, httpHeaders);
 
+        logger.debug("API 요청 URL: {}", url);
+        logger.debug("API 요청 Body: {}", requestBody);
+
         ResponseEntity<Map> responseEntity = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Map.class);
         Map<String, Object> responseMap = responseEntity.getBody();
+
+        logger.debug("API 응답 상태: {}", responseEntity.getStatusCode());
+        logger.debug("API 응답 Body: {}", responseMap);
+
         if (responseMap == null || !responseMap.containsKey("REC")) {
             logger.error("계좌 조회 결과가 비어 있음");
             throw new CustomException(ErrorCode.VALIDATION_FAILED, "계좌 조회 결과가 없습니다.");
@@ -115,12 +126,13 @@ public class AccountService {
                     logger.info("계좌 업데이트됨: {}", accountNo);
                 }
             } catch (Exception e) {
-                logger.error("계좌 동기화 중 오류 발생: {}", e.getMessage());
+                logger.error("계좌 동기화 중 오류 발생: {}", e.getMessage(), e);
             }
         }
         logger.info("수동 계좌 동기화 완료");
         return accountRepository.findByUserId(loggedInUserId);
     }
+
 
     /**
      * 거래내역 가져오기: 가계부(거래내역 테이블)에 등록된 마지막 거래일 이후의
