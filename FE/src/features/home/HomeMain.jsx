@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import Api from "../../services/Api";
 import { setEmail, setNickName, setProfileImg } from "../user/UserSlice";
 import axios from "axios";
+import { Route, Routes } from "react-router-dom";
+import SubScribe from "./components/SubScribe";
 
 export default function HomeMain() {
   const dispatch = useDispatch();
@@ -27,9 +29,9 @@ export default function HomeMain() {
     fetchData();
   }, [dispatch]);
   return (
-    <>
-      <p>{nickName}</p>
-      <p>{email}</p>
-    </>
+    <Routes>
+      <Route path="/"/>
+      <Route path="subscribe" element={<SubScribe/>}/>
+    </Routes>
   );
 }
