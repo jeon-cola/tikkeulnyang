@@ -13,6 +13,8 @@ import com.c107.challenge.repository.ChallengeRepository;
 import com.c107.challenge.repository.UserChallengeRepository;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
+import com.c107.s3.entity.S3Entity;
+import com.c107.s3.repository.S3Repository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
@@ -39,12 +41,14 @@ public class ChallengeService {
 
     private static final Logger logger = LoggerFactory.getLogger(ChallengeService.class);
 
+    private static final String DEFAULT_THUMBNAIL_URL = "https://my-catcat-bucket.s3.us-east-2.amazonaws.com/default/CloseIcon.png";
     private final ChallengeRepository challengeRepository;
     private final UserChallengeRepository userChallengeRepository;
     private final UserRepository userRepository;
     private final AccountTransactionRepository accountTransactionRepository;
     // AccountService 주입 (서비스 계좌 ID를 가져오기 위해)
     private final AccountService accountService;
+    private final S3Repository s3Repository;
 
     // 챌린지 생성 (로그인한 유저 정보 자동 등록)
     @Transactional
@@ -183,6 +187,12 @@ public class ChallengeService {
     }
 
     private ChallengeResponseDto mapToDto(ChallengeEntity entity) {
+
+        String thumbnailUrl = s3Repository
+                .findTopByUsageTypeAndUsageIdOrderByCreatedAtDesc("CHALLENGE", entity.getChallengeId())
+                .map(S3Entity::getUrl)
+                .orElse(DEFAULT_THUMBNAIL_URL);
+
         return ChallengeResponseDto.builder()
                 .challengeId(entity.getChallengeId())
                 .challengeName(entity.getChallengeName())
@@ -197,6 +207,7 @@ public class ChallengeService {
                 .challengeCategory(entity.getChallengeCategory())
                 .createdAt(entity.getCreatedAt())
                 .limitAmount(entity.getLimitAmount())
+                .thumbnailUrl(thumbnailUrl)
                 .build();
     }
 
