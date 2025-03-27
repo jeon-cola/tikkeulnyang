@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -57,14 +58,14 @@ public class UserController {
         User user = userOpt.get();
         String profileImageUrl = userService.getProfileImageUrl(user.getUserId());
 
-        Map<String, Object> responseBody = Map.of(
-                "id", user.getUserId(),
-                "email", user.getEmail(),
-                "nickname", user.getNickname(),
-                "role", user.getRole(),
-                "deposit", user.getDeposit(),
-                "profileImage", profileImageUrl
-        );
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("id", user.getUserId());
+        responseBody.put("email", user.getEmail());
+        responseBody.put("nickname", user.getNickname());
+        responseBody.put("role", user.getRole());
+        responseBody.put("deposit", user.getDeposit());
+        responseBody.put("profileImage", profileImageUrl); // null이어도 OK
+
         return ResponseEntity.ok(ResponseUtil.success("현재 사용자 정보", responseBody));
     }
 
