@@ -3,7 +3,7 @@ import NavBar from "@/components/NavBar";
 import { useNavigate } from "react-router-dom";
 import CustomCalendar from "@/components/CustomCalendar";
 import { ChallengeService } from "@/features/challenge/servies/ChallengeService";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function ChallengeMake() {
   const navigate = useNavigate();
@@ -20,9 +20,26 @@ export default function ChallengeMake() {
     maxParticipants: "",
   });
 
-  // useEffect(() => {
-  //   console.log("challengeCategory: ", challengeData.challengeCategory);
-  // }, [challengeData.challengeCategory]);
+  // 썸네일 이미지 파일을 저장할 state
+  const [thumbnail, setThumbnail] = useState(null);
+
+  useEffect(() => {
+    const uploadThumbnail = async () => {
+      try {
+        if (thumbnail) {
+          const response = await ChallengeService.postChallengeThumbnail(
+            4,
+            thumbnail
+          );
+          console.log("썸네일 업로드 성공:", response);
+        }
+      } catch (error) {
+        console.error("썸네일 업로드 실패:", error);
+      }
+    };
+
+    uploadThumbnail();
+  }, [thumbnail]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -40,6 +57,14 @@ export default function ChallengeMake() {
     } catch (error) {
       console.error("챌린지 생성 실패", error);
       alert("챌린지 생성에 실패했습니다. ");
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setThumbnail(file);
+      console.log("선택된 파일:", file);
     }
   };
 
@@ -186,6 +211,24 @@ export default function ChallengeMake() {
               <CategoryItem text="주류" />
               <CategoryItem text="의약품" />
             </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center p-[12px_20px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+          <div className="flex flex-col items-start p-0 w-[347px]">
+            <div className="w-full h-[32px] order-none flex-none">
+              <div className="w-full h-[32px] left-0 top-0">
+                <h2 className="text-left w-[154.03px] h-[32px] left-0 top-0 font-pretendard font-semibold text-[15px] leading-[18px] text-black">
+                  썸네일 업로드
+                </h2>
+              </div>
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="w-full mt-2"
+            />
           </div>
         </div>
 
