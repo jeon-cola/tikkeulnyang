@@ -13,6 +13,8 @@ import com.c107.paymenthistory.entity.PaymentHistoryEntity;
 import com.c107.paymenthistory.repository.BudgetCategoryRepository;
 import com.c107.paymenthistory.repository.CategoryRepository;
 import com.c107.paymenthistory.repository.PaymentHistoryRepository;
+import com.c107.transactions.entity.Transaction;
+import com.c107.transactions.repository.TransactionRepository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -43,6 +46,7 @@ public class CardService {
     private final BudgetCategoryRepository budgetCategoryRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final RestTemplate restTemplate = new RestTemplate();
+    private final TransactionRepository transactionRepository;
 
     /**
      * Open API를 호출하여 사용자의 모든 카드 정보를 DB에 등록 또는 업데이트
@@ -364,6 +368,9 @@ public class CardService {
                     savedTransactions.add(paymentHistory);
                     logger.info("거래내역 저장 성공: {}", transactionUniqueNo);
 
+                    // transactions 테이블에도 저장
+                    saveCardPaymentToTransaction(paymentHistory);
+
                     // 총액 계산
                     int amount = Math.abs(Integer.parseInt(transactionBalance.trim().replace(",", "")));
                     totalAmount += amount;
@@ -388,6 +395,68 @@ public class CardService {
                 .totalSpent(totalAmount)
                 .transactions(transactionDtos)
                 .build();
+    }
+
+    //
+    private void saveCardPaymentToTransaction(PaymentHistoryEntity paymentHistory) {
+        try {
+            // 1. 날짜/시간 변환
+            LocalDate transactionDate = paymentHistory.getTransactionDate();
+            LocalTime transactionTime = LocalTime.parse(
+                    paymentHistory.getTranscationTime(),
+                    DateTimeFormatter.ofPattern("HHmmss")
+            );
+            LocalDateTime dateTime = LocalDateTime.of(transactionDate, transactionTime);
+
+            // 2. 금액 변환
+            int amount = Math.abs(Integer.parseInt(paymentHistory.getTransactionBalance().trim().replace(",", "")));
+
+            // 3. 카테고리 ID 변환
+            int categoryId;
+            try {
+                categoryId = Integer.parseInt(paymentHistory.getCategoryId());
+            } catch (NumberFormatException e) {
+                categoryId = 9999;
+                logger.warn("카테고리 ID 변환 실패: {}", paymentHistory.getCategoryId());
+            }
+
+            // 4. 중복 체크 - 이미 저장된 데이터인지 확인
+            // 카드ID, 거래 날짜/시간, 금액, 가맹점 기준으로 확인
+            boolean exists = transactionRepository.existsByCardIdAndTransactionDateAndAmountAndMerchantName(
+                    paymentHistory.getCardId(),
+                    dateTime,
+                    amount,
+                    paymentHistory.getMerchantName()
+            );
+
+            // 이미 존재하는 데이터면 건너뛰기
+            if (exists) {
+                logger.info("이미 저장된 거래내역이므로 건너뜁니다: {}", paymentHistory.getTransactionUniqueNo());
+                return;
+            }
+
+            // 현재 시간 가져오기
+            LocalDateTime now = LocalDateTime.now();
+
+            // 5. 새 거래내역만 저장
+            Transaction transaction = Transaction.builder()
+                    .cardId(paymentHistory.getCardId())
+                    .transactionDate(dateTime)
+                    .amount(amount)
+                    .categoryId(categoryId)
+                    .merchantName(paymentHistory.getMerchantName())
+                    .transactionType(2)  // 출금 = 2
+                    .deleted(0)
+                    .createdAt(now)
+                    .updatedAt(now)
+                    .build();
+
+            transactionRepository.save(transaction);
+            logger.info("새로운 카드 결제내역 transactions 테이블 저장 완료: {}", paymentHistory.getTransactionUniqueNo());
+
+        } catch (Exception e) {
+            logger.error("카드 결제내역 transactions 저장 실패: {}", e.getMessage(), e);
+        }
     }
 
     /**
