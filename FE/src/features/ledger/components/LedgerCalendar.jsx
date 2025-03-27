@@ -39,14 +39,6 @@ export default function PersonalLedgerCalendar() {
 
   return (
     <div className="relative max-w-[320px]">
-      {/* 상단 우측 블랙 버튼 */}
-      <button
-        className="blackButton absolute top-2 right-2 z-10"
-        onClick={() => navigate("/ledger/detail")}
-      >
-        세부내역
-      </button>
-
       {/* CustomCalendar에 API 데이터를 prop으로 전달 */}
       <CustomCalendar
         value={value}
@@ -61,7 +53,7 @@ export default function PersonalLedgerCalendar() {
               (item) => item.date === formattedDate
             );
             return entry ? (
-              <div className="flex flex-col text-xs">
+              <div className="flex flex-col items-center mt-5 text-xs relative z-10">
                 {entry.income > 0 && (
                   <span className="text-blue-500">+{entry.income}</span>
                 )}

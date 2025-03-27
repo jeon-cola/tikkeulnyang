@@ -15,7 +15,7 @@ export default function CustomCalendar({
         onChange={onChange}
         value={value}
         calendarType="hebrew" // 일요일부터 시작
-        formatDay={(local, date) => date.getDate()} // 숫자+'일' 텍스트 '일'제거
+        formatDay={(local, date) => <abbr>{date.getDate()}</abbr>} // 숫자+'일' 텍스트 '일'제거
         formatMonthYear={(local, date) =>
           `${date.getFullYear()}.${(date.getMonth() + 1)
             .toString()
