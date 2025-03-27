@@ -124,28 +124,30 @@ p {
   color: white;
   background: #3d3d3d;
   border: none;
+  border-radius: 100px;
   width: auto;
   height: 25px;
   font-family: "Pretendard-thin";
   font-size: 10px;
   font-weight: 500;
-  padding: 2px 10px;
+  padding: 2px 15px;
 }
 
 /* 작은 버튼 */
 .whiteButton {
   display: flex;
-  flex-direction: center;
+  flex-direction: row;
   align-items: center;
   text-align: center;
   color: #3d3d3d;
   background: white;
-  width: 50px;
+  border-radius: 100px;
+  width: auto;
   height: 25px;
   font-family: "Pretendard-thin";
   font-size: 10px;
   font-weight: 500;
-  padding: 2px 10px;
+  padding: 2px 15px;
   /* 그림자효과 */
   box-shadow: 1px 1px 2px 0px rgba(0, 0, 0, 15%);
 }

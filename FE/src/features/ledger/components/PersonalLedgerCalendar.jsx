@@ -26,7 +26,7 @@ export default function PersonalLedgerCalendar() {
         const formattedData = fetchedData.map((item) => ({
           date: item.date,
           income: item.income,
-          spending: item.expense, // API에서는 expense로 받음
+          spending: item.expense,
           transactions: item.transactions,
         }));
         setCalendarData(formattedData);
