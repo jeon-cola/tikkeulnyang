@@ -43,7 +43,7 @@ export const ChallengeService = {
     }
   },
 
-  // 현재 참여중인 챌린지 상세조회
+  // 챌린지 상세조회
   getCurrChallenge: async (challengeId) => {
     try {
       const response = await Api.get(
