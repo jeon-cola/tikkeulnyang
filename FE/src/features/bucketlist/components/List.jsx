@@ -1,14 +1,18 @@
 import axios from "axios"
 import { useEffect, useState } from "react"
+import Api from "../../../services/Api";
+import MapCategory from "./category/MapCategory";
 
 export default function List() {
   const [userData, setUserData] = useState([]);
   useEffect(()=> {
     const fetchData = async() => {
     try {
-        const response = await axios.get("http://localhost:3000/bucket_lists")
-        setUserData(response.data)
-        console.log(response.data)
+      const response = await Api.get("api/bucket/list")
+        if (response.data.status === "success") {
+          console.log(response.data.data.bucket_lists)
+          setUserData(response.data.data.bucket_lists)
+        }
       } catch (error) { 
         console.log(error)
       }
@@ -17,8 +21,8 @@ export default function List() {
   },[])
   return (
     <div>
-      {userData.map((data)=>(
-        <p>{data.title}</p>
+      {userData.map((data,index)=>(
+        <MapCategory key={index} list={data}/>
       ))}
     </div>
   )

@@ -21,9 +21,13 @@ export default function BucketListStep2() {
 
     useEffect(() => {
         const fetchData = async () => {
-            const response = await Api.get("api/account/refresh")
-            console.log(response.data)
-            setList(response.data)
+            try {
+                const response = await Api.get("api/account/refresh")
+                console.log(response.data)
+                setList(response.data)
+            } catch (error) {
+                console.log(error)
+            }
         }
         fetchData();
     },[])
@@ -166,7 +170,7 @@ export default function BucketListStep2() {
             {/* 다음 버튼 */}
             <div className="w-full mx-auto flex flex-col items-center">
                 <button 
-                    className="hover:bg-blue-600 disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed mx-auto" 
+                    className="customButton hover:bg-blue-600 disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed mx-auto" 
                      disabled={!isChecked} 
                      onClick={nextHandler}
                     >
