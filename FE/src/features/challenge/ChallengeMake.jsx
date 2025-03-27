@@ -39,6 +39,21 @@ export default function ChallengeMake() {
     }
   };
 
+  // 카테고리 항목 개별 컴포넌트
+  const CategoryItem = ({ text }) => {
+    const handleClick = () => {};
+    return (
+      <div
+        onClick={handleClick}
+        className={`box-border flex flex-row justify-center items-center py-[7px] px-[13px] gap-[10px] bg-white border border-[#E1E1E2] rounded-[100px] w-auto h-auto flex-none flex-grow-0`}
+      >
+        <span className="font-['Noto_Sans_KR'] font-normal text-[14px] leading-[17px] flex items-center tracking-[0.02em] text-[#999999] whitespace-nowrap">
+          {text}
+        </span>
+      </div>
+    );
+  };
+
   return (
     <>
       <CustomHeader title="챌린지 생성" />
@@ -113,6 +128,30 @@ export default function ChallengeMake() {
                 placeholder="최소 1,000원부터 입력"
                 className="w-full h-full px-[5px] pt-[5px] font-pretendard font-thin text-[20px] leading-[24px] placeholder-[#DFDFDF] text-black focus:outline-none bg-transparent"
               />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center p-[12px_20px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+          <div className="flex flex-col items-start p-0 w-[347px] h-[70px]">
+            <div className="w-full h-[32px] order-none flex-none">
+              <div className=" w-full h-[32px] left-0 top-0">
+                {/* 챌린지 카테고리 설정 */}
+                <h2 className="text-left w-[154.03px] h-[32px] left-0 top-0 font-pretendard font-semibold text-[15px] leading-[18px] text-black">
+                  챌린지 카테고리 설정
+                </h2>
+              </div>
+            </div>
+
+            {/* 챌린지 목록 */}
+            <div className="w-full overflow-hidden flex flex-row overflow-x-auto whitespace-nowrap items-center p-0 gap-[10px] relative w-[543px] h-auto">
+              <CategoryItem text="식비" />
+              <CategoryItem text="카페, 음료" />
+              <CategoryItem text="교통" />
+              <CategoryItem text="통신비" />
+              <CategoryItem text="쇼핑" />
+              <CategoryItem text="카페, 음료" />
+              <CategoryItem text="카페, 음료" />
             </div>
           </div>
         </div>
