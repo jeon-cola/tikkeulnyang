@@ -2,7 +2,6 @@ package com.c107.accounts.service;
 
 import com.c107.accounts.entity.Account;
 import com.c107.accounts.entity.ServiceTransaction;
-import com.c107.accounts.entity.AccountTransaction;
 import com.c107.accounts.repository.AccountRepository;
 import com.c107.accounts.repository.AccountTransactionRepository;
 import com.c107.common.exception.CustomException;
@@ -133,11 +132,12 @@ public class AccountService {
         return accountRepository.findByUserId(loggedInUserId);
     }
 
-
     /**
      * 거래내역 가져오기: 가계부(거래내역 테이블)에 등록된 마지막 거래일 이후의
      * 거래내역을 각 계좌별로 Open API를 통해 조회하여 transactions 테이블에 저장.
      * (사용자가 가져오기 버튼을 누르면 호출됨)
+     *
+     * 입금, 출금 모두 처리하며, 중복된 거래는 삽입하지 않습니다.
      *
      * @param loggedInUserId 로그인한 사용자 ID
      * @param userSelectedCategoryId 사용자가 선택한 기본 카테고리 ID (가져온 거래엔 초기값으로 저장)
@@ -161,11 +161,6 @@ public class AccountService {
         for (Account account : accounts) {
             String accountNo = account.getAccountNumber();
 
-//            // ✅ 서비스 계좌는 거래내역 기록하지 않음
-//            if ("SERVICE".equals(account.getAccountType())) {
-//                logger.info("서비스 계좌({}) 거래내역은 기록하지 않음", accountNo);
-//                continue;
-//            }
             // 각 계좌의 transactions 테이블에서 마지막 거래일 조회
             Optional<Transaction> lastTxOpt = transactionRepository.findTopByAccountIdOrderByTransactionDateDesc(accountNo);
             LocalDate startDate;
@@ -223,39 +218,38 @@ public class AccountService {
             Map<String, Object> rec = (Map<String, Object>) responseMap.get("REC");
             List<Map<String, Object>> transactionList = (List<Map<String, Object>>) rec.get("list");
 
-            // 각 거래내역에 대해 transactions 테이블에 저장 (입금 거래만 저장)
+            // 각 거래내역에 대해 transactions 테이블에 저장 (입금, 출금 모두 처리)
             for (Map<String, Object> tx : transactionList) {
                 try {
-                    String transactionUniqueNo = (String) tx.get("transactionUniqueNo");
+                    // 거래 데이터를 파싱
                     String txDate = (String) tx.get("transactionDate"); // yyyyMMdd
                     String txTime = (String) tx.get("transactionTime");   // HHmmss
                     String txTypeCode = (String) tx.get("transactionType"); // "1" 또는 "2"
-                    // 입금 거래만 처리 (1: 입금)
-//                    if (!"1".equals(txTypeCode)) {
-//                        continue;
-//                    }
-                    String txTypeName = (String) tx.get("transactionTypeName"); // 입금, 출금(이체) 등
                     String txAccountNo = (String) tx.get("transactionAccountNo");
                     String txBalanceStr = (String) tx.get("transactionBalance");
                     String txAfterBalanceStr = (String) tx.get("transactionAfterBalance");
-                    String txSummary = (String) tx.get("transactionSummary");
-                    // 필요한 경우 txMemo 등 추가 처리
 
                     LocalDateTime txDateTime = LocalDateTime.parse(txDate + txTime,
                             DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
                     int txBalance = Integer.parseInt(txBalanceStr);
                     int txAfterBalance = Integer.parseInt(txAfterBalanceStr);
-
-                    // 거래 전 잔액 계산 (입금이면 afterBalance - txBalance)
                     int beforeBalance = txAfterBalance - txBalance;
 
-                    // transactions 테이블에 저장 (입금 거래만)
+                    // 중복 거래 체크: 이미 같은 account_id, transaction_date, transaction_type, amount인 거래가 존재하면 건너뜁니다.
+                    Optional<Transaction> existingTx = transactionRepository.findTopByAccountIdAndTransactionDateAndTransactionTypeAndAmount(
+                            String.valueOf(account.getAccountId()), txDateTime, Integer.parseInt(txTypeCode), txBalance);
+                    if (existingTx.isPresent()) {
+                        continue;
+                    }
+
                     Transaction transaction = Transaction.builder()
-                            .cardId(0) // 카드 관련 정보 없음 -> null 처리 (Transaction 엔티티의 cardId 타입을 Integer로 수정)
+                            .cardId(0) // 카드 관련 정보 없음
                             .transactionDate(txDateTime)
-                            .categoryId(userSelectedCategoryId)  // 기본 카테고리로 저장
-                            .amount(Integer.valueOf(txBalanceStr))
+                            .categoryId(userSelectedCategoryId)
+                            .amount(txBalance)
                             .accountId(String.valueOf(account.getAccountId()))
+                            // user_id 추가
+                            .userId(loggedInUserId)
                             .transactionAccountNo(txAccountNo)
                             .transactionType(Integer.parseInt(txTypeCode))
                             .accountBeforeTransaction(beforeBalance)
@@ -266,10 +260,10 @@ public class AccountService {
                             .deleted(0)
                             .build();
                     transactionRepository.save(transaction);
-                    logger.info("transactions 저장됨, 계좌: {}, 거래고유번호: {}",
-                            accountNo, transactionUniqueNo);
+                    logger.info("Transaction 저장됨, 계좌: {}, 거래일시: {}, 금액: {}",
+                            accountNo, txDateTime, txBalance);
                 } catch (Exception e) {
-                    logger.error("계좌 {}의 거래내역 동기화 중 오류 발생: {}", accountNo, e.getMessage());
+                    logger.error("계좌 {}의 거래내역 동기화 중 오류 발생: {}", accountNo, e.getMessage(), e);
                 }
             }
         }
