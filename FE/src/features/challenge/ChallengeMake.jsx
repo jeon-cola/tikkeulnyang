@@ -3,7 +3,7 @@ import NavBar from "@/components/NavBar";
 import { useNavigate } from "react-router-dom";
 import CustomCalendar from "@/components/CustomCalendar";
 import { ChallengeService } from "@/features/challenge/servies/ChallengeService";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function ChallengeMake() {
   const navigate = useNavigate();
@@ -20,9 +20,27 @@ export default function ChallengeMake() {
     maxParticipants: "",
   });
 
-  // useEffect(() => {
-  //   console.log("challengeCategory: ", challengeData.challengeCategory);
-  // }, [challengeData.challengeCategory]);
+  // 썸네일 이미지 파일을 저장할 state
+  const [thumbnail, setThumbnail] = useState(null);
+  const [challengeId, setChallengeId] = useState(0);
+
+  useEffect(() => {
+    uploadThumbnail();
+  }, [thumbnail]);
+
+  const uploadThumbnail = async (challengeId) => {
+    try {
+      if (thumbnail) {
+        const response = await ChallengeService.postChallengeThumbnail(
+          challengeId,
+          thumbnail
+        );
+        console.log("썸네일 업로드 성공:", response);
+      }
+    } catch (error) {
+      console.error("썸네일 업로드 실패:", error);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -32,14 +50,29 @@ export default function ChallengeMake() {
     }));
   };
 
+  /**
+   * 챌린지 방을 생성한뒤, 응답으로 받은 challengeId 값을 바탕으로 썸네일을 S3에 생성
+   */
   const handleSubmit = async () => {
     try {
-      await ChallengeService.postChallengeCreate(challengeData);
+      const response = await ChallengeService.postChallengeCreate(
+        challengeData
+      );
+      setChallengeId(response.challengeId);
+      uploadThumbnail(challengeId);
       //TODO : 추후에 챌린지 알림 페이지도 이동하게끔 수정
       navigate(`/challenge`);
     } catch (error) {
       console.error("챌린지 생성 실패", error);
       alert("챌린지 생성에 실패했습니다. ");
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setThumbnail(file);
+      console.log("선택된 파일:", file);
     }
   };
 
@@ -186,6 +219,24 @@ export default function ChallengeMake() {
               <CategoryItem text="주류" />
               <CategoryItem text="의약품" />
             </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center p-[12px_20px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+          <div className="flex flex-col items-start p-0 w-[347px]">
+            <div className="w-full h-[32px] order-none flex-none">
+              <div className="w-full h-[32px] left-0 top-0">
+                <h2 className="text-left w-[154.03px] h-[32px] left-0 top-0 font-pretendard font-semibold text-[15px] leading-[18px] text-black">
+                  썸네일 업로드
+                </h2>
+              </div>
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="w-full mt-2"
+            />
           </div>
         </div>
 

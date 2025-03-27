@@ -56,7 +56,7 @@ export default function ChallengeMain() {
         <CardBox>
           {officialChallenges.slice(i, i + 2).map((challenge) => (
             <ChallengeCard
-              imageUrl={challenge.imageUrl}
+              thumbnailUrl={challenge.thumbnailUrl}
               type="공식챌린지"
               title={challenge.challengeName}
               startDate={challenge.startDate}
@@ -82,7 +82,7 @@ export default function ChallengeMain() {
         <CardBox>
           {userChallenges.slice(i, i + 2).map((challenge) => (
             <ChallengeCard
-              imageUrl={challenge.imageUrl}
+              thumbnailUrl={challenge.thumbnailUrl}
               type="유저챌린지"
               title={challenge.challengeName}
               startDate={challenge.startDate}
