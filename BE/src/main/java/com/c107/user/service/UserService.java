@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import com.c107.s3.entity.S3Entity;
+
 
 @Service
 @RequiredArgsConstructor
@@ -24,10 +26,11 @@ public class UserService {
 
 
     public String getProfileImageUrl(Integer userId) {
-        return s3Repository.findByUsageTypeAndUsageId("PROFILE", userId)
-                .map(image -> image.getUrl())
+        return s3Repository.findTopByUsageTypeAndUsageIdOrderByCreatedAtDesc("PROFILE", userId)
+                .map(S3Entity::getUrl)
                 .orElse(defaultProfileImageUrl);
     }
+
 
     public ResponseEntity<?> registerUser(UserRegistrationRequestDto request) {
         // 1. DB에서 유저 존재 여부 확인

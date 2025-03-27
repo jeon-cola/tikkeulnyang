@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface S3Repository extends JpaRepository<S3Entity, Integer> {
     // 예를 들어, 특정 유저의 프로필 이미지를 조회할 때
-    Optional<S3Entity> findByUsageTypeAndUsageId(String usageType, Integer usageId);
+    Optional<S3Entity> findTopByUsageTypeAndUsageIdOrderByCreatedAtDesc(String usageType, Integer usageId);
 }
