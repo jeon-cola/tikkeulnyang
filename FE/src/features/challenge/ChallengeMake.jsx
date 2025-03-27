@@ -22,24 +22,25 @@ export default function ChallengeMake() {
 
   // 썸네일 이미지 파일을 저장할 state
   const [thumbnail, setThumbnail] = useState(null);
+  const [challengeId, setChallengeId] = useState(0);
 
   useEffect(() => {
-    const uploadThumbnail = async () => {
-      try {
-        if (thumbnail) {
-          const response = await ChallengeService.postChallengeThumbnail(
-            4,
-            thumbnail
-          );
-          console.log("썸네일 업로드 성공:", response);
-        }
-      } catch (error) {
-        console.error("썸네일 업로드 실패:", error);
-      }
-    };
-
     uploadThumbnail();
   }, [thumbnail]);
+
+  const uploadThumbnail = async (challengeId) => {
+    try {
+      if (thumbnail) {
+        const response = await ChallengeService.postChallengeThumbnail(
+          challengeId,
+          thumbnail
+        );
+        console.log("썸네일 업로드 성공:", response);
+      }
+    } catch (error) {
+      console.error("썸네일 업로드 실패:", error);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -49,9 +50,16 @@ export default function ChallengeMake() {
     }));
   };
 
+  /**
+   * 챌린지 방을 생성한뒤, 응답으로 받은 challengeId 값을 바탕으로 썸네일을 S3에 생성
+   */
   const handleSubmit = async () => {
     try {
-      await ChallengeService.postChallengeCreate(challengeData);
+      const response = await ChallengeService.postChallengeCreate(
+        challengeData
+      );
+      setChallengeId(response.challengeId);
+      uploadThumbnail(challengeId);
       //TODO : 추후에 챌린지 알림 페이지도 이동하게끔 수정
       navigate(`/challenge`);
     } catch (error) {
