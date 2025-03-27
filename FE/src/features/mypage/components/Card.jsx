@@ -3,7 +3,6 @@ import CustomBackHeader from "../../../components/CustomBackHeader"
 import bankImage from "../assets/bank.png"
 import axios from "axios";
 import Api from "../../../services/Api";
-
 export default function Card() {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
@@ -13,14 +12,12 @@ export default function Card() {
         CardName:"",
     });
 
-
+    // 카드 리스트 조회
     useEffect(() => {
         const fetchData = async() => {
             try {
                 const response = await Api.get("api/card/refresh")
-                // const response = await axios.get("http://localhost:8080/api/card/refresh",{
-                //     withCredentials:true
-                // })
+                console.log(response)
                 if (response.data.status === "success") {
                     const cardData = response.data.data.cards
                     setList(cardData)
@@ -35,7 +32,7 @@ export default function Card() {
 
     return(
             <div className="flex flex-col justify-center gap-5 min-w-[345px]">
-                <CustomBackHeader title="카드 등록"/>
+                <CustomBackHeader title="카드 조회"/>
                 <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 flex flex-col gap-2">
                     <p className="text-left font-regular text-lg">카드 선택</p>
                     
@@ -59,11 +56,11 @@ export default function Card() {
                             <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-60 overflow-auto">
                                 {list.map((card) => (
                                     <div 
-                                        key={card.CardName}
+                                        key={card.card_name}
                                         className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
                                         onClick={() => handleBankSelect(card)}
                                     >
-                                        <span>{card.CardName}</span>
+                                        <span>{card.card_name}</span>
                                     </div>
                                 ))}
                             </div>
@@ -75,11 +72,7 @@ export default function Card() {
                 <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4">
                     <img src={bankImage} alt="은행 이미지" />
                 </div>
-                
-                {/* 저장 버튼 */}
-                <div className="w-full flex flex-col items-center">
-                    <button className="bg-blue-500 text-white px-4 py-2 rounded" >저장하기</button>
-                </div>
+            
             </div>
         )
 }
