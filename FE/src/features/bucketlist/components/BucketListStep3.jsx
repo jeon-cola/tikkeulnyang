@@ -91,7 +91,7 @@ export default function BucketListStep3() {
         {/* 생성 버튼 */}
         <div className="w-full mx-auto flex flex-col items-center">
           <button 
-            className="hover:bg-blue-600 disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed mx-auto mb-[10px]" 
+            className="customButton hover:bg-blue-600 disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed mx-auto mb-[10px]" 
             disabled={!isChecked}
             onClick={creationHandler}
           >시작하기</button>

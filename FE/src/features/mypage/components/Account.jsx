@@ -111,7 +111,7 @@ export default function Account() {
             
             {/* 저장 버튼 */}
             <div className="w-full flex flex-col items-center">
-                <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={registHandler}>저장하기</button>
+                <button className="customButton bg-blue-500 text-white px-4 py-2 rounded" onClick={registHandler}>저장하기</button>
             </div>
         </div>
     )

@@ -59,8 +59,8 @@ h1 {
 p {
   font-family: "Pretendard-medium";
 }
-/* 일반 버튼 */
-button {
+
+/* button {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -78,7 +78,7 @@ button {
   height: 43px;
   width: 125px;
   white-space: nowrap;
-}
+} */
 
 .customButton {
   display: flex;
@@ -99,6 +99,7 @@ button {
   width: 125px;
   white-space: nowrap;
 }
+
 /* 긴 버튼 */
 .longButton {
   box-sizing: border-box;

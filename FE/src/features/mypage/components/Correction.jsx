@@ -83,7 +83,7 @@ export default function Correction() {
                     </div>
                 </div>
                 <div className="w-full flex justify-center">
-                    <button onClick={CorrectionHandler}>{!correctionCheck? "수정하기" : "저장하기"}</button>
+                    <button className="customButton" onClick={CorrectionHandler}>{!correctionCheck? "수정하기" : "저장하기"}</button>
                 </div>
         </div>
     )
