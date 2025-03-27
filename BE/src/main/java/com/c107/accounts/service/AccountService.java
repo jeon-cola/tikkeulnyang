@@ -242,7 +242,7 @@ public class AccountService {
                             .cardId(0) // 카드 관련 정보 없음 -> null 처리 (Transaction 엔티티의 cardId 타입을 Integer로 수정)
                             .transactionDate(txDateTime)
                             .categoryId(userSelectedCategoryId)  // 기본 카테고리로 저장
-                            .amount(txBalanceStr)
+                            .amount(Integer.valueOf(txBalanceStr))
                             .accountId(String.valueOf(account.getAccountId()))
                             .transactionAccountNo(txAccountNo)
                             .transactionType(Integer.parseInt(txTypeCode))
