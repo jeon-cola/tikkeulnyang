@@ -29,6 +29,7 @@ export default function BucketListStep3() {
 
   const isChecked = isNumber(stepCheck.amount) && stepCheck.day;
 
+  // 버킷리스트 생성 
   function creationHandler() {
     const fetchData = async() => {
       try {
@@ -36,8 +37,8 @@ export default function BucketListStep3() {
           "saving_amount":stepCheck.amount,
           "saving_days":stepCheck.day
         })
-        console.log(response)
-        if (response.status === "success") {
+        console.log(response.data)
+        if (response.data.status === "success") {
           window.alert("버킷리스트 생성이 완료 되었습니다")
           nav("/bucketlist/list");
         }

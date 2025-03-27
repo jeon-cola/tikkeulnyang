@@ -63,7 +63,8 @@ export default function BucketListStep2() {
                         "account_number":stepCheck.withdrawl_amount_num
                     }
                 })
-                if (response.status === "success") {
+                console.log(response.data)
+                if (response.data.status === "success") {
                     nav("/bucketlist/step3")
                 }
             } catch (error) {
