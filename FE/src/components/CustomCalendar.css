@@ -72,4 +72,7 @@
 .react-calendar__tile {
   color: #000000;
   text-decoration: none !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 가운데 정렬 (선택사항) */
 }
