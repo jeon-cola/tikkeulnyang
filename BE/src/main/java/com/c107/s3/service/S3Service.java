@@ -29,6 +29,10 @@ public class S3Service {
     @Value("${cloud.aws.region.static}")
     private String region;
 
+    @Value("${s3.prefix}")
+    private String prefix;
+
+
     /**
      * S3에 파일 업로드 후 이미지 DB에 저장.
      * @param file 업로드할 파일
@@ -38,28 +42,26 @@ public class S3Service {
      */
     public String uploadProfileImage(MultipartFile file, String usageType, Integer usageId) throws IOException {
         String originalFileName = file.getOriginalFilename();
-        if(originalFileName == null) {
+        if (originalFileName == null) {
             throw new IllegalArgumentException("파일명이 존재하지 않습니다.");
         }
 
-        // 파일명에 UUID 추가 (충돌 방지)
         String uniqueFileName = UUID.randomUUID().toString() + "_" + originalFileName;
-        String key = "profile/" + uniqueFileName;
+
+        String key = String.format("%s/%s/%d/%s", prefix, usageType.toLowerCase(), usageId, uniqueFileName);
 
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(file.getContentType());
         metadata.setContentLength(file.getSize());
 
-        // 업로드 (ACL 없이, 버킷 정책으로 공개 처리)
         PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, key, file.getInputStream(), metadata);
         amazonS3Client.putObject(putObjectRequest);
 
-        // URL 인코딩 처리 (파일명이 안전하게 처리되도록)
         String encodedFileName = URLEncoder.encode(uniqueFileName, StandardCharsets.UTF_8);
-        String encodedKey = "profile/" + encodedFileName;
+        String encodedKey = String.format("%s/%s/%d/%s", prefix, usageType.toLowerCase(), usageId, encodedFileName);
+
         String fileUrl = "https://" + bucket + ".s3." + region + ".amazonaws.com/" + encodedKey;
 
-        // 이미지 엔티티 저장
         S3Entity image = S3Entity.builder()
                 .url(fileUrl)
                 .extension(getExtension(originalFileName))
