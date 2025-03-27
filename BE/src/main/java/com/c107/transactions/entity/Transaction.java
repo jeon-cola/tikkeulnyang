@@ -61,4 +61,6 @@ public class Transaction {
 
     @Column(name = "merchant_name", length = 20)
     private String merchantName;
+    @Column(name = "user_id")
+    private Integer userId;
 }
