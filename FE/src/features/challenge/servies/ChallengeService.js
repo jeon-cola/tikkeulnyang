@@ -5,7 +5,7 @@ export const ChallengeService = {
   getOfficial: async (page, size) => {
     try {
       const response = await Api.get(
-        `/challenge/official?page=${page}&size=${size}`
+        `api/challenge/official?page=${page}&size=${size}`
         //`/api_challenges_official?page=${page}&size=${size}`
       );
 
@@ -20,7 +20,7 @@ export const ChallengeService = {
   getUser: async (page, size) => {
     try {
       const response = await Api.get(
-        `/challenge/user?page=${page}&size=${size}`
+        `api/challenge/user?page=${page}&size=${size}`
         //`/challenge/user?page=0&size=4`
         //`/api_challenge_user?page=${page}&size=${size}`
       );
@@ -33,12 +33,9 @@ export const ChallengeService = {
   },
 
   // 참여이력 전체조회
-  getHistory: async (page, size) => {
+  getPast: async () => {
     try {
-      const response = await Api.get(
-        `/challenge/history?page=${page}&size=${size}`
-        //`/api_challenge_history?page=${page}&size=${size}`
-      );
+      const response = await Api.get(`api/challenge/past`);
       return response;
     } catch (error) {
       console.error(error);
@@ -51,7 +48,7 @@ export const ChallengeService = {
     try {
       const response = await Api.get(
         //`/challenge/current?challenge_id=${challengeId}`
-        `/challenge/${challengeId}/detail`
+        `api/challenge/${challengeId}/detail`
         //`/api_challenge_current?challenge_id=${challengeId}`
       );
       return response;
@@ -69,7 +66,7 @@ export const ChallengeService = {
       console.log("Sending challenge data:", challengeData);
 
       const response = await Api.post(
-        `/challenge`,
+        `api/challenge`,
         //`/api_challenge`,
         challengeData
       );
