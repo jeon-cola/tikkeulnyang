@@ -99,6 +99,8 @@ public class CardService {
                 String cardName = (String) rec.get("cardName");
                 String cardType = (String) rec.get("cardType");
                 String issuerCode = (String) rec.get("issuerCode");
+                // CVC 추출 추가
+                String cvc = (String) rec.get("cvc");
 
                 Optional<CardInfoEntity> existingOpt = cardInfoRepository.findByCardNo(cardNo);
                 if (existingOpt.isEmpty()) {
@@ -107,6 +109,7 @@ public class CardService {
                             .cardName(cardName)
                             .cardNo(cardNo)
                             .cardType(cardType)
+                            .cvc(cvc)  // CVC 설정
                             .createdAt(LocalDateTime.now())
                             .updatedAt(LocalDateTime.now())
                             .build();
