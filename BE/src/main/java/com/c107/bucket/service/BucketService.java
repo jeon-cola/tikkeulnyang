@@ -136,28 +136,38 @@ public class BucketService {
         BucketEntity bucket = bucketRepository.findTopByUserIdOrderByCreatedAtDesc(user.getUserId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "버킷리스트를 찾을 수 없습니다."));
 
+        // 계좌 번호 추출
+        String savingAccountNo = request.getSaving_account().getAccount_number();
+        String withdrawalAccountNo = request.getWithdrawal_account().getAccount_number();
+
         // 저축통장 정보 가져오기
-        Account savingAccount = accountRepository.findByAccountNumber(request.getSaving_account())
+        Account savingAccount = accountRepository.findByAccountNumber(savingAccountNo)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "저축통장 정보를 찾을 수 없습니다."));
 
         // 출금통장 정보 가져오기
-        Account withdrawalAccount = accountRepository.findByAccountNumber(request.getWithdrawal_account())
+        Account withdrawalAccount = accountRepository.findByAccountNumber(withdrawalAccountNo)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "출금통장 정보를 찾을 수 없습니다."));
 
-        // 사용자가 계좌의 소유자인지 확인
         if (!savingAccount.getUserId().equals(user.getUserId()) ||
                 !withdrawalAccount.getUserId().equals(user.getUserId())) {
             throw new CustomException(ErrorCode.UNAUTHORIZED, "해당 계좌에 대한 권한이 없습니다.");
         }
 
-        // 계좌 정보 업데이트
-        bucket.setSavingAccount(request.getSaving_account());
-        bucket.setWithdrawalAccount(request.getWithdrawal_account());
+        // 은행명 추가 유효성 검사 (선택적)
+        if (!savingAccount.getBankName().equals(request.getSaving_account().getBank_name())) {
+            logger.warn("요청된 저축계좌 은행명과 실제 은행명이 일치하지 않습니다");
+        }
+
+        if (!withdrawalAccount.getBankName().equals(request.getWithdrawal_account().getBank_name())) {
+            logger.warn("요청된 출금계좌 은행명과 실제 은행명이 일치하지 않습니다");
+        }
+
+        bucket.setSavingAccount(savingAccountNo);
+        bucket.setWithdrawalAccount(withdrawalAccountNo);
 
         BucketEntity updatedBucket = bucketRepository.save(bucket);
         LocalDateTime updatedAt = LocalDateTime.now();
 
-        // 응답 생성
         BucketAccountDto.AccountInfo savingAccountInfo = BucketAccountDto.AccountInfo.builder()
                 .bank_name(savingAccount.getBankName())
                 .account_number(savingAccount.getAccountNumber())
