@@ -10,6 +10,7 @@ export default function List() {
     try {
       const response = await Api.get("api/bucket/list")
         if (response.data.status === "success") {
+          console.log(response.data.data.bucket_lists)
           setUserData(response.data.data.bucket_lists)
         }
       } catch (error) { 
