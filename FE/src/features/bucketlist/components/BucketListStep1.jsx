@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Api from "../../../services/Api";
 
 export default function BucketListStep1() {
+    const nav = useNavigate();
     const [stepCheck, setStepCheck] = useState({
         "category":"",
         "title":"",
@@ -38,7 +39,7 @@ export default function BucketListStep1() {
                     "amount": stepCheck.amount
                 })
                 console.log(response.data)
-                if (response.status === "scuccess") {
+                if (response.data.status === "success") {
                     nav("/bucketlist/step2")
                 }
             } catch (error) {
