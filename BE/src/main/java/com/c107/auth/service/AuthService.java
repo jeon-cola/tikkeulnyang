@@ -177,7 +177,7 @@ public class AuthService {
         response.addCookie(accessTokenCookie);
         response.addCookie(refreshTokenCookie);
     }
-
+//
 
     public ResponseEntity<?> authenticateWithKakaoAndReturnJson(String code) {
         System.out.println("Received authorization code: " + code);
