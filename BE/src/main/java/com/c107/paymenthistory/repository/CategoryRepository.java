@@ -12,6 +12,7 @@ import java.util.Optional;
 public interface CategoryRepository extends JpaRepository<CategoryEntity, Integer> {
     Optional<CategoryEntity> findByCategoryCode(String categoryCode);
     List<CategoryEntity> findAllByMerchantName(String merchantName);
+    List<CategoryEntity> findByMerchantName(String merchantName);
 
     List<CategoryEntity> findByMerchantNameContaining(String merchantNamePart);
 
