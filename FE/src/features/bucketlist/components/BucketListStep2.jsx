@@ -1,7 +1,9 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Step from "../assets/Step"
 import step2Image from "../assets/step2.png"
 import { useNavigate } from "react-router-dom";
+import Api from "../../../services/Api";
+import BankImg from "../../mypage/assets/BankImgFunction";
 
 export default function BucketListStep2() {
     const [stepCheck,setStepCheck] = useState({
@@ -10,21 +12,65 @@ export default function BucketListStep2() {
         saving_account:"",
         saving_account_num:""
     });
+    const [list, setList] = useState([]);
+    const [withdrawalIsOpen, setWithdrawalIsOpen] = useState(false);
+    const withdrawalDropdownRef = useRef(null);
+    const [savingIsOpen, setSavingIsOpen] = useState(false);
+    const savingDropdownRef = useRef(null);
     const nav = useNavigate();
 
-    //입력 변경
-    function inputHandler(e) {
-        const {name, value} = e.target;
+    useEffect(() => {
+        const fetchData = async () => {
+            const response = await Api.get("api/account/refresh")
+            console.log(response.data)
+            setList(response.data)
+        }
+        fetchData();
+    },[])
+
+    // 송금 계좌 선택
+    function handleWithdrawalSelect(bank) {
         setStepCheck({
             ...stepCheck,
-            [name]:value
+            withdrawl_amount:bank.bankName,
+            withdrawl_amount_num: bank.accountNumber
         });
-    };
+        setWithdrawalIsOpen(false);
+    }
+
+    // 저축 계좌 선택
+    function handleSavingSelect(bank) {
+        setStepCheck({
+            ...stepCheck,
+            saving_account:bank.bankName,
+            saving_account_num: bank.accountNumber
+        });
+        setSavingIsOpen(false);
+    }
 
     // 다음 페이지 이동 로직직
     function nextHandler(e) {
         e.preventDefault();
-        nav("/bucketlist/step3")
+        const fetchData = async () => {
+            try {
+                const response = await Api.post("api/bucket/account", {
+                    "saving_account": {
+                        "bank_name":stepCheck.saving_account,
+                        "account_number":stepCheck.saving_account_num
+                    },
+                    "withdrawal_account": {
+                        "bank_name":stepCheck.withdrawl_amount,
+                        "account_number":stepCheck.withdrawl_amount_num
+                    }
+                })
+                if (response.status === "success") {
+                    nav("/bucketlist/step3")
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        fetchData();
     } 
 
     // 체크 사항 확인
@@ -43,23 +89,77 @@ export default function BucketListStep2() {
             <img src={step2Image} alt="고양이 사진" className="w-full scale-[1] transform-gpu" />
 
             {/* 송금 계좌 선택 */}
-            <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex flex-col gap-1 p-[20px]">
-                <p className="text-left">주거래 계좌를 선택해주세요</p>
-                <select name="saving_account" id="" className="w-full text-xl font-semibold" onChange={inputHandler} value={stepCheck.saving_account}>
-                    <option value="" disabled>옵션을 선택해주세요</option>
-                    <option value="신한 저축 은행">신한 저축 은행</option>
-                </select>
-                <input type="text" placeholder="계좌번호를 입력해주세요" className="text-left w-full text-xl font-semibold" value={stepCheck.saving_account_num} name="saving_account_num" onChange={inputHandler}/>
+            <div className="relative w-full" ref={withdrawalDropdownRef}>
+                <div 
+                    className="w-full p-2 border rounded flex items-center justify-between cursor-pointer"
+                    onClick={() => setWithdrawalIsOpen(!withdrawalIsOpen)}
+                >
+                    {stepCheck.withdrawl_amount ? (
+                        <div className="flex items-center justify-center w-full">
+                            <span className="h-6 mr-2">
+                                <BankImg bankName={stepCheck.withdrawl_amount} />
+                            </span>
+                            <span>{stepCheck.withdrawl_amount}</span>
+                        </div>
+                    ) : (
+                        <span className="text-gray-400">송금 계좌를 선택해주세요</span>
+                    )}
+                    <span className="ml-2">▼</span>
+                </div>
+                
+                {withdrawalIsOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-60 overflow-auto">
+                        {list.map((bank) => (
+                            <div 
+                                key={bank.accountId}
+                                className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                                onClick={() => handleWithdrawalSelect(bank)}
+                            >
+                                <span className="h-6 mr-2">
+                                    <BankImg bankName={bank.bankName} />
+                                </span>
+                                <span>{bank.bankName} : {bank.accountNumber}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* 저축 계좌 선택 */}
-            <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex flex-col gap-1 p-[20px]">
-                <p className="text-left">저축할 계좌를 선택해주세요</p>
-                <select name="withdrawl_amount" id="" className="w-full text-xl font-semibold" onChange={inputHandler} value={stepCheck.withdrawl_amount}>
-                    <option value="" disabled>옵션을 선택해주세요</option>
-                    <option value="국민 은행">국민은행</option>
-                </select>
-                <input type="text" placeholder="계좌번호를 입력해주세요" className="text-left w-full text-xl font-semibold" value={stepCheck.withdrawl_amount_num} name="withdrawl_amount_num" onChange={inputHandler}/>
+            <div className="relative w-full" ref={savingDropdownRef}>
+                <div 
+                    className="w-full p-2 border rounded flex items-center justify-between cursor-pointer"
+                    onClick={() => setSavingIsOpen(!savingIsOpen)}
+                >
+                    {stepCheck.saving_account ? (
+                        <div className="flex items-center justify-center w-full">
+                            <span className="h-6 mr-2">
+                                <BankImg bankName={stepCheck.saving_account} />
+                            </span>
+                            <span>{stepCheck.saving_account}</span>
+                        </div>
+                    ) : (
+                        <span className="text-gray-400">저축 계좌를 선택해주세요</span>
+                    )}
+                    <span className="ml-2">▼</span>
+                </div>
+                
+                {savingIsOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-60 overflow-auto">
+                        {list.map((bank) => (
+                            <div 
+                                key={bank.accountId}
+                                className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                                onClick={() => handleSavingSelect(bank)}
+                            >
+                                <span className="h-6 mr-2">
+                                    <BankImg bankName={bank.bankName} />
+                                </span>
+                                <span>{bank.bankName} : {bank.accountNumber}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* 다음 버튼 */}
