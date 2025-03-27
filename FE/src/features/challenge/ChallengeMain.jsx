@@ -81,12 +81,12 @@ export default function ChallengeMain() {
             </BasicContainer>
 
             <BasicContainer>
-              <ChallengeDesc type="유저 챌린지" button="전체보기 >" />
+              <ChallengeDesc type="공식 챌린지" button="전체보기 >" />
               <CardBox>
                 {userChallenges.slice(0, 2).map((challenge) => (
                   <ChallengeCard
                     imageUrl={challenge.imageUrl}
-                    type="유저챌린지"
+                    type="공식챌린지"
                     title={challenge.challengeName}
                     startDate={challenge.startDate}
                     endDate={challenge.endDate}
@@ -99,7 +99,7 @@ export default function ChallengeMain() {
                 {userChallenges.slice(2, 4).map((challenge) => (
                   <ChallengeCard
                     imageUrl={challenge.imageUrl}
-                    type="유저챌린지"
+                    type="공식챌린지"
                     title={challenge.challengeName}
                     startDate={challenge.startDate}
                     endDate={challenge.endDate}
@@ -157,10 +157,12 @@ export default function ChallengeMain() {
             </BasicContainer>
           </>
         );
-
+      case 1:
+        return <>{/* 참여중 챌린지 탭 */}</>;
       case 2:
         return (
           <>
+            {/* 과거 이력 탭 */}
             <RenderHistory />
           </>
         );
@@ -169,7 +171,7 @@ export default function ChallengeMain() {
   return (
     <>
       <CustomHeader title="챌린지" showCreateButton="true" />
-      <div className="flex flex-col items-start p-[30px_10px_12px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
+      <div className="flex flex-col items-start p-[30px_10px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
         <ChallengeNav />
         {renderPage()}
       </div>
