@@ -30,7 +30,7 @@ public class Transaction {
     private Integer categoryId;
 
     @Column(name = "amount", length = 255)
-    private String amount;
+    private Integer amount;
 
     @Column(name = "account_id", length = 255)
     private String accountId;
@@ -58,4 +58,7 @@ public class Transaction {
 
     @Column(name = "deleted", columnDefinition = "tinyint(1) default 0")
     private Integer deleted;
+
+    @Column(name = "merchant_name", length = 20)
+    private String merchantName;
 }
