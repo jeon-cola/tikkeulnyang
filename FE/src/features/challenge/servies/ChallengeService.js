@@ -65,13 +65,33 @@ export const ChallengeService = {
     try {
       console.log("Sending challenge data:", challengeData);
 
-      const response = await Api.post(
-        `api/challenge`,
-        //`/api_challenge`,
-        challengeData
-      );
+      const response = await Api.post(`api/challenge`, challengeData);
 
       console.log("challengeData", challengeData);
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
+
+  // 썸네일 업로드
+  postChallengeThumbnail: async (challengeId, file) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await Api.post(
+        `api/challenge/${challengeId}/thumbnail`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("thumbnail response : ", response);
       return response;
     } catch (error) {
       console.error(error);
