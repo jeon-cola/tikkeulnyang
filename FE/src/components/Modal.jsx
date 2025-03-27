@@ -31,7 +31,7 @@ export default function Modal({ title, description, onClose }) {
         {/* 닫기 버튼 - 우측 상단 */}
         <img
           className="absolute top-5 right-5 w-5 h-5 cursor-pointer"
-          src="/CloseIcon.png"
+          src="/close_icon.png"
           alt="닫기"
           onClick={handleClose}
         />
