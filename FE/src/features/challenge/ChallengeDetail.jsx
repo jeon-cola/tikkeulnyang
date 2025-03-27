@@ -24,7 +24,30 @@ export default function ChallengeDetail() {
       },
     });
   };
-  const [currChallenge, setCurrChallenge] = useState([]);
+  const [currChallenge, setCurrChallenge] = useState({
+    challenge: {
+      challengeId: 0,
+      challengeName: "",
+      challengeType: "",
+      targetAmount: 0,
+      startDate: "",
+      endDate: "",
+      description: "",
+      createdBy: "",
+      activeFlag: false,
+      challengeCategory: "",
+      createdAt: "",
+      maxParticipants: 0,
+      limitAmount: 0,
+      imageUrl: "",
+    },
+    participantCount: 0,
+    bucket100to85: 0,
+    bucket84to50: 0,
+    bucket49to25: 0,
+    bucket24to0: 0,
+    averageSuccessRate: 0.0,
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async () => {
@@ -54,19 +77,19 @@ export default function ChallengeDetail() {
         ) : (
           <>
             {/* 챌린지 상세 이미지 */}
-            <ChallengeDetailImg imageInfo={currChallenge.images[0].url} />
+            <ChallengeDetailImg imageInfo={currChallenge.challenge.imageUrl} />
             <ChallengeIntro
-              challengeType={currChallenge.challengeType}
-              challengeName={currChallenge.challengeName}
+              challengeType={currChallenge.challenge.challengeType}
+              challengeName={currChallenge.challenge.challengeName}
               currentParticipants={currChallenge.participantCount}
-              startDate={currChallenge.startDate}
-              endDate={currChallenge.endDate}
+              startDate={currChallenge.challenge.startDate}
+              endDate={currChallenge.challenge.endDate}
             />
 
             {/* 챌린지 상세 설명 */}
             <div className="flex flex-col items-center p-[12px_11px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
               <div className="whitespace-pre-line text-left w-full h-auto font-normal text-[17px] leading-[20px] text-black flex-none order-0 flex-grow-0">
-                <p>{currChallenge.description}</p>
+                <p>{currChallenge.challenge.description}</p>
               </div>
             </div>
 
@@ -81,7 +104,7 @@ export default function ChallengeDetail() {
 
                   챌린지 시작 후부터 환불 불가
 
-                  참가비용 최소 ${currChallenge.limitAmount}원
+                  참가비용 최소 ${currChallenge.challenge.limitAmount}원
                   `}
                 </p>
               </div>
@@ -89,15 +112,13 @@ export default function ChallengeDetail() {
 
             {/* 현재 챌린지들의 현황*/}
             <MyCurrentStatus
-              deposit={currChallenge.limitAmount}
-              currentProgress={currChallenge.achievementRate}
+              deposit={currChallenge.challenge.limitAmount}
+              currentProgress={currChallenge.averageSuccessRate}
             />
 
             <ParticiStatics
               participantCount={currChallenge.participantCount}
-              averageExpectedSuccessRate={
-                currChallenge.averageExpectedSuccessRate
-              }
+              averageExpectedSuccessRate={currChallenge.averageSuccessRate}
             />
             {/* 참가 버튼 */}
             <div className="w-full justify-center flex flex-row">
