@@ -20,6 +20,10 @@ export default function ChallengeMake() {
     maxParticipants: "",
   });
 
+  // useEffect(() => {
+  //   console.log("challengeCategory: ", challengeData.challengeCategory);
+  // }, [challengeData.challengeCategory]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setChallengeData((prev) => ({
@@ -41,7 +45,12 @@ export default function ChallengeMake() {
 
   // 카테고리 항목 개별 컴포넌트
   const CategoryItem = ({ text }) => {
-    const handleClick = () => {};
+    const handleClick = () => {
+      setChallengeData((prev) => ({
+        ...prev,
+        challengeCategory: text,
+      }));
+    };
     return (
       <div
         onClick={handleClick}
@@ -145,13 +154,37 @@ export default function ChallengeMake() {
 
             {/* 챌린지 목록 */}
             <div className="w-full overflow-hidden flex flex-row overflow-x-auto whitespace-nowrap items-center p-0 gap-[10px] relative w-[543px] h-auto">
-              <CategoryItem text="식비" />
-              <CategoryItem text="카페, 음료" />
-              <CategoryItem text="교통" />
-              <CategoryItem text="통신비" />
-              <CategoryItem text="쇼핑" />
-              <CategoryItem text="카페, 음료" />
-              <CategoryItem text="카페, 음료" />
+              <CategoryItem text="주유" />
+              <CategoryItem text="세차" />
+              <CategoryItem text="이커머스" />
+              <CategoryItem text="백화점" />
+              <CategoryItem text="마트" />
+              <CategoryItem text="버스" />
+              <CategoryItem text="지하철" />
+              <CategoryItem text="택시" />
+              <CategoryItem text="도서" />
+              <CategoryItem text="문구" />
+              <CategoryItem text="전시/박람회" />
+              <CategoryItem text="아동 장난감" />
+              <CategoryItem text="통신" />
+              <CategoryItem text="OTT 구독" />
+              <CategoryItem text="게임 과금" />
+              <CategoryItem text="음원" />
+              <CategoryItem text="전자기기" />
+              <CategoryItem text="직구" />
+              <CategoryItem text="면세점" />
+              <CategoryItem text="여행" />
+              <CategoryItem text="카페" />
+              <CategoryItem text="편의점" />
+              <CategoryItem text="음식점" />
+              <CategoryItem text="외식" />
+              <CategoryItem text="영화" />
+              <CategoryItem text="공연" />
+              <CategoryItem text="미용/뷰티" />
+              <CategoryItem text="레저" />
+              <CategoryItem text="명품" />
+              <CategoryItem text="주류" />
+              <CategoryItem text="의약품" />
             </div>
           </div>
         </div>
