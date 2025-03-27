@@ -99,6 +99,7 @@ p {
   width: 125px;
   white-space: nowrap;
 }
+
 /* 긴 버튼 */
 .longButton {
   box-sizing: border-box;

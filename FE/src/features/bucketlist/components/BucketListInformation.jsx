@@ -44,7 +44,7 @@ export default function BucketListInformation() {
             </div>
             <img src="/cat_stamp.png" alt="고양이 스탬프" className="w-full scale-[1.2] transform-gpu" />
             <div className="w-full mx-auto flex flex-col items-center mb-[10px]">
-                <button onClick={stepHandler}>생성하기</button>
+                <button className="customButton"onClick={stepHandler}>생성하기</button>
             </div>
         </div>
     ) 
