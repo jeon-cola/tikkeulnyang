@@ -19,5 +19,4 @@ public class ChallengeDetailResponseDto {
     private int bucket24to0;
     // 전체 참가자 평균 성공률
     private double averageSuccessRate;
-    private String thumbnailUrl;
 }
