@@ -1,30 +1,32 @@
-export default function DigitalDevicePage ({title, current_savings, target_amount}) {
-    const currentProgress = (target_amount/current_savings) *100 > 0 ? (target_amount/current_savings) *100 : 0
+import DigitalThing from "../../assets/DigitalThing.png"
+
+export default function DigitalDevicePage ({title, current_savings, target_amount,color}) {
+    const currentProgress = current_savings > 0 && target_amount > 0 ? Math.min((current_savings / target_amount) * 100, 100) : 0
     return(
-        <div className="w-full">
-            <div>
-                <div>
-                    <p>#버킷리스트</p>
-                    <p>{title}</p>
+        <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 flex flex-col gap-3">
+            <div className="w-full flex flex-row">
+                <div className="w-full flex flex-col gap-6">
+                    <p className="text-left font-semibold text-xl" style={{color:"#321B41"}}>#버킷리스트</p>
+                    <p className="text-left font-semibold text-2xl" style={{color:color}}>📟 {title}</p>
                 </div>
-                <img src="" alt="" />
+                <img src={DigitalThing} alt="디지털 기기 이미지" className="w-full" />
             </div>
-            <div>
-                <button>저축하기</button>
+            <div className="w-full">
+                <button className="customButton" style={{backgroundColor:color}}>저축하기</button>
             </div>
-            <div>
+            <div className="flex flex-row justify-between w-full">
                 <div>
-                    <span>{current_savings}</span> / <span>{target_amount}</span>
+                    <span style={{color:color}} className="text-left font-semibold text-xl">{current_savings}</span> / <span style={{color:"#321B41"}}  className="text-left font-semibold text-xl">{target_amount}</span>
                 </div>
-                <p>{currentProgress}</p>
+                <p style={{color:color}} className="text-left font-semibold text-xl">{currentProgress.toFixed(1)}%</p>
             </div>
 
             {/* 프로그레스 바 배경 */}
-          <div className="absolute left-0 bottom-0 w-full h-[24px] bg-[#F1EFEF] border border-[#DFDFDF] rounded-[70px]">
+          <div className="w-full h-[24px] bg-[#F1EFEF] border border-[#DFDFDF] rounded-[70px]">
             {/* 프로그레스 바 채움 */}
             <div
-              className="h-full bg-[#FF957A] rounded-[70px]"
-              style={{ width: `${currentProgress}%` }}
+              className="h-full rounded-[70px]"
+              style={{ width: `${currentProgress}%`, backgroundColor:"#321B41" }}
             ></div>
           </div>
         </div>
