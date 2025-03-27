@@ -6,7 +6,7 @@ export default function RenderHistory() {
   const [challengeHistory, setChallengeHistory] = useState([]);
   const fetchHistory = async () => {
     try {
-      const response = await ChallengeService.getHistory(0, 10);
+      const response = await ChallengeService.getPast();
       console.log(response.data.content);
       setChallengeHistory(response.data.content);
     } catch (error) {
