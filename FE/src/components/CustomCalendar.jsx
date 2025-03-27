@@ -9,13 +9,6 @@ export default function CustomCalendar({
   tileContent,
   tileClassName: customTileClassName,
 }) {
-  const formatLocalDate = (date) => {
-    const year = data.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
   return (
     <div className="relative max-w-[320px]">
       <Calendar
