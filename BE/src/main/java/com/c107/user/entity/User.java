@@ -36,4 +36,8 @@ public class User{
     @Builder.Default
     @Column(nullable = false)
     private Integer deposit = 0;
+
+    @Builder.Default
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
 }
