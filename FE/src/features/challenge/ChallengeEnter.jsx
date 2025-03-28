@@ -4,20 +4,58 @@ import ChallengeIntro from "@/features/challenge/components/ChallengeIntro";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChallengeService } from "@/features/challenge/services/ChallengeService";
 import { useEffect, useState } from "react";
+import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
 
 export default function ChallengeEnter() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [isLoading, setIsLoading] = useState(true);
-  const [challengeData, setChallengeData] = useState([]);
+  const [challengeData, setChallengeData] = useState({
+    challenge: {
+      challengeId: 0,
+      challengeName: "",
+      challengeType: "",
+      targetAmount: 0,
+      startDate: "",
+      endDate: "",
+      description: "",
+      createdBy: "",
+      activeFlag: false,
+      challengeCategory: "",
+      createdAt: "",
+      maxParticipants: 0,
+      limitAmount: 0,
+      thumbnailUrl: "",
+    },
+    participantCount: 0,
+    bucket100to85: 0,
+    bucket84to50: 0,
+    bucket49to25: 0,
+    bucket24to0: 0,
+    averageSuccessRate: 0.0,
+  });
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
       const response = await ChallengeService.getCurrChallenge(id);
-      console.log(response.data);
-      setChallengeData(response.data);
+      console.log("original response", response.data);
 
+      // 날짜 형식 변경
+      const formattedData = {
+        ...response.data,
+        challenge: {
+          ...response.data.challenge,
+          startDate: ChallengeUtils.formatDate(
+            response.data.challenge.startDate
+          ),
+          endDate: ChallengeUtils.formatDate(response.data.challenge.endDate),
+        },
+      };
+
+      console.log("formatted response", formattedData);
+
+      setChallengeData(formattedData);
       setIsLoading(false);
     } catch (error) {
       console.error(error);
@@ -43,11 +81,11 @@ export default function ChallengeEnter() {
           <CustomHeader title="챌린지 입장" showCreateButton="true" />
           <div className="flex flex-col items-start p-[30px_20px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
             <ChallengeIntro
-              challengeType={challengeData.challengeType}
-              challengeName={challengeData.challengeName}
+              challengeType={challengeData.challenge.challengeType}
+              challengeName={challengeData.challenge.challengeName}
               currentParticipants={challengeData.participantCount}
-              startDate={challengeData.startDate}
-              endDate={challengeData.endDate}
+              startDate={challengeData.challenge.startDate}
+              endDate={challengeData.challenge.endDate}
             />
 
             <div className="text-left flex flex-col items-center p-[30px_12px_30px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
@@ -69,7 +107,7 @@ export default function ChallengeEnter() {
               {/* 금액 표시 및 밑줄 */}
               <div className="w-full flex flex-col items-center">
                 <span className="text-2xl font-semibold text-[#FF957A] mb-1">
-                  {challengeData.limitAmount}원
+                  {challengeData.challenge.limitAmount}원
                 </span>
                 <div className="w-1/2 max-w-xs h-px bg-[#FF957A]"></div>
               </div>
