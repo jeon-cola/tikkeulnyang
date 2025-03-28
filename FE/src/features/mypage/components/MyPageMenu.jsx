@@ -17,8 +17,7 @@ import Api from "../../../services/Api.jsx";
 
 export default function MyPageMenu() {
   const dispatch = useDispatch();
-  const {nickName, email, } = useSelector(state => state.user);
-  const [userImage, setUserImage] = useState(userProfile);
+  const {nickName, email,profileImg } = useSelector(state => state.user);
   const [userLevel, setUserLevel] = useState("LV.1");
   const [pendingChallenges, setPendingChallenges] = useState(0);
   const [activeChallenges, setActiveChallenges] = useState(0);
@@ -61,14 +60,14 @@ export default function MyPageMenu() {
   }
 
   return(
-      <div className="flex flex-col justify-center gap-5 min-w-[345px] mt-[50px] mb-[20px]">
+      <div className="flex flex-col justify-center gap-5 min-w-[345px] mt-[50px] mb-[30px]">
 
         <CustomHeader title="마이 페이지"/>
         
         {/* 유저 정보 */}
         <div className="w-full t flex items-center p-4 relative bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px]">
           <div className="mr-4">
-            <img src={userImage} alt="유저 이미지"/>
+            <img src={profileImg} alt="유저 이미지" className="w-[80px] h-[80px rounded-full "/>
           </div>
           <div className="flex flex-col">
             <div className="flex items-center mb-1 gap-3">
@@ -194,11 +193,9 @@ export default function MyPageMenu() {
                 <p className="font-regular">로그아웃</p>
               </div>
             </div>
-
+          
 
         </div>
-
-
 
       </div>
 
