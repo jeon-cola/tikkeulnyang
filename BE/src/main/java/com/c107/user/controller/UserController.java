@@ -115,17 +115,10 @@ public class UserController {
     public ResponseEntity<?> deleteUser(@AuthenticationPrincipal String email) {
         System.out.println("📌 Delete 요청 들어옴: " + email);
         if (email == null) {
-            System.out.println("❌ 인증된 사용자 없음");
-            throw new CustomException(ErrorCode.UNAUTHORIZED, "인증된 사용자가 없습니다.");
+            System.out.println("❌ 인증된 사용자가 없음");
+            return ResponseUtil.unauthorized("인증된 사용자가 없습니다.", null);
         }
-
-        try {
-            userService.deleteUser(email);
-            return ResponseUtil.success("회원 탈퇴가 완료되었습니다.", null);
-        } catch (Exception e) {
-            e.printStackTrace();  // 예외 전체 로그 출력
-            return ResponseUtil.badRequest("회원 탈퇴 도중 오류 발생", null);
-        }
+        return userService.deleteUser(email);
     }
 
 
