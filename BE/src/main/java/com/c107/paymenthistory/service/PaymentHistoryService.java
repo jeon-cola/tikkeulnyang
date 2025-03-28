@@ -212,6 +212,7 @@ public class PaymentHistoryService {
                 .transactionsMap(transactionsMap)
                 .build();
     }
+
     @Transactional(readOnly = true)
     public Map<String, Object> getDailyConsumption(
             String email,
@@ -343,7 +344,6 @@ public class PaymentHistoryService {
     // 카테고리별 통계
     @Transactional(readOnly = true)
     public CategoryStatisticsResponseDto getCategoryStatistics(String email, Integer year, Integer month) {
-
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
 
@@ -355,6 +355,7 @@ public class PaymentHistoryService {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
+        // 사용자의 예산 정보 조회
         List<BudgetEntity> budgets = budgetRepository.findByEmailAndStartDateAndEndDate(
                 email, startDate, endDate);
 
@@ -362,24 +363,43 @@ public class PaymentHistoryService {
                 .mapToInt(budget -> budget.getAmount() != null ? budget.getAmount() : 0)
                 .sum();
 
+        // 결제 내역 조회
         List<PaymentHistoryEntity> payments = paymentHistoryRepository
                 .findByCardIdInAndTransactionDateBetween(userCardIds, startDate, endDate);
 
+        // 거래 내역 조회 (Transaction 테이블)
+        List<Transaction> transactions = transactionRepository.findByUserIdAndTransactionDateBetween(
+                user.getUserId(),
+                startDate.atStartOfDay(),
+                endDate.atTime(23, 59, 59)
+        );
+
+        // 모든 카테고리 정보 조회
         Map<Integer, String> budgetCategoryMap = new HashMap<>();
         List<BudgetCategoryEntity> allBudgetCategories = budgetCategoryRepository.findAll();
         for (BudgetCategoryEntity bc : allBudgetCategories) {
             budgetCategoryMap.put(bc.getBudgetCategoryId(), bc.getCategoryName());
         }
 
-
+        // 카테고리별 금액 집계
         Map<String, Integer> categoryAmounts = new HashMap<>();
+
+        // 기본 카테고리 먼저 추가 (모든 예산 카테고리 포함)
+        for (BudgetCategoryEntity category : allBudgetCategories) {
+            categoryAmounts.put(category.getCategoryName(), 0);
+        }
+
+        // 추가로 기타 카테고리 추가
+        categoryAmounts.put("기타", 0);
+
         int totalSpent = 0;
 
+        // PaymentHistory 테이블 데이터 처리
         for (PaymentHistoryEntity payment : payments) {
             try {
                 String categoryIdStr = payment.getCategoryId();
                 Integer categoryId = null;
-                String merchantName = payment.getMerchantName(); // 가맹점명 가져오기
+                String merchantName = payment.getMerchantName();
 
                 try {
                     categoryId = Integer.parseInt(categoryIdStr);
@@ -391,12 +411,12 @@ public class PaymentHistoryService {
                 int amount = Math.abs(Integer.parseInt(payment.getTransactionBalance().trim().replace(",", "")));
                 totalSpent += amount;
 
-                // 기본값으로 "결제" 설정
-                String budgetCategoryName = "결제";
+                // 기본값으로 "기타" 설정
+                String budgetCategoryName = "기타";
 
-                // 직접 SQL 쿼리로 budget_category_id와 budget_category_name 가져오기
+                // 카테고리 매핑 시도
                 try {
-                    // 1. 먼저 가맹점 이름으로 category 테이블 조회
+                    // 1. 가맹점 이름으로 category 테이블 조회
                     if (merchantName != null && !merchantName.isEmpty()) {
                         List<CategoryEntity> matchingCategories = categoryRepository.findByMerchantName(merchantName);
                         if (!matchingCategories.isEmpty() && matchingCategories.get(0).getBudgetCategory() != null) {
@@ -404,30 +424,19 @@ public class PaymentHistoryService {
                             String mappedName = budgetCategoryMap.get(budgetCategoryId);
                             if (mappedName != null) {
                                 budgetCategoryName = mappedName;
-                                log.debug("가맹점 기반 매핑: 가맹점={}, budget_category_id={}, 카테고리명={}",
-                                        merchantName, budgetCategoryId, budgetCategoryName);
-
-                                // 카테고리별 금액 누적
-                                categoryAmounts.put(budgetCategoryName,
-                                        categoryAmounts.getOrDefault(budgetCategoryName, 0) + amount);
-                                continue; // 성공했으므로 다음 결제 내역으로
                             }
                         }
                     }
 
                     // 2. 카테고리 ID로 조회 (가맹점으로 찾지 못한 경우)
-                    if (categoryId != null) {
+                    if (budgetCategoryName.equals("기타") && categoryId != null) {
                         CategoryEntity category = categoryRepository.findById(categoryId).orElse(null);
                         if (category != null && category.getBudgetCategory() != null) {
                             Integer budgetCategoryId = category.getBudgetCategory();
                             String mappedName = budgetCategoryMap.get(budgetCategoryId);
                             if (mappedName != null) {
                                 budgetCategoryName = mappedName;
-                                log.debug("카테고리 ID 기반 매핑: ID={}, budget_category_id={}, 카테고리명={}",
-                                        categoryId, budgetCategoryId, budgetCategoryName);
                             }
-                        } else {
-                            log.warn("카테고리 ID {}에 해당하는 정보가 없거나 budget_category가 null입니다", categoryId);
                         }
                     }
                 } catch (Exception e) {
@@ -443,8 +452,51 @@ public class PaymentHistoryService {
             }
         }
 
+        // Transaction 테이블 데이터 처리
+        for (Transaction transaction : transactions) {
+            try {
+                if (transaction.getTransactionType() != 1) { // 출금(지출)만 처리
+                    int amount = transaction.getAmount();
+                    Integer categoryId = transaction.getCategoryId();
+                    String budgetCategoryName = "기타"; // 기본값
+
+                    // 카테고리 매핑 시도
+                    if (categoryId != null) {
+                        // 카테고리 ID로 예산 카테고리 조회
+                        CategoryEntity category = categoryRepository.findById(categoryId).orElse(null);
+                        if (category != null && category.getBudgetCategory() != null) {
+                            Integer budgetCategoryId = category.getBudgetCategory();
+                            String mappedName = budgetCategoryMap.get(budgetCategoryId);
+                            if (mappedName != null) {
+                                budgetCategoryName = mappedName;
+                            }
+                        }
+                    } else if (transaction.getMerchantName() != null) {
+                        // 가맹점 이름으로 카테고리 조회
+                        List<CategoryEntity> matchingCategories = categoryRepository.findByMerchantName(transaction.getMerchantName());
+                        if (!matchingCategories.isEmpty() && matchingCategories.get(0).getBudgetCategory() != null) {
+                            Integer budgetCategoryId = matchingCategories.get(0).getBudgetCategory();
+                            String mappedName = budgetCategoryMap.get(budgetCategoryId);
+                            if (mappedName != null) {
+                                budgetCategoryName = mappedName;
+                            }
+                        }
+                    }
+
+                    // 카테고리별 금액 누적
+                    categoryAmounts.put(budgetCategoryName,
+                            categoryAmounts.getOrDefault(budgetCategoryName, 0) + amount);
+                    totalSpent += amount;
+                }
+            } catch (Exception e) {
+                log.error("거래 내역 처리 중 오류 발생: {}", e.getMessage(), e);
+            }
+        }
+
+        // 집계 결과 변환
         List<CategoryStatisticsResponseDto.CategoryData> categories = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : categoryAmounts.entrySet()) {
+            // 금액이 0인 카테고리도 포함
             double percentage = totalSpent > 0 ? (entry.getValue() * 100.0) / totalSpent : 0;
 
             categories.add(CategoryStatisticsResponseDto.CategoryData.builder()
@@ -454,7 +506,11 @@ public class PaymentHistoryService {
                     .build());
         }
 
+        // 금액 내림차순 정렬
         categories.sort((a, b) -> b.getAmount().compareTo(a.getAmount()));
+
+        // 금액이 0인 카테고리 필터링 (선택적)
+        // categories = categories.stream().filter(c -> c.getAmount() > 0).collect(Collectors.toList());
 
         int remainingAmount = goalAmount - totalSpent;
 
