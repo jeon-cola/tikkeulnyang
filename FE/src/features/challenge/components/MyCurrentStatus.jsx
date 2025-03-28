@@ -4,7 +4,10 @@
 */
 }
 
-export default function MyCurrentStatus({ deposit, currentProgress }) {
+export default function MyCurrentStatus({
+  deposit = 5000,
+  currentProgress = 50,
+}) {
   return (
     <>
       {/* 나의 현황 */}
