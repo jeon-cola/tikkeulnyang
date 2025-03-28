@@ -12,6 +12,8 @@ import com.c107.paymenthistory.repository.BudgetCategoryRepository;
 import com.c107.paymenthistory.repository.CardRepository;
 import com.c107.paymenthistory.repository.CategoryRepository;
 import com.c107.paymenthistory.repository.PaymentHistoryRepository;
+import com.c107.transactions.entity.Transaction;
+import com.c107.transactions.repository.TransactionRepository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Field;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -36,6 +39,7 @@ public class PaymentHistoryService {
     private final CategoryRepository categoryRepository;
     private final BudgetRepository budgetRepository;
     private final BudgetCategoryRepository budgetCategoryRepository;
+    private final TransactionRepository transactionRepository;
 
 
     @Transactional(readOnly = true)
@@ -52,16 +56,15 @@ public class PaymentHistoryService {
         LocalDate startDate = yearMonth.atDay(1);
         LocalDate endDate = yearMonth.atEndOfMonth();
 
-        List<Integer> userCardIds = cardRepository.findByUserId(userId)
-                .stream()
-                .map(CardEntity::getCardId)
-                .collect(Collectors.toList());
+        // payment_history 대신 transactions 테이블 사용
+        List<Transaction> transactions = transactionRepository.findByUserIdAndTransactionDateBetween(
+                userId,
+                startDate.atStartOfDay(),
+                endDate.atTime(23, 59, 59)
+        );
 
-        List<PaymentHistoryEntity> paymentHistories = paymentHistoryRepository
-                .findByCardIdInAndTransactionDateBetween(userCardIds, startDate, endDate);
-
-        Map<LocalDate, List<PaymentHistoryEntity>> paymentsByDate = paymentHistories.stream()
-                .collect(Collectors.groupingBy(PaymentHistoryEntity::getTransactionDate));
+        Map<LocalDate, List<Transaction>> transactionsByDate = transactions.stream()
+                .collect(Collectors.groupingBy(t -> t.getTransactionDate().toLocalDate()));
 
         List<PaymentHistoryResponseDto.DayData> dayDataList = new ArrayList<>();
         int totalIncome = 0;
@@ -69,26 +72,40 @@ public class PaymentHistoryService {
 
         for (int day = 1; day <= endDate.getDayOfMonth(); day++) {
             LocalDate date = LocalDate.of(year, month, day);
-            List<PaymentHistoryEntity> dayPayments = paymentsByDate.getOrDefault(date, Collections.emptyList());
+            List<Transaction> dayTransactions = transactionsByDate.getOrDefault(date, Collections.emptyList());
 
             int dayIncome = 0;
             int dayExpense = 0;
-            List<PaymentHistoryResponseDto.TransactionDetail> transactions = new ArrayList<>();
+            List<PaymentHistoryResponseDto.TransactionDetail> transactionDetails = new ArrayList<>();
 
-            for (PaymentHistoryEntity payment : dayPayments) {
+            for (Transaction transaction : dayTransactions) {
                 try {
-                    int amount = Math.abs(Integer.parseInt(payment.getTransactionBalance().trim().replace(",", "")));
-                    dayExpense += amount;
-                    totalExpense += amount;
+                    int amount = transaction.getAmount();
 
-                    transactions.add(PaymentHistoryResponseDto.TransactionDetail.builder()
-                            .merchantName(payment.getMerchantName())
-                            .amount(amount)
-                            .transactionType("EXPENSE")
-                            .category(payment.getCategoryName())
-                            .build());
-                } catch (NumberFormatException | NullPointerException e) {
-                    log.error("금액 변환 오류: {}", payment.getTransactionBalance(), e);
+                    // 거래 유형에 따라 수입 또는 지출로 분류
+                    if (transaction.getTransactionType() == 1) { // 입금
+                        dayIncome += amount;
+                        totalIncome += amount;
+
+                        transactionDetails.add(PaymentHistoryResponseDto.TransactionDetail.builder()
+                                .merchantName(transaction.getMerchantName())
+                                .amount(amount)
+                                .transactionType("INCOME")
+                                .category(getCategoryName(transaction.getCategoryId()))
+                                .build());
+                    } else { // 출금
+                        dayExpense += amount;
+                        totalExpense += amount;
+
+                        transactionDetails.add(PaymentHistoryResponseDto.TransactionDetail.builder()
+                                .merchantName(transaction.getMerchantName())
+                                .amount(amount)
+                                .transactionType("EXPENSE")
+                                .category(getCategoryName(transaction.getCategoryId()))
+                                .build());
+                    }
+                } catch (Exception e) {
+                    log.error("금액 처리 오류: {}", transaction.getTransactionId(), e);
                 }
             }
 
@@ -96,7 +113,7 @@ public class PaymentHistoryService {
                     .date(date.format(DateTimeFormatter.ISO_DATE))
                     .income(dayIncome)
                     .expense(dayExpense)
-                    .transactions(transactions)
+                    .transactions(transactionDetails)
                     .build());
         }
 
@@ -107,6 +124,15 @@ public class PaymentHistoryService {
                 .totalSpent(totalExpense)
                 .data(dayDataList)
                 .build();
+    }
+
+    // 카테고리 ID로 카테고리 이름 조회 유틸 메서드
+    private String getCategoryName(Integer categoryId) {
+        if (categoryId == null) return "기타";
+
+        return budgetCategoryRepository.findById(categoryId)
+                .map(BudgetCategoryEntity::getCategoryName)
+                .orElse("기타");
     }
 
     @Transactional(readOnly = true)
@@ -123,73 +149,74 @@ public class PaymentHistoryService {
         LocalDate startDate = yearMonth.atDay(1);
         LocalDate endDate = yearMonth.atEndOfMonth();
 
-        List<Integer> userCardIds = cardRepository.findByUserId(userId)
-                .stream()
-                .map(CardEntity::getCardId)
-                .collect(Collectors.toList());
+        // transactions 테이블에서 데이터 조회
+        List<Transaction> transactions = transactionRepository.findByUserIdAndTransactionDateBetween(
+                userId,
+                startDate.atStartOfDay(),
+                endDate.atTime(23, 59, 59)
+        );
 
-        List<PaymentHistoryEntity> paymentHistories = paymentHistoryRepository
-                .findByCardIdInAndTransactionDateBetween(userCardIds, startDate, endDate);
+        // 디버깅을 위한 로그 추가
+        log.info("조회된 거래 수: {}", transactions.size());
+        for (Transaction t : transactions) {
+            log.debug("거래 ID: {}, 타입: {}, 금액: {}, 카드ID: {}",
+                    t.getTransactionId(), t.getTransactionType(), t.getAmount(), t.getCardId());
+        }
 
-        // 카드 거래는 모두 지출로 처리
-        int totalSpent = calculateTotalAmount(paymentHistories, false);
-        // 현재는 카드 거래에서 수입을 처리하지 않음 (필요시 변경)
+        int totalSpent = 0;
         int totalIncome = 0;
 
         List<Map<String, Object>> transactionsMap = new ArrayList<>();
 
-        // Map을 사용하여 categoryId를 Integer로 직접 처리
-        for (PaymentHistoryEntity p : paymentHistories) {
+        for (Transaction t : transactions) {
             try {
-                int transactionAmount = Math.abs(Integer.parseInt(p.getTransactionBalance().trim().replace(",", "")));
-                Map<String, Object> transaction = new HashMap<>();
+                int amount = t.getAmount();
 
-                // 기본 필드 설정
-                transaction.put("paymentHistoryId", p.getPaymentHistoryId());
-                transaction.put("date", p.getTransactionDate().toString());
-                transaction.put("categoryName", p.getCategoryName());
-                transaction.put("merchantId", p.getMerchantId());
-                transaction.put("merchantName", p.getMerchantName());
-                transaction.put("transactionBalance", transactionAmount);
-                transaction.put("amount", transactionAmount);
-                transaction.put("category", p.getCategoryName());
-                transaction.put("description", p.getMerchantName());
-                transaction.put("transactionUniqueNo", p.getTransactionUniqueNo());
-                transaction.put("is_waste", p.getIsWaste());
+                // 거래 유형을 다양하게 확인 (카드 거래는 일반적으로 지출)
+                Integer type = t.getTransactionType();
 
-                // categoryId 처리 - 숫자로 변환 시도
-                if (p.getCategoryId() != null && !p.getCategoryId().isEmpty()) {
-                    try {
-                        transaction.put("categoryId", Integer.parseInt(p.getCategoryId()));
-                    } catch (NumberFormatException e) {
-                        // 숫자로 변환 불가능한 경우 원래 값 사용
-                        transaction.put("categoryId", p.getCategoryId());
-                    }
+                // 타입이 1이면 입금(수입), 그 외는 모두 지출로 처리
+                boolean isIncome = (type != null && type == 1);
+
+                if (isIncome) {
+                    totalIncome += amount;
                 } else {
-                    transaction.put("categoryId", null);
+                    totalSpent += amount;
                 }
+
+                Map<String, Object> transaction = new HashMap<>();
+                transaction.put("transactionId", t.getTransactionId());
+                transaction.put("date", t.getTransactionDate().toLocalDate().toString());
+                transaction.put("categoryId", t.getCategoryId());
+                transaction.put("categoryName", getCategoryName(t.getCategoryId()));
+                transaction.put("merchantName", t.getMerchantName());
+                transaction.put("amount", amount);
+                transaction.put("transactionType", isIncome ? "INCOME" : "EXPENSE");
+                transaction.put("is_waste", t.getIsWaste());
+                transaction.put("description", t.getMerchantName());
 
                 transactionsMap.add(transaction);
             } catch (Exception e) {
-                log.error("결제 내역 처리 중 오류: {}", p.getPaymentHistoryId(), e);
+                log.error("거래 내역 처리 중 오류: {}", t.getTransactionId(), e);
             }
         }
+
+        // 집계 결과 로깅
+        log.info("월 합계 - 수입: {}, 지출: {}", totalIncome, totalSpent);
 
         return PaymentHistoryResponseDto.builder()
                 .year(year)
                 .month(month)
                 .totalSpent(totalSpent)
                 .totalIncome(totalIncome)
-                .transactionsMap(transactionsMap) // Map 리스트 직접 사용
+                .transactionsMap(transactionsMap)
                 .build();
     }
-
     @Transactional(readOnly = true)
     public Map<String, Object> getDailyConsumption(
             String email,
             String date
     ) {
-        // 익명 사용자 체크
         if ("anonymousUser".equals(email)) {
             throw new RuntimeException("로그인이 필요한 서비스입니다.");
         }
@@ -199,45 +226,44 @@ public class PaymentHistoryService {
         Integer userId = user.getUserId();
 
         LocalDate targetDate = LocalDate.parse(date);
+        LocalDateTime startOfDay = targetDate.atStartOfDay();
+        LocalDateTime endOfDay = targetDate.atTime(23, 59, 59);
 
-        List<Integer> userCardIds = cardRepository.findByUserId(userId)
-                .stream()
-                .map(CardEntity::getCardId)
-                .collect(Collectors.toList());
+        // transactions 테이블에서 조회
+        List<Transaction> dailyTransactions = transactionRepository
+                .findByUserIdAndTransactionDateBetween(userId, startOfDay, endOfDay);
 
-        List<PaymentHistoryEntity> paymentHistories = paymentHistoryRepository
-                .findByCardIdInAndTransactionDate(userCardIds, targetDate);
+        int totalSpent = 0;
+        int totalIncome = 0;
 
-        int totalSpent = calculateTotalAmount(paymentHistories, false);
-        int totalIncome = 0; // 카드 거래는 모두 지출로 처리
+        List<Map<String, Object>> transactions = new ArrayList<>();
 
-        List<Map<String, Object>> transactions = paymentHistories.stream()
-                .map(p -> {
-                    int transactionAmount = Math.abs(Integer.parseInt(p.getTransactionBalance().trim().replace(",", "")));
-                    Map<String, Object> transaction = new HashMap<>();
+        for (Transaction t : dailyTransactions) {
+            try {
+                int amount = t.getAmount();
 
-                    // 여기만 수정: categoryId를 Integer로 변환 시도
-                    try {
-                        if (p.getCategoryId() != null && !p.getCategoryId().isEmpty()) {
-                            // categoryId를 Integer로 변환
-                            transaction.put("categoryId", Integer.parseInt(p.getCategoryId()));
-                        } else {
-                            // null이거나 빈 문자열이면 null로 설정
-                            transaction.put("categoryId", null);
-                        }
-                    } catch (NumberFormatException e) {
-                        // 숫자 형식이 아니면 원본 문자열 그대로 유지
-                        transaction.put("categoryId", p.getCategoryId());
-                    }
+                // 입금/출금 구분
+                if (t.getTransactionType() == 1) { // 입금
+                    totalIncome += amount;
+                } else { // 출금
+                    totalSpent += amount;
+                }
 
-                    transaction.put("category", p.getCategoryName());
-                    transaction.put("merchantName", p.getMerchantName());
-                    transaction.put("description", p.getMerchantName());
-                    transaction.put("transactionBalance", transactionAmount);
-                    transaction.put("is_waste", p.getIsWaste());
-                    return transaction;
-                })
-                .collect(Collectors.toList());
+                Map<String, Object> transaction = new HashMap<>();
+                transaction.put("transactionId", t.getTransactionId());
+                transaction.put("categoryId", t.getCategoryId());
+                transaction.put("category", getCategoryName(t.getCategoryId()));
+                transaction.put("merchantName", t.getMerchantName());
+                transaction.put("description", t.getMerchantName());
+                transaction.put("amount", amount);
+                transaction.put("transactionType", t.getTransactionType());
+                transaction.put("is_waste", t.getIsWaste());
+
+                transactions.add(transaction);
+            } catch (Exception e) {
+                log.error("거래 내역 처리 중 오류: {}", t.getTransactionId(), e);
+            }
+        }
 
         Map<String, Object> response = new HashMap<>();
         response.put("date", date);
@@ -300,19 +326,19 @@ public class PaymentHistoryService {
     }
 
     @Transactional
-    public Integer toggleWasteStatus(Integer paymentHistoryId) {
-        PaymentHistoryEntity paymentHistory = paymentHistoryRepository
-                .findById(paymentHistoryId)
-                .orElseThrow(() -> new RuntimeException("결제 내역을 찾을 수 없습니다."));
+    public Integer toggleWasteStatus(Integer transactionId) {
+        // PaymentHistory가 아닌 Transaction으로 변경
+        Transaction transaction = transactionRepository
+                .findById(transactionId)
+                .orElseThrow(() -> new RuntimeException("거래 내역을 찾을 수 없습니다."));
 
-        Boolean currentWasteStatus = paymentHistory.isWaste();
-        paymentHistory.setIsWaste(currentWasteStatus == null || !currentWasteStatus);
+        Integer currentWasteStatus = transaction.getIsWaste();
+        transaction.setIsWaste(currentWasteStatus == null || currentWasteStatus == 0 ? 1 : 0);
 
-        PaymentHistoryEntity updatedPaymentHistory = paymentHistoryRepository.save(paymentHistory);
+        Transaction updatedTransaction = transactionRepository.save(transaction);
 
-        return updatedPaymentHistory.getIsWaste();
+        return updatedTransaction.getIsWaste();
     }
-
 
     // 카테고리별 통계
     @Transactional(readOnly = true)
