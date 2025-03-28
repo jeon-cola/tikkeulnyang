@@ -25,28 +25,36 @@ export default function MyPageMenu() {
   const [userCost, setUserCost] = useState(10000);
   const nav = useNavigate();
 
+  // 챌린지 참여 이력
   useEffect(() => {
-    // const fetchChallengeHistory  = async() => {
-    //   try {
-    //     // const response = await Api.get("/api/challenge/history");
-    //     const response = await axios.get("http://localhost:8080/api/challenge/history",{
-    //       withCredentials:true
-    //     })
-    //     console.log(response);
-    //   } catch (error) {
-    //     console.log(error);
-    //   }
-    // }
-    // fetchChallengeHistory ();
+    const fetchChallengeHistory  = async() => {
+      try {
+        const response = await Api.get("/api/challenge/past");
+        setCompletedChallenges(response.data.length)
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchChallengeHistory ();
   },[]);
+
+  // 진행 중인 챌린지 
+  useEffect(()=> {
+    const fetchActiveChallenge = async () => {
+      try {
+        const response = await Api.get("api/challenge/participated")
+        setActiveChallenges(response.data.length)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    fetchActiveChallenge()
+  })
 
   // 로그아웃 핸들러
   async function logoutHandler(e) {
     e.preventDefault();
       try {
-        // const response = await axios.post("http://localhost:8080/api/auth/logout",{},{
-        //   withCredentials:true
-        // })
         const response = await Api.post("api/auth/logout")
         if (response.data.status === "success") {
           dispatch(resetUser())
