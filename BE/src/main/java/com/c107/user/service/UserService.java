@@ -18,6 +18,7 @@ import com.c107.s3.entity.S3Entity;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 
 @Service
@@ -120,20 +121,25 @@ public class UserService {
         return updatedUserInfo;
     }
 
-    public void deleteUser(String email) {
+    public ResponseEntity<?> deleteUser(String email) {
         System.out.println("🔍 이메일로 유저 조회: " + email);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보를 찾을 수 없습니다."));
+        Optional<User> userOpt = userRepository.findByEmail(email);
 
+        System.out.println("찾았다");
+
+        if (userOpt.isEmpty()) {
+            return ResponseUtil.badRequest("사용자 정보를 찾을 수 없습니다.", null);
+        }
+        User user = userOpt.get();
         if (Boolean.TRUE.equals(user.getIsDeleted())) {
             System.out.println("⚠️ 이미 탈퇴한 사용자");
-            throw new CustomException(ErrorCode.VALIDATION_FAILED, "이미 탈퇴한 사용자입니다.");
+            return ResponseUtil.badRequest("이미 탈퇴한 사용자입니다.", null);
         }
-
         System.out.println("📝 탈퇴 처리 중...");
         user.setIsDeleted(true);
         userRepository.save(user);
         System.out.println("✅ 탈퇴 완료");
+        return ResponseUtil.success("회원 탈퇴가 완료되었습니다.", null);
     }
 
 

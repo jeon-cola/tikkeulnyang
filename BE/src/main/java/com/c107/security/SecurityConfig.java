@@ -50,7 +50,7 @@ public class SecurityConfig {
                                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "권한이 부족합니다.")
                         )
                 )
-                // JWT 필터 추가 (Spring Security의 기본 필터보다 앞에서 실행)
+                // JWT 필터 추가 (Spring Security의 기본 필터보다 앞에서 실행) ㅌ
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
 
