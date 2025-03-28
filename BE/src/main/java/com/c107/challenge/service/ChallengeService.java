@@ -410,6 +410,7 @@ public class ChallengeService {
                             .limitAmount(challenge.getLimitAmount())
                             // 참여 결과 상태 (예: "성공" 또는 "실패")
                             .participationStatus(participation.getStatus())
+                            .thumbnailUrl(mapToDto(challenge).getThumbnailUrl())
                             .build();
                 })
                 .collect(Collectors.toList());
