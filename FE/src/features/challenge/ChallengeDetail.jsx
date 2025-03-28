@@ -6,7 +6,8 @@ import ChallengeIntro from "@/features/challenge/components/ChallengeIntro";
 import MyCurrentStatus from "@/features/challenge/components/MyCurrentStatus";
 import ParticiStatics from "./components/ParticiStatics";
 import { useNavigate } from "react-router-dom";
-import { ChallengeService } from "@/features/challenge/servies/ChallengeService";
+import { ChallengeService } from "@/features/challenge/services/ChallengeService";
+import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
 
 /*
   추후에 axios로 채워넣을 데이터: 
@@ -39,7 +40,7 @@ export default function ChallengeDetail() {
       createdAt: "",
       maxParticipants: 0,
       limitAmount: 0,
-      imageUrl: "",
+      thumbnailUrl: "",
     },
     participantCount: 0,
     bucket100to85: 0,
@@ -54,8 +55,23 @@ export default function ChallengeDetail() {
     try {
       setIsLoading(true);
       const response = await ChallengeService.getCurrChallenge(id);
-      console.log(response.data);
-      setCurrChallenge(response.data);
+      console.log("original response", response.data);
+
+      // 날짜 형식 변경
+      const formattedData = {
+        ...response.data,
+        challenge: {
+          ...response.data.challenge,
+          startDate: ChallengeUtils.formatDate(
+            response.data.challenge.startDate
+          ),
+          endDate: ChallengeUtils.formatDate(response.data.challenge.endDate),
+        },
+      };
+
+      console.log("formatted response", formattedData);
+
+      setCurrChallenge(formattedData);
       setIsLoading(false);
     } catch (error) {
       console.error(error);
@@ -77,7 +93,9 @@ export default function ChallengeDetail() {
         ) : (
           <>
             {/* 챌린지 상세 이미지 */}
-            <ChallengeDetailImg imageInfo={currChallenge.challenge.imageUrl} />
+            <ChallengeDetailImg
+              imageInfo={currChallenge.challenge.thumbnailUrl}
+            />
             <ChallengeIntro
               challengeType={currChallenge.challenge.challengeType}
               challengeName={currChallenge.challenge.challengeName}
@@ -119,6 +137,10 @@ export default function ChallengeDetail() {
             <ParticiStatics
               participantCount={currChallenge.participantCount}
               averageExpectedSuccessRate={currChallenge.averageSuccessRate}
+              bucket24to0={currChallenge.bucket24to0}
+              bucket49to25={currChallenge.bucket49to25}
+              bucket84to50={currChallenge.bucket84to50}
+              bucket100to85={currChallenge.bucket100to85}
             />
             {/* 참가 버튼 */}
             <div className="w-full justify-center flex flex-row">

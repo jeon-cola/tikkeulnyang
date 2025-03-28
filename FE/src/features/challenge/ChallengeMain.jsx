@@ -6,10 +6,11 @@ import ChallengeNav from "@/features/challenge/components/ChallengeNav";
 import ViewMoreButton from "@/features/challenge/components/ViewMoreButton";
 import ChallengeDesc from "@/features/challenge/components/ChallengeDesc";
 import CustomHeader from "@/components/CustomHeader";
-import { ChallengeService } from "@/features/challenge/servies/ChallengeService";
+import { ChallengeService } from "@/features/challenge/services/ChallengeService";
 import { useSelector, useDispatch } from "react-redux";
 import { addOfficialChallenge } from "@/features/challenge/ChallengeSlice";
 import RenderHistory from "@/features/challenge/components/RenderHistory";
+import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
 
 export default function ChallengeMain() {
   const [officialChallenges, setOfficialChallenges] = useState([]);
@@ -25,14 +26,30 @@ export default function ChallengeMain() {
   const fetchOfficialChallenge = async (page, size) => {
     const response = await ChallengeService.getOfficial(page, size);
     console.log(response.data.content);
-    dispatch(addOfficialChallenge(response.data.content));
-    setOfficialChallenges([...officialChallenges, ...response.data.content]);
+
+    // 날짜 형식 변경
+    const formattedChallenges = response.data.content.map((challenge) => ({
+      ...challenge,
+      startDate: ChallengeUtils.formatDate(challenge.startDate),
+      endDate: ChallengeUtils.formatDate(challenge.endDate),
+    }));
+
+    dispatch(addOfficialChallenge(formattedChallenges));
+    setOfficialChallenges([...officialChallenges, ...formattedChallenges]);
   };
 
   const fetchUserChallenge = async (page, size) => {
     const response = await ChallengeService.getUser(page, size);
     console.log(response.data.content);
-    setUserChallenges([...userChallenges, ...response.data.content]);
+
+    // 날짜 형식 변경
+    const formattedChallenges = response.data.content.map((challenge) => ({
+      ...challenge,
+      startDate: ChallengeUtils.formatDate(challenge.startDate),
+      endDate: ChallengeUtils.formatDate(challenge.endDate),
+    }));
+
+    setUserChallenges([...userChallenges, ...formattedChallenges]);
   };
 
   // 페이지가 실행되자마자 우선 추천, 공식, 유저 챌린지를 4개씩 불러온다.
