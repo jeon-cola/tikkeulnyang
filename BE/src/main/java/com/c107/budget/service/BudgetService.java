@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,33 +35,40 @@ public class BudgetService {
 
 
     @Transactional
-    public BudgetResponseDto createBudget(String email, BudgetRequestDto requestDto) {
+    public BudgetResponseDto createBudget(String email, BudgetRequestDto requestDto, int year, int month) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        LocalDate now = LocalDate.now();
-        LocalDate startDate = now.withDayOfMonth(1);
-        LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth());
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
+        // 기존 예산 조회 (같은 월, 같은 카테고리)
+        Optional<BudgetEntity> existingBudget = budgetRepository.findByEmailAndCategoryIdAndStartDateAndEndDate(
+                email, requestDto.getCategoryId(), startDate, endDate);
 
-        budgetRepository.findByEmailAndCategoryIdAndStartDateAndEndDate(
-                        email, requestDto.getCategoryId(), startDate, endDate)
-                .ifPresent(budgetRepository::delete);
-
-
-        BudgetEntity budgetEntity = BudgetEntity.builder()
-                .userId(user.getUserId())
-                .email(email)
-                .categoryId(requestDto.getCategoryId())
-                .amount(requestDto.getAmount())
-                .spendingAmount(0)
-                .remainingAmount(requestDto.getAmount())
-                .isExceed(false)
-                .startDate(startDate)
-                .endDate(endDate)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        // 기존 예산이 있으면 업데이트, 없으면 새로 생성
+        BudgetEntity budgetEntity;
+        if (existingBudget.isPresent()) {
+            budgetEntity = existingBudget.get();
+            budgetEntity.setAmount(requestDto.getAmount());
+            budgetEntity.setRemainingAmount(requestDto.getAmount() - budgetEntity.getSpendingAmount());
+            budgetEntity.setUpdatedAt(LocalDateTime.now());
+        } else {
+            // 새 예산 생성
+            budgetEntity = BudgetEntity.builder()
+                    .userId(user.getUserId())
+                    .email(email)
+                    .categoryId(requestDto.getCategoryId())
+                    .amount(requestDto.getAmount())
+                    .spendingAmount(0)
+                    .remainingAmount(requestDto.getAmount())
+                    .isExceed(false)
+                    .startDate(startDate)
+                    .endDate(endDate)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+        }
 
         BudgetEntity savedBudget = budgetRepository.save(budgetEntity);
 
@@ -79,13 +87,15 @@ public class BudgetService {
                 .build();
     }
 
-    public BudgetResponseDto getBudgetPlan(String email) {
+    /**
+     * 특정 연/월에 대한 예산 계획 조회
+     */
+    public BudgetResponseDto getBudgetPlan(String email, int year, int month) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        LocalDate now = LocalDate.now();
-        LocalDate startDate = now.withDayOfMonth(1);
-        LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth());
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
         List<BudgetEntity> budgetEntities = budgetRepository.findByEmailAndStartDateAndEndDate(
                 email, startDate, endDate);
