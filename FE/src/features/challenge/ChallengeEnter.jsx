@@ -2,7 +2,7 @@ import CustomHeader from "@/components/CustomHeader";
 import NavBar from "@/components/NavBar";
 import ChallengeIntro from "@/features/challenge/components/ChallengeIntro";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChallengeService } from "@/features/challenge/servies/ChallengeService";
+import { ChallengeService } from "@/features/challenge/services/ChallengeService";
 import { useEffect, useState } from "react";
 
 export default function ChallengeEnter() {

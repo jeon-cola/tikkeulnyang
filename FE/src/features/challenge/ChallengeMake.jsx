@@ -2,7 +2,7 @@ import CustomHeader from "@/components/CustomHeader";
 import NavBar from "@/components/NavBar";
 import { useNavigate } from "react-router-dom";
 import CustomCalendar from "@/components/CustomCalendar";
-import { ChallengeService } from "@/features/challenge/servies/ChallengeService";
+import { ChallengeService } from "@/features/challenge/services/ChallengeService";
 import { useState, useEffect } from "react";
 
 export default function ChallengeMake() {
