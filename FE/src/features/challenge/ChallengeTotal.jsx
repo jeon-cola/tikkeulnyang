@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import CustomHeader from "@/components/CustomHeader";
 import ChallengeNav from "@/features/challenge/components/ChallengeNav";
-import { ChallengeService } from "@/features/challenge/servies/ChallengeService";
+import { ChallengeService } from "@/features/challenge/services/ChallengeService";
 import BasicContainer from "@/features/challenge/components/BasicContainer";
 import ChallengeCard from "@/features/challenge/components/ChallengeCard";
 import CardBox from "@/features/challenge/components/CardBox";

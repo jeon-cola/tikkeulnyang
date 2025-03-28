@@ -6,6 +6,10 @@ import RoundChart from "@/features/challenge/components/RoundChart";
 export default function ParticiStatics({
   participantCount = 100,
   averageExpectedSuccessRate = 50,
+  bucket24to0 = 50,
+  bucket49to25 = 50,
+  bucket84to50 = 50,
+  bucket100to85 = 50,
 }) {
   return (
     <>
@@ -66,7 +70,7 @@ export default function ParticiStatics({
 
               {/* 인원 수 */}
               <div className="ml-auto font-['Pretendard'] text-[13px] leading-4 text-black">
-                {/*studentCounts[0]*/ `00명`}
+                {/*studentCounts[0]*/ `${bucket100to85}명`}
               </div>
             </div>
 
@@ -86,7 +90,7 @@ export default function ParticiStatics({
 
               {/* 인원 수 */}
               <div className="ml-auto font-['Pretendard'] text-[13px] leading-4 text-black">
-                {/*studentCounts[1]*/ `00명`}
+                {/*studentCounts[1]*/ `${bucket84to50}명`}
               </div>
             </div>
 
@@ -106,7 +110,7 @@ export default function ParticiStatics({
 
               {/* 인원 수 */}
               <div className="ml-auto font-['Pretendard'] text-[13px] leading-4 text-black">
-                {/*studentCounts[2]*/ `00명`}
+                {/*studentCounts[2]*/ `${bucket49to25}명`}
               </div>
             </div>
 
@@ -126,7 +130,7 @@ export default function ParticiStatics({
 
               {/* 인원 수 */}
               <div className="ml-auto font-['Pretendard'] text-[13px] leading-4 text-black">
-                {/*studentCounts[3]*/ `00명`}
+                {/*studentCounts[3]*/ `${bucket24to0}명`}
               </div>
             </div>
           </div>

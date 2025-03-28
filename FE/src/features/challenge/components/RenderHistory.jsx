@@ -1,4 +1,4 @@
-import { ChallengeService } from "@/features/challenge/servies/ChallengeService";
+import { ChallengeService } from "@/features/challenge/services/ChallengeService";
 import { useEffect, useState } from "react";
 import ChallengeCard2 from "@/features/challenge/components/ChallengeCard2";
 
