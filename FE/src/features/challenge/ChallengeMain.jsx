@@ -154,7 +154,7 @@ export default function ChallengeMain() {
       case 2:
         return (
           <>
-            {/* 과거 이력 탭 */}
+            {/* 참여 이력 탭 */}
             <RenderHistory />
           </>
         );
