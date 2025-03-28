@@ -7,8 +7,8 @@ export default function RenderHistory() {
   const fetchHistory = async () => {
     try {
       const response = await ChallengeService.getPast();
-      console.log(response.data.content);
-      setChallengeHistory(response.data.content);
+      console.log(response);
+      setChallengeHistory(response.data);
     } catch (error) {
       console.error(error);
     }
@@ -22,10 +22,10 @@ export default function RenderHistory() {
     <>
       {challengeHistory.map((challenge) => (
         <ChallengeCard2
-          imageUrl={challenge.imageUrl}
-          title={challenge.challengeName}
-          category={challenge.challengeType}
-          amount={challenge.limitAmount}
+          thumbnailUrl={challenge.thumbnailUrl}
+          challengeName={challenge.challengeName}
+          challengeType={challenge.challengeType}
+          targetAmount={challenge.targetAmount}
           startDate={challenge.startDate}
           endDate={challenge.endDate}
           challengeId={challenge.challengeId}
