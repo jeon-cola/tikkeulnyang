@@ -9,6 +9,7 @@ import com.c107.user.dto.UserRegistrationRequestDto;
 import com.c107.user.dto.UserUpdateRequestDto;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -118,6 +119,24 @@ public class UserService {
 
         return updatedUserInfo;
     }
+
+    public void deleteUser(String email) {
+        System.out.println("🔍 이메일로 유저 조회: " + email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보를 찾을 수 없습니다."));
+
+        if (Boolean.TRUE.equals(user.getIsDeleted())) {
+            System.out.println("⚠️ 이미 탈퇴한 사용자");
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "이미 탈퇴한 사용자입니다.");
+        }
+
+        System.out.println("📝 탈퇴 처리 중...");
+        user.setIsDeleted(true);
+        userRepository.save(user);
+        System.out.println("✅ 탈퇴 완료");
+    }
+
+
 
 
 }
