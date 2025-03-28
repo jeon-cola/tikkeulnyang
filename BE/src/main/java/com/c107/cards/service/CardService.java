@@ -400,6 +400,11 @@ public class CardService {
     //
     private void saveCardPaymentToTransaction(PaymentHistoryEntity paymentHistory) {
         try {
+            Integer cardId = paymentHistory.getCardId();
+            CardInfoEntity cardInfo = cardInfoRepository.findById(cardId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "카드 정보를 찾을 수 없습니다."));
+            Integer userId = cardInfo.getUserId();
+
             // 1. 날짜/시간 변환
             LocalDate transactionDate = paymentHistory.getTransactionDate();
             LocalTime transactionTime = LocalTime.parse(
@@ -449,6 +454,8 @@ public class CardService {
                     .deleted(0)
                     .createdAt(now)
                     .updatedAt(now)
+                    .isWaste(paymentHistory.getIsWaste())
+                    .userId(userId)
                     .build();
 
             transactionRepository.save(transaction);
