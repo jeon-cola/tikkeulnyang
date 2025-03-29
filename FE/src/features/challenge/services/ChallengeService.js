@@ -36,6 +36,7 @@ export const ChallengeService = {
   getPast: async () => {
     try {
       const response = await Api.get(`api/challenge/past`);
+      console.log("response past", response);
       return response;
     } catch (error) {
       console.error(error);
