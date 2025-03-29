@@ -4,11 +4,14 @@ package com.c107.budget.service;
 import com.c107.budget.dto.BudgetRemainResponseDto;
 import com.c107.budget.dto.BudgetRequestDto;
 import com.c107.budget.dto.BudgetResponseDto;
+import com.c107.budget.dto.CategoryResponseDto;
 import com.c107.budget.entity.BudgetEntity;
 import com.c107.budget.repository.BudgetRepository;
 import com.c107.common.util.JwtUtil;
+import com.c107.paymenthistory.entity.BudgetCategoryEntity;
 import com.c107.paymenthistory.entity.PaymentHistoryEntity;
 import com.c107.paymenthistory.entity.CardEntity;
+import com.c107.paymenthistory.repository.BudgetCategoryRepository;
 import com.c107.paymenthistory.repository.CardRepository;
 import com.c107.paymenthistory.repository.PaymentHistoryRepository;
 import com.c107.user.entity.User;
@@ -18,9 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,7 +33,7 @@ public class BudgetService {
 
     private final CardRepository cardRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
-
+    private final BudgetCategoryRepository budgetCategoryRepository;
 
     @Transactional
     public BudgetResponseDto createBudget(String email, BudgetRequestDto requestDto, int year, int month) {
@@ -209,6 +210,102 @@ public class BudgetService {
                 .year(year)
                 .month(month)
                 .totalWasteAmount(totalWasteAmount)
+                .build();
+    }
+
+    public CategoryResponseDto getAllCategories(String email, int year, int month) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        // 사용자가 설정한 예산 조회
+        List<BudgetEntity> userBudgets = budgetRepository.findByEmailAndStartDateAndEndDate(
+                email, startDate, endDate);
+
+        // 카테고리 ID와 예산 엔티티 매핑
+        Map<Integer, BudgetEntity> budgetMap = userBudgets.stream()
+                .collect(Collectors.toMap(
+                        BudgetEntity::getCategoryId,
+                        budget -> budget,
+                        (existing, replacement) -> existing
+                ));
+
+        // 모든 카테고리 조회
+        List<BudgetCategoryEntity> allCategories = budgetCategoryRepository.findAll();
+
+        // 총합 계산 (기존 getBudgetPlan과 동일하게)
+        int totalAmount = 0;
+        int totalSpendingAmount = 0;
+        int totalRemainingAmount = 0;
+        boolean totalIsExceed = false;
+
+        for (BudgetEntity budget : userBudgets) {
+            totalAmount += budget.getAmount() != null ? budget.getAmount() : 0;
+            totalSpendingAmount += budget.getSpendingAmount() != null ? budget.getSpendingAmount() : 0;
+            totalRemainingAmount += budget.getRemainingAmount() != null ? budget.getRemainingAmount() : 0;
+
+            if (budget.getIsExceed() != null && budget.getIsExceed()) {
+                totalIsExceed = true;
+            }
+        }
+
+        // DTO 변환
+        List<CategoryResponseDto.Category> categoryDtos = allCategories.stream()
+                .map(category -> {
+                    Integer categoryId = category.getBudgetCategoryId();
+                    BudgetEntity budget = budgetMap.get(categoryId);
+                    boolean hasBudget = budget != null;
+
+                    // 기본값 설정
+                    Integer amount = 0;
+                    Integer spendingAmount = 0;
+                    Integer remainingAmount = 0;
+                    Integer isExceed = 0;
+                    String createdAt = null;
+                    String updatedAt = null;
+
+                    // 예산이 설정된 경우 실제 값으로 업데이트
+                    if (hasBudget) {
+                        amount = budget.getAmount();
+                        spendingAmount = budget.getSpendingAmount();
+                        remainingAmount = budget.getRemainingAmount();
+                        isExceed = budget.getIsExceed() != null && budget.getIsExceed() ? 1 : 0;
+                        createdAt = budget.getCreatedAt() != null ? budget.getCreatedAt().toString() : null;
+                        updatedAt = budget.getUpdatedAt() != null ? budget.getUpdatedAt().toString() : null;
+                    }
+
+                    return CategoryResponseDto.Category.builder()
+                            .categoryId(categoryId)
+                            .categoryName(category.getCategoryName())
+                            .hasBudget(hasBudget)
+                            .amount(amount)
+                            .spendingAmount(spendingAmount)
+                            .remainingAmount(remainingAmount)
+                            .isExceed(isExceed)
+                            .startDate(startDate.toString())
+                            .endDate(endDate.toString())
+                            .createdAt(createdAt)
+                            .updatedAt(updatedAt)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        // 카테고리별 정렬 (카테고리 ID 기준)
+        categoryDtos.sort(Comparator.comparing(CategoryResponseDto.Category::getCategoryId));
+
+        // 총합 정보 설정
+        CategoryResponseDto.Totals totals = CategoryResponseDto.Totals.builder()
+                .totalAmount(totalAmount)
+                .totalSpendingAmount(totalSpendingAmount)
+                .totalRemainingAmount(totalRemainingAmount)
+                .totalIsExceed(totalIsExceed ? 1 : 0)
+                .build();
+
+        return CategoryResponseDto.builder()
+                .totals(totals)
+                .categories(categoryDtos)
                 .build();
     }
 }

@@ -121,5 +121,6 @@ public class PaymentHistoryController {
 
         return ResponseUtil.success("카테고리별 소비 통계 조회에 성공했습니다.", responseDto);
     }
+    //
 
 }
