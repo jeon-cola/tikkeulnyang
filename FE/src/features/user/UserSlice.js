@@ -4,7 +4,8 @@ const initialState= {
     isAuthenticated: false,
     nickName: null,
     email:null,
-    profileImg:null
+    profileImg:null,
+    deposit:null
 }
 
 const userSlice = createSlice({
@@ -23,6 +24,9 @@ const userSlice = createSlice({
         setProfileImg : (state, action) => {
             state.profileImg = action.payload
         },
+        setDeposit: (state, action) => {
+            state.deposit = action.payload
+        },
         resetUser : (status) => {
             return initialState
         }
@@ -34,6 +38,7 @@ export const {
     setEmail,
     setNickName,
     setProfileImg,
+    setDeposit,
     resetUser
 } = userSlice.actions
 
