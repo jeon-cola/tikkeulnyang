@@ -1,4 +1,4 @@
-export default function Box({ text, variant, children }) {
+export default function Box({ text, variant, children, onClick }) {
   const baseStyles =
     "w-full h-[40px] flex items-center justify-between rounded-md shadow-sm px-[10px]";
   const variants = {
@@ -8,7 +8,7 @@ export default function Box({ text, variant, children }) {
   // 유효성 검사
   const selectedVariant = variants[variant] ?? variants.title;
   return (
-    <div className={`${baseStyles} ${selectedVariant}`}>
+    <div className={`${baseStyles} ${selectedVariant}`} onClick={onClick}>
       <span>{text}</span>
       <div className="flex justify-end items-center w-auto">{children}</div>
     </div>
