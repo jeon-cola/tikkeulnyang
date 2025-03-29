@@ -3,6 +3,7 @@ package com.c107.budget.controller;
 import com.c107.budget.dto.BudgetRemainResponseDto;
 import com.c107.budget.dto.BudgetRequestDto;
 import com.c107.budget.dto.BudgetResponseDto;
+import com.c107.budget.dto.CategoryResponseDto;
 import com.c107.budget.entity.BudgetEntity;
 import com.c107.budget.service.BudgetService;
 import com.c107.common.util.ResponseUtil;
@@ -72,5 +73,19 @@ public class BudgetController {
 
         return ResponseUtil.success("낭비 금액 조회에 성공했습니다.", responseDto);
 
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<?> getAllCategories(
+            @AuthenticationPrincipal String email,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month
+    ) {
+        LocalDate now = LocalDate.now();
+        int targetYear = (year != null) ? year : now.getYear();
+        int targetMonth = (month != null) ? month : now.getMonthValue();
+
+        CategoryResponseDto responseDto = budgetService.getAllCategories(email, targetYear, targetMonth);
+        return ResponseUtil.success("카테고리 목록 조회에 성공했습니다.", responseDto);
     }
 }
