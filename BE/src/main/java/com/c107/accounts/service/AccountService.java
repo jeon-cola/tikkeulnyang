@@ -284,7 +284,8 @@ public class AccountService {
         Account representativeAccount = repOpt.get();
         String representativeAccountNo = representativeAccount.getAccountNumber();
 
-        Map<String, Object> response = transferDeposit(loggedInUserId, serviceAccountNo, representativeAccountNo, amount);
+        // 충전은 userKey로 로그인한 유저의 값을 사용하므로 isRefund false
+        Map<String, Object> response = transferDeposit(loggedInUserId, serviceAccountNo, representativeAccountNo, amount, false);
         logger.info("예치금 이체 API 응답: {}", response);
 
         int repBalance = Integer.parseInt(representativeAccount.getBalance());
@@ -341,7 +342,8 @@ public class AccountService {
         String representativeAccountNo = representativeAccount.getAccountNumber();
         String serviceAccountNo = "0018031273647742";
 
-        Map<String, Object> response = transferDeposit(loggedInUserId, representativeAccountNo, serviceAccountNo, amount);
+        // 환불은 고정 userKey를 사용하므로 isRefund true
+        Map<String, Object> response = transferDeposit(loggedInUserId, representativeAccountNo, serviceAccountNo, amount, true);
         logger.info("환불 이체 API 응답: {}", response);
 
         int repBalance = Integer.parseInt(representativeAccount.getBalance());
@@ -375,15 +377,18 @@ public class AccountService {
 
     /**
      * 예치금 이체 Open API 호출 (transferDeposit)
+     * isRefund 플래그를 이용해 환불 시 고정 userKey를 사용합니다.
      */
     @Transactional
     public Map<String, Object> transferDeposit(Integer loggedInUserId,
                                                String depositAccountNo,
                                                String withdrawalAccountNo,
-                                               String transactionBalance) {
+                                               String transactionBalance,
+                                               boolean isRefund) {
         User user = userRepository.findById(loggedInUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
-        String userKey = user.getFinanceUserKey();
+        // 환불인 경우 지정된 userKey, 아니면 로그인한 유저의 userKey 사용
+        String userKey = isRefund ? "c2158201-76d8-4753-b517-bf14056da5e9" : user.getFinanceUserKey();
 
         LocalDateTime now = LocalDateTime.now();
         String transmissionDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
@@ -427,6 +432,7 @@ public class AccountService {
         logger.info("예치금 이체 완료: {}", responseMap);
         return responseMap;
     }
+
 
     /**
      * 등록된 계좌 중 대표계좌를 설정하는 기능
