@@ -37,8 +37,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                         .requestMatchers("/api/auth/login", "/api/user/register","/api/auth/callback","/api/user/check-nickname","/api/auth/callback/json","/api/challenge/**").permitAll()
-                        .requestMatchers("api/payment/**").permitAll()
-                        .requestMatchers("api/budget/**").permitAll()
+                        .requestMatchers("/api/payment/**").permitAll()
+                        .requestMatchers("/api/budget/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
@@ -50,8 +50,9 @@ public class SecurityConfig {
                                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "권한이 부족합니다.")
                         )
                 )
-                // JWT 필터 추가 (Spring Security의 기본 필터보다 앞에서 실행)
+                // JWT 필터 추가 (Spring Security의 기본 필터보다 앞에서 실행) ㅌ
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
 
         return http.build();
     }
