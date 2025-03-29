@@ -1,14 +1,13 @@
 import "./App.css";
 import Router from "./routes";
 import { useEffect } from "react"
-import { useDispatch, useSelector } from "react-redux"
-import { setEmail, setNickName, setProfileImg } from "./features/user/UserSlice.js"
+import { useDispatch } from "react-redux"
+import { setEmail, setNickName, setProfileImg, setDeposit } from "./features/user/UserSlice.js"
 import axios from "axios";
 import Api from "./services/Api";
 
 function App() {
   const dispatch = useDispatch();
-  const {nickName, email, profileImg} = useSelector(state => state.user)
   useEffect(()=> {
       const fetchData = async ()=> {
           try {
@@ -18,6 +17,7 @@ function App() {
                   dispatch(setEmail(userData.email))
                   dispatch(setNickName(userData.nickname))
                   dispatch(setProfileImg(userData.profileImage))
+                  dispatch(setDeposit(userData.deposit))
               }
           } catch (error) {
               console.log(error)
