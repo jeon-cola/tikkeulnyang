@@ -1,25 +1,25 @@
 import { useState } from "react";
 
-import AllIcon from "../assets/icons/AllIcon.png";
-import AllIconInactive from "../assets/icons/AllIconInactive.png";
-import EntertainmentIcon from "../assets/icons/EntertainmentIcon.png";
-import EntertainmentIconInactive from "../assets/icons/EntertainmentIconInactive.png";
-import FoodIcon from "../assets/icons/FoodIcon.png";
-import FoodIconInactive from "../assets/icons/FoodIconInactive.png";
-import GeneralGoodsIcon from "../assets/icons/GeneralGoodsIcon.png";
-import GeneralGoodsIconInactive from "../assets/icons/GeneralGoodsIconInactive.png";
-import HousingIcon from "../assets/icons/HousingIcon.png";
-import HousingIconInactive from "../assets/icons/HousingIconInactive.png";
-import MedicalIcon from "../assets/icons/MedicalIcon.png";
-import MedicalIconInactive from "../assets/icons/MedicalIconInactive.png";
-import ShoppingIcon from "../assets/icons/ShoppingIcon.png";
-import ShoppingIconInactive from "../assets/icons/ShoppingIconInactive.png";
-import TransportationIcon from "../assets/icons/TransportationIcon.png";
-import TransportationIconInactive from "../assets/icons/TransportationIconInactive.png";
-import IncomeIcon from "../assets/icons/IncomeIcon.png";
-import IncomeIconInactive from "../assets/icons/IncomeIconInactive.png";
-import SpenseIcon from "../assets/icons/SpenseIcon.png";
-import SpenseIconInactive from "../assets/icons/SpenseIconInactive.png";
+import AllIcon from "../assets/category/all_icon.png";
+import AllIconInactive from "../assets/category/all_icon_inactive.png";
+import EntertainmentIcon from "../assets/category/entertainment_icon.png";
+import EntertainmentIconInactive from "../assets/category/entertainment_icon_inactive.png";
+import FoodIcon from "../assets/category/food_icon.png";
+import FoodIconInactive from "../assets/category/food_icon_inactive.png";
+import GoodsIcon from "../assets/category/goods_icon.png";
+import GoodsIconInactive from "../assets/category/goods_icon_inactive.png";
+import HousingIcon from "../assets/category/housing_icon.png";
+import HousingIconInactive from "../assets/category/housing_icon_inactive.png";
+import MedicalIcon from "../assets/category/medical_icon.png";
+import MedicalIconInactive from "../assets/category/medical_icon_inactive.png";
+import ShoppingIcon from "../assets/category/shopping_icon.png";
+import ShoppingIconInactive from "../assets/category/shopping_icon_inactive.png";
+import TransportationIcon from "../assets/category/transportation_icon.png";
+import TransportationIconInactive from "../assets/category/transportation_icon_inactive.png";
+import IncomeIcon from "../assets/category/income_icon.png";
+import IncomeIconInactive from "../assets/category/Income_icon_inactive.png";
+import SpenseIcon from "../assets/category/spense_icon.png";
+import SpenseIconInactive from "../assets/category/spense_icon_inactive.png";
 
 const categories = [
   { id: "all", activeIcon: AllIcon, inactiveIcon: AllIconInactive },
@@ -33,8 +33,8 @@ const categories = [
 
   {
     id: "goods",
-    activeIcon: GeneralGoodsIcon,
-    inactiveIcon: GeneralGoodsIconInactive,
+    activeIcon: GoodsIcon,
+    inactiveIcon: GoodsIconInactive,
   },
 
   { id: "medical", activeIcon: MedicalIcon, inactiveIcon: MedicalIconInactive },
