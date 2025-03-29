@@ -1,10 +1,10 @@
 package com.c107.auth.service;
 
 import com.c107.auth.dto.KakaoTokenResponseDto;
-import com.c107.auth.entity.LoginUserEntity;
-import com.c107.auth.repository.LoginUserRepository;
 import com.c107.common.util.JwtUtil;
 import com.c107.common.util.ResponseUtil;
+import com.c107.user.entity.User;
+import com.c107.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final LoginUserRepository loginUserRepository;
+    private final UserRepository loginUserRepository;
     private final JwtUtil jwtUtil;
     private final FinanceService financeService;
     private final RestTemplate restTemplate = new RestTemplate();
@@ -43,9 +43,10 @@ public class AuthService {
     @Value("${spring.security.oauth2.client.provider.kakao.user-info-uri}")
     private String kakaoUserInfoUri;
 
-    /**
-     * [1] 카카오 로그인 페이지로 바로 리다이렉트
-     */
+    // base URL를 properties 파일에서 주입받음
+    @Value("${app.base.url}")
+    private String baseUrl;
+
     public void redirectToKakaoLogin(HttpServletResponse response) throws IOException {
         String loginUrl = "https://kauth.kakao.com/oauth/authorize"
                 + "?client_id=" + kakaoClientId
@@ -54,9 +55,6 @@ public class AuthService {
         response.sendRedirect(loginUrl);
     }
 
-    /**
-     * [2] 카카오 액세스 토큰 요청
-     */
     public KakaoTokenResponseDto getKakaoAccessToken(String code) {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
@@ -77,9 +75,6 @@ public class AuthService {
         return response.getBody();
     }
 
-    /**
-     * [3] 카카오 사용자 정보 조회
-     */
     public Map<String, Object> getKakaoUserInfo(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
@@ -97,48 +92,59 @@ public class AuthService {
     public void authenticateWithKakaoAndRedirect(String code, HttpServletResponse response) throws IOException {
         System.out.println("백엔드용 인가 코드: " + code);
 
-        // 1. 카카오 액세스 토큰 받기
         KakaoTokenResponseDto tokenResponse = getKakaoAccessToken(code);
-
-        // 2. 카카오 사용자 정보 요청
         Map<String, Object> kakaoUser = getKakaoUserInfo(tokenResponse.getAccessToken());
         if (kakaoUser == null || !kakaoUser.containsKey("kakao_account")) {
-            response.sendRedirect("https://j12c107.p.ssafy.io/login?error=kakaoUserNotFound");
+            response.sendRedirect(baseUrl + "/login?error=kakaoUserNotFound");
             return;
         }
         Map<String, Object> kakaoAccount = (Map<String, Object>) kakaoUser.get("kakao_account");
         String email = (String) kakaoAccount.get("email");
 
         if (email == null || email.isBlank()) {
-            response.sendRedirect("https://j12c107.p.ssafy.io/login?error=emailNotFound");
+            response.sendRedirect(baseUrl + "/login?error=emailNotFound");
             return;
         }
 
-        Optional<LoginUserEntity> existingUserOpt = loginUserRepository.findByEmail(email);
+        Optional<User> existingUserOpt = loginUserRepository.findByEmail(email);
 
         if (existingUserOpt.isPresent()) {
-            LoginUserEntity user = existingUserOpt.get();
+            User user = existingUserOpt.get();
             String accessTokenJwt = jwtUtil.generateAccessToken(user.getRole(), user.getEmail(), user.getNickname());
             String refreshTokenJwt = jwtUtil.generateRefreshToken(user.getRole(), user.getEmail(), user.getNickname());
 
+            // Access Token과 Refresh Token 모두 HttpOnly 쿠키에 저장
+            setAccessTokenCookie(accessTokenJwt, response);
             setRefreshTokenCookie(refreshTokenJwt, response);
-            response.setHeader("Authorization", "Bearer " + accessTokenJwt);
 
             System.out.println("백엔드용 accesstoken 확인 : " + accessTokenJwt);
 
-            response.sendRedirect("https://j12c107.p.ssafy.io/home/");
+            response.sendRedirect(baseUrl + "/home/");
         } else {
-            response.sendRedirect("https://j12c107.p.ssafy.io/user/signup?email=" + email);
+            response.sendRedirect(baseUrl + "/user/signup?email=" + email);
         }
     }
 
+    private void setAccessTokenCookie(String accessToken, HttpServletResponse response) {
+        Cookie cookie = new Cookie("accessToken", accessToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge((int)(accessTokenExpiration() / 1000));
+        response.addCookie(cookie);
+    }
+
     private void setRefreshTokenCookie(String refreshToken, HttpServletResponse response) {
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
-        response.addCookie(refreshTokenCookie);
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(7 * 24 * 60 * 60);
+        response.addCookie(cookie);
+    }
+
+    private long accessTokenExpiration() {
+        return 3600000L;
     }
 
     public ResponseEntity<Map<String, Object>> logout(HttpServletResponse response, String email) {
@@ -150,7 +156,7 @@ public class AuthService {
 
         String kakaoLogoutUrl = "https://kauth.kakao.com/oauth/logout"
                 + "?client_id=" + kakaoClientId
-                + "&logout_redirect_uri=" + "https://j12c107.p.ssafy.io/api/auth/logout/callback";
+                + "&logout_redirect_uri=" + baseUrl + "/logout/callback";
 
         return ResponseUtil.success("로그아웃 완료", Map.of("redirectUri", kakaoLogoutUrl));
     }
@@ -160,15 +166,18 @@ public class AuthService {
         accessTokenCookie.setMaxAge(0);
         accessTokenCookie.setPath("/");
         accessTokenCookie.setHttpOnly(true);
+        accessTokenCookie.setSecure(true);  // Secure 플래그 추가
 
         Cookie refreshTokenCookie = new Cookie("refreshToken", null);
         refreshTokenCookie.setMaxAge(0);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true);  // Secure 플래그 추가
 
         response.addCookie(accessTokenCookie);
         response.addCookie(refreshTokenCookie);
     }
+//
 
     public ResponseEntity<?> authenticateWithKakaoAndReturnJson(String code) {
         System.out.println("Received authorization code: " + code);
@@ -185,11 +194,11 @@ public class AuthService {
             return ResponseEntity.badRequest().body("이메일 정보 없음");
         }
 
-        Optional<LoginUserEntity> existingUserOpt = loginUserRepository.findByEmail(email);
+        Optional<User> existingUserOpt = loginUserRepository.findByEmail(email);
         if (existingUserOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("신규 회원입니다. 가입 필요");
         }
-        LoginUserEntity user = existingUserOpt.get();
+        User user = existingUserOpt.get();
         String accessTokenJwt = jwtUtil.generateAccessToken(user.getRole(), user.getEmail(), user.getNickname());
         String refreshTokenJwt = jwtUtil.generateRefreshToken(user.getRole(), user.getEmail(), user.getNickname());
 

@@ -1,0 +1,70 @@
+{
+    "status": "success",
+    "message": "버킷리스트 조회 성공",
+    "bucket_lists": [
+      {
+        "bucket_list_id": 1,
+        "title": "유럽 여행",
+        "current_savings": 500000,
+        "target_amount": 5000000,
+        "category": "여행",
+        "savings_account": "123-456-7890",
+        "transfer_account": "987-654-3210"
+      },
+      {
+        "bucket_list_id": 2,
+        "title": "내 집 마련",
+        "current_savings": 10000000,
+        "target_amount": 80000000,
+        "category": "부동산",
+        "savings_account": "223-456-7891",
+        "transfer_account": "887-654-3211"
+      },
+      {
+        "bucket_list_id": 3,
+        "title": "첫차 구매",
+        "current_savings": 3000000,
+        "target_amount": 20000000,
+        "category": "자동차차",
+        "savings_account": "323-456-7892",
+        "transfer_account": "787-654-3212"
+      },
+      {
+        "bucket_list_id": 4,
+        "title": "대학원 등록금",
+        "current_savings": 5000000,
+        "target_amount": 30000000,
+        "category": "교육비",
+        "savings_account": "423-456-7893",
+        "transfer_account": "687-654-3213"
+      },
+      {
+        "bucket_list_id": 5,
+        "title": "결혼식 비용",
+        "current_savings": 7000000,
+        "target_amount": 50000000,
+        "category": "결혼 자금",
+        "savings_account": "523-456-7894",
+        "transfer_account": "587-654-3214"
+      },
+      {
+        "bucket_list_id": 6,
+        "title": "최신 노트북 구매",
+        "current_savings": 1000000,
+        "target_amount": 3000000,
+        "category": "디지털 기기",
+        "savings_account": "623-456-7895",
+        "transfer_account": "487-654-3215"
+      },
+      {
+        "bucket_list_id": 7,
+        "title": "드럼 배우기",
+        "current_savings": 200000,
+        "target_amount": 1000000,
+        "category": "취미 활동",
+        "savings_account": "723-456-7896",
+        "transfer_account": "387-654-3216"
+      }
+    ]
+  }
+  

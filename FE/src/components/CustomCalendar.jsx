@@ -1,44 +1,56 @@
 import React, { useState } from "react";
 import Calendar from "react-calendar";
-import "react-calendar/dist/Calendar.css";
 import "./CustomCalendar.css";
+import "react-calendar/dist/Calendar.css";
 
-export default function CustomCalendar() {
-  const [value, setValue] = useState(new Date());
-
+export default function CustomCalendar({
+  value,
+  onChange,
+  tileContent,
+  tileClassName: customTileClassName,
+}) {
   return (
-    <div className="max-w-[320px]">
+    <div className="relative max-w-[320px]">
       <Calendar
-        onChange={setValue}
+        onChange={onChange}
         value={value}
-        // 일요일 기준으로 정렬
-        calendarType="hebrew"
-        // 달력 일에 숫자일 표시를 숫자로 보이게 하는 속성성
-        formatDay={(local, date) => date.getDate()}
+        calendarType="hebrew" // 일요일부터 시작
+        formatDay={(local, date) => <abbr>{date.getDate()}</abbr>} // 숫자+'일' 텍스트 '일'제거
+        formatMonthYear={(local, date) =>
+          `${date.getFullYear()}.${(date.getMonth() + 1)
+            .toString()
+            .padStart(2, "0")}`
+        }
+        tileContent={tileContent}
         tileClassName={({ date, view, activeStartDate }) => {
-          // 'month' 뷰에서만 스타일 지정
+          // 해당 월의 일요일 대표색(#ff957a)으로 표시
+          let classNames = [];
+
           if (view === "month") {
             const startMonth = activeStartDate.getMonth();
             const startYear = activeStartDate.getFullYear();
-
-            // 현재 렌더링 중인 달과 같은 연/월 && 요일이 일요일이면
-            if (
+            const isCurrentMonth =
               date.getFullYear() === startYear &&
-              date.getMonth() === startMonth &&
-              date.getDay() === 0
-            ) {
-              return "current-month-sunday";
+              date.getMonth() === startMonth;
+
+            if (isCurrentMonth && date.getDay() === 0) {
+              classNames.push("current-month-sunday");
             }
           }
-          return null;
+
+          // 사용자 정의 클래스도 함께 적용 (optional)
+          if (customTileClassName) {
+            const customClass = customTileClassName({
+              date,
+              view,
+              activeStartDate,
+            });
+            if (customClass) classNames.push(customClass);
+          }
+
+          return classNames.join(" ");
         }}
       />
-      <div>
-        선택한 날짜:{" "}
-        {Array.isArray(value)
-          ? `${value[0].toDateString()} ~ ${value[1].toDateString()}`
-          : value.toDateString()}
-      </div>
     </div>
   );
 }

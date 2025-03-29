@@ -1,5 +1,6 @@
-import { useState } from "react"
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router-dom";
+import { resetUser } from "../../user/UserSlice.js"
 import userProfile from "/userProfile.png"
 import CorrectionIcon from "../assets/CorrectionIcon";
 import MyCatIcon from "../assets/MyCatIcon";
@@ -9,34 +10,80 @@ import "../../../components/CustomHeader"
 import CustomHeader from "../../../components/CustomHeader";
 import YellowCat from "../../../../public/YellowCat.jsx";
 import AttendanceIcon from "../assets/AttendanceIcon.jsx";
+import LogoutIcon from "../assets/LogoutIcon.jsx";
+import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import Api from "../../../services/Api.jsx";
 
 export default function MyPageMenu() {
-  const [userImage, setUserImage] = useState(userProfile);
-  const [userName, setUserName] = useState("길동홍");
+  const dispatch = useDispatch();
+  const {nickName, email,profileImg } = useSelector(state => state.user);
   const [userLevel, setUserLevel] = useState("LV.1");
-  const [userEmail, setUserEmail] = useState("abc@naver.com")
-  const [pendingChallenges, setPendingChallenges] = useState(0)
-  const [activeChallenges, setActiveChallenges] = useState(0)
-  const [completedChallenges, setCompletedChallenges] = useState(0)
-  const [userCost, setUserCost] = useState(10000)
+  const [pendingChallenges, setPendingChallenges] = useState(0);
+  const [activeChallenges, setActiveChallenges] = useState(0);
+  const [completedChallenges, setCompletedChallenges] = useState(0);
+  const [userCost, setUserCost] = useState(10000);
+  const nav = useNavigate();
+
+  // 챌린지 참여 이력
+  useEffect(() => {
+    const fetchChallengeHistory  = async() => {
+      try {
+        const response = await Api.get("/api/challenge/past");
+        setCompletedChallenges(response.data.length)
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchChallengeHistory ();
+  },[]);
+
+  // 진행 중인 챌린지 
+  useEffect(()=> {
+    const fetchActiveChallenge = async () => {
+      try {
+        const response = await Api.get("api/challenge/participated")
+        setActiveChallenges(response.data.length)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    fetchActiveChallenge()
+  })
+
+  // 로그아웃 핸들러
+  async function logoutHandler(e) {
+    e.preventDefault();
+      try {
+        const response = await Api.post("api/auth/logout")
+        if (response.data.status === "success") {
+          dispatch(resetUser())
+          window.alert("로그아웃 성공")
+          nav("/home")
+        }
+      } catch (error) {
+        console.log(error)
+        window.alert("에러: 잠시 후 시도해주세요")
+      }
+  }
 
   return(
-      <div className="flex flex-col justify-center gap-5 min-w-[345px]">
+      <div className="flex flex-col justify-center gap-5 min-w-[345px] mt-[50px] mb-[30px]">
 
         <CustomHeader title="마이 페이지"/>
         
         {/* 유저 정보 */}
-        <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex items-center p-4">
+        <div className="w-full t flex items-center p-4 relative bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px]">
           <div className="mr-4">
-            <img src={userImage} alt="유저 이미지"/>
+            <img src={profileImg} alt="유저 이미지" className="w-[80px] h-[80px rounded-full "/>
           </div>
           <div className="flex flex-col">
             <div className="flex items-center mb-1 gap-3">
-              <span className="font-semibold">{userName}</span>
+              <span className="font-semibold">{nickName}</span>
               <span className="font-semibold text-xs">{userLevel}</span>
             </div>
             <div>
-              <span className="font-regular text-x">{userEmail}</span>
+              <span className="font-regular text-x">{email}</span>
             </div>
           </div>
         </div>
@@ -145,10 +192,18 @@ export default function MyPageMenu() {
             </div>
           </Link>
 
+          {/* 로그아웃 */}
+          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 flex items-center p-4" onClick={logoutHandler}>
+              <div className="mr-4">
+                <LogoutIcon/>
+              </div>
+              <div className="flex items-center mb-1 gap-3">
+                <p className="font-regular">로그아웃</p>
+              </div>
+            </div>
+          
 
         </div>
-
-
 
       </div>
 

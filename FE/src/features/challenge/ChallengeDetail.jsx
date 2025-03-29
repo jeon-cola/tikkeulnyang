@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import CustomHeader from "@/components/CustomHeader";
 import ChallengeDetailImg from "@/features/challenge/components/ChallengeDetailImg";
@@ -6,6 +6,9 @@ import ChallengeIntro from "@/features/challenge/components/ChallengeIntro";
 import MyCurrentStatus from "@/features/challenge/components/MyCurrentStatus";
 import ParticiStatics from "./components/ParticiStatics";
 import { useNavigate } from "react-router-dom";
+import { ChallengeService } from "@/features/challenge/services/ChallengeService";
+import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
+
 /*
   추후에 axios로 채워넣을 데이터: 
   title, imageInfo, challengeType, challengeName, currentParticipants, startDate, endDate,
@@ -13,76 +16,140 @@ import { useNavigate } from "react-router-dom";
    deposit, currentProgress, 
 */
 export default function ChallengeDetail() {
-  const { ChallengeId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const challengeId = useRef(ChallengeId);
   const handleClick = () => {
-    navigate(`/challenge/enter/${challengeId}`);
+    navigate(`/challenge/enter/${id}`, {
+      state: {
+        challengeData: currChallenge,
+      },
+    });
   };
+  const [currChallenge, setCurrChallenge] = useState({
+    challenge: {
+      challengeId: 0,
+      challengeName: "",
+      challengeType: "",
+      targetAmount: 0,
+      startDate: "",
+      endDate: "",
+      description: "",
+      createdBy: "",
+      activeFlag: false,
+      challengeCategory: "",
+      createdAt: "",
+      maxParticipants: 0,
+      limitAmount: 0,
+      thumbnailUrl: "",
+    },
+    participantCount: 0,
+    bucket100to85: 0,
+    bucket84to50: 0,
+    bucket49to25: 0,
+    bucket24to0: 0,
+    averageSuccessRate: 0.0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const response = await ChallengeService.getCurrChallenge(id);
+      console.log("original response", response.data);
+
+      // 날짜 형식 변경
+      const formattedData = {
+        ...response.data,
+        challenge: {
+          ...response.data.challenge,
+          startDate: ChallengeUtils.formatDate(
+            response.data.challenge.startDate
+          ),
+          endDate: ChallengeUtils.formatDate(response.data.challenge.endDate),
+        },
+      };
+
+      console.log("formatted response", formattedData);
+
+      setCurrChallenge(formattedData);
+      setIsLoading(false);
+    } catch (error) {
+      console.error(error);
+      setIsLoading(false);
+      throw error;
+    }
+  };
+  // 페이지가 실행될 때 현재 보고자 하는 챌린지의 상세 내용을 가져온다.
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   return (
     <>
-      <CustomHeader title="챌린지 상세" />
+      <CustomHeader title="챌린지 상세" showCreateButton="true" />
       <div className="flex flex-col items-start p-[30px_20px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
-        {/* 챌린지 상세 이미지 */}
-        <ChallengeDetailImg imageInfo="https://media.istockphoto.com/id/1552871673/ko/%EC%82%AC%EC%A7%84/%ED%95%98%EC%96%80-%EC%9C%A0%EB%A6%AC%EC%9E%94%EC%97%90-%EB%8B%B4%EA%B8%B4-%EB%B8%94%EB%9E%99-%EC%BB%A4%ED%94%BC%EB%8A%94-%EC%BB%A4%ED%94%BC-%EC%9B%90%EB%91%90%EA%B0%80-%EC%9E%88%EB%8A%94-%EC%98%A4%EB%9E%98%EB%90%9C-%EC%8B%9C%EB%A9%98%ED%8A%B8-%ED%85%8C%EC%9D%B4%EB%B8%94-%EC%9C%84%EC%97%90-%EB%86%93%EC%97%AC-%EC%9E%88%EB%8B%A4.jpg?s=612x612&w=0&k=20&c=I7irn9wSVxvSSHVNFSxpxTHFkBcCJlHL0m4NIiTc3Sg=" />
-        <ChallengeIntro
-          challengeType="공식챌린지"
-          challengeName="택시요금 줄이기"
-          currentParticipants="100"
-          startDate="03 . 10"
-          endDate="03 . 13"
-        />
+        {isLoading ? (
+          <></>
+        ) : (
+          <>
+            {/* 챌린지 상세 이미지 */}
+            <ChallengeDetailImg
+              imageInfo={currChallenge.challenge.thumbnailUrl}
+            />
+            <ChallengeIntro
+              challengeType={currChallenge.challenge.challengeType}
+              challengeName={currChallenge.challenge.challengeName}
+              currentParticipants={currChallenge.participantCount}
+              startDate={currChallenge.challenge.startDate}
+              endDate={currChallenge.challenge.endDate}
+            />
 
-        {/* 챌린지 상세 설명 */}
-        <div className="flex flex-col items-center p-[12px_11px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
-          <div className="whitespace-pre-line text-left w-full h-auto font-normal text-[17px] leading-[20px] text-black flex-none order-0 flex-grow-0">
-            <p>
-              {`
-              택시 요금 줄이기 챌린지는 개인 재정 관리의 효과적인 첫걸음입니다.
+            {/* 챌린지 상세 설명 */}
+            <div className="flex flex-col items-center p-[12px_11px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+              <div className="whitespace-pre-line text-left w-full h-auto font-normal text-[17px] leading-[20px] text-black flex-none order-0 flex-grow-0">
+                <p>{currChallenge.challenge.description}</p>
+              </div>
+            </div>
 
-              이유
-              주 2-3회 택시 이용만으로도 월 10-15만원이 지출됩니다. 
-              이 비용을 줄이면 저축이나 다른 가치 있는 경험에 투자할 수 있습니다.
+            {/* 챌린지 주의사항 */}
+            <div className="flex flex-col items-center p-[12px_11px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+              <div className="whitespace-pre-line text-left w-full h-auto font-normal text-[17px] leading-[20px] text-black flex-none order-0 flex-grow-0">
+                <h2 className="text-lg font-bold mb-1">주의사항</h2>
 
-              부가효과 
-              재정 관리 능력 향상
-              걷기나 자전거 이용으로 건강 개선 시간
-              관리 능력 발전
-              다른 불필요한 지출 패턴도 인식하게 됨
+                <p>
+                  {`
+                  챌린지 시작 전까지 100% 환불
 
-              한 달만 실천해도 눈에 띄는 절약 효과를 경험할 수 있습니다.
-              `}
-            </p>
-          </div>
-        </div>
+                  챌린지 시작 후부터 환불 불가
 
-        {/* 챌린지 주의사항 */}
-        <div className="flex flex-col items-center p-[12px_11px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
-          <div className="whitespace-pre-line text-left w-full h-auto font-normal text-[17px] leading-[20px] text-black flex-none order-0 flex-grow-0">
-            <h2 className="text-lg font-bold mb-1">주의사항</h2>
+                  참가비용 최소 ${currChallenge.challenge.limitAmount}원
+                  `}
+                </p>
+              </div>
+            </div>
 
-            <p>
-              {`
-              챌린지 시작 전까지 100% 환불
+            {/* 현재 챌린지들의 현황*/}
+            <MyCurrentStatus
+              deposit={currChallenge.challenge.limitAmount}
+              currentProgress={currChallenge.averageSuccessRate}
+            />
 
-              챌린지 시작 후부터 환불 불가
-
-              참가비용 최소 1000원
-              `}
-            </p>
-          </div>
-        </div>
-
-        {/* 현재 챌린지들의 현황*/}
-        <MyCurrentStatus deposit="10000" currentProgress="50" />
-
-        <ParticiStatics />
-        {/* 참가 버튼 */}
-        <div className="w-full justify-center flex flex-row">
-          <button className="longButton" onClick={handleClick}>
-            참여하기
-          </button>
-        </div>
+            <ParticiStatics
+              participantCount={currChallenge.participantCount}
+              averageExpectedSuccessRate={currChallenge.averageSuccessRate}
+              bucket24to0={currChallenge.bucket24to0}
+              bucket49to25={currChallenge.bucket49to25}
+              bucket84to50={currChallenge.bucket84to50}
+              bucket100to85={currChallenge.bucket100to85}
+            />
+            {/* 참가 버튼 */}
+            <div className="w-full justify-center flex flex-row">
+              <button className="longButton" onClick={handleClick}>
+                참여하기
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </>
   );

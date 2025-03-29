@@ -2,23 +2,37 @@ import { useEffect, useState, useRef } from "react"
 import CustomBackHeader from "../../../components/CustomBackHeader"
 import bankImage from "../assets/bank.png"
 import axios from "axios";
-// BankImg 컴포넌트 이름으로 올바르게 임포트
 import BankImg from "../assets/BankImgFunction"
+import { useNavigate } from "react-router-dom";
+import Api from "../../../services/Api";
 
 export default function Account() {
     const [list, setList] = useState([])
     const [account, setAccount] = useState({
         bank:"",
+        bankImformation:""
     });
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
-    function handleBankSelect(bankName) {
+    function handleBankSelect(bank) {
         setAccount({
-            ...account,
-            bank: bankName
+            bankImformation:bank,
+            bank: bank.bankName
         });
         setIsOpen(false);
+    }
+
+    //대표계좌 설정
+    function registHandler(e) {
+        e.preventDefault()
+        const fetchData = async () => {
+            console.log(account.bankImformation.accountNumber)
+            const response = await Api.post(`/api/account/set-representative?accountNo=${account.bankImformation.accountNumber}`)
+            console.log(response.data)
+            window.alert("대표계좌로 설정되었습니다")
+        }
+        fetchData();
     }
 
     // 외부 클릭 감지
@@ -32,10 +46,11 @@ export default function Account() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    // 계좌 불러오기기
     useEffect(() => {
         const fetchData = async()=>{
             try {
-                const response = await axios.get("http://localhost:3000/account")    
+                const response = await Api.get("/api/account/refresh")    
                 console.log(response.data)
                 setList(response.data);
             } catch (error) {
@@ -76,9 +91,8 @@ export default function Account() {
                                 <div 
                                     key={bank.accountId}
                                     className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                                    onClick={() => handleBankSelect(bank.bankName)}
+                                    onClick={() => handleBankSelect(bank)}
                                 >
-                                    {/* 컴포넌트 직접 렌더링 */}
                                     <span className="h-6 mr-2">
                                         <BankImg bankName={bank.bankName} />
                                     </span>
@@ -90,12 +104,14 @@ export default function Account() {
                 </div>
             </div>
             
+            {/* 은행 이미지 */}
             <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4">
                 <img src={bankImage} alt="은행 이미지" />
             </div>
             
+            {/* 저장 버튼 */}
             <div className="w-full flex flex-col items-center">
-                <button className="bg-blue-500 text-white px-4 py-2 rounded">저장하기</button>
+                <button className="customButton bg-blue-500 text-white px-4 py-2 rounded" onClick={registHandler}>저장하기</button>
             </div>
         </div>
     )

@@ -2,6 +2,7 @@ import { useState } from "react";
 import Step from "../assets/Step";
 import step1image from "../assets/step1.png"
 import { useNavigate } from "react-router-dom";
+import Api from "../../../services/Api";
 
 export default function BucketListStep1() {
     const nav = useNavigate();
@@ -30,7 +31,22 @@ export default function BucketListStep1() {
 
     // 등록 로직
     function nextHandler() {
-        nav("/bucketlist/step2")
+        const fetchData = async () => {
+            try {
+                const response = await Api.post("api/bucket", {
+                    "category":stepCheck.category,
+                    "title":stepCheck.title,
+                    "amount": stepCheck.amount
+                })
+                console.log(response.data)
+                if (response.data.status === "success") {
+                    nav("/bucketlist/step2")
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        fetchData();
     }
     return(
         <div className="flex flex-col justify-center gap-4">
@@ -40,7 +56,13 @@ export default function BucketListStep1() {
                 <p className="text-left">버킷리스트 카테고리를 선택해주세요</p>
                 <select name="category" id="" className="w-full text-2xl font-semibold" onChange={inputHandler} value={stepCheck.category}>
                     <option value="" disabled>옵션을 선택해주세요</option>
-                    <option value="여행" >여행</option>
+                    <option value="1" >부동산</option>
+                    <option value="2" >자동차</option>
+                    <option value="3" >여행</option>
+                    <option value="4" >결혼 자금</option>
+                    <option value="5" >디지털 기기</option>
+                    <option value="6" >교육비</option>
+                    <option value="7" >취미 활동</option>
                 </select>
             </div>
             <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex flex-col gap-1 p-[20px]">
@@ -53,7 +75,7 @@ export default function BucketListStep1() {
             </div>
             <div className="w-full mx-auto flex flex-col items-center">
                 <button 
-                    className="hover:bg-blue-600 disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed mx-auto mb-[10px]" 
+                    className="customButton hover:bg-blue-600 disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed mx-auto mb-[10px]" 
                     disabled={!isChecked} 
                     onClick={nextHandler}
                     >

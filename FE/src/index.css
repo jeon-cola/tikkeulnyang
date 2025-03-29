@@ -4,7 +4,7 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  color: #242424;
   background-color: #242424;
 
   font-synthesis: none;
@@ -55,8 +55,32 @@ h1 {
   line-height: 1.1;
 }
 
+/* 프리텐다드 폰트 추가 */
+p {
+  font-family: "Pretendard-medium";
+}
+
 /* 일반 버튼 */
-button {
+/* button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 23px;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #ff957a;
+  color: white;
+  cursor: pointer;
+  transition: all 0.25s;
+  height: 43px;
+  width: 125px;
+  white-space: nowrap;
+} */
+
+.customButton {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -90,6 +114,43 @@ button {
   background: #ff957a;
   border: 1px solid #dfdfdf;
   border-radius: 100px;
+}
+
+/* 작은 버튼 */
+.blackButton {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: center;
+  color: white;
+  background: #3d3d3d;
+  border: none;
+  border-radius: 100px;
+  width: auto;
+  height: 25px;
+  font-family: "Pretendard-thin";
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 15px;
+}
+
+/* 작은 버튼 */
+.whiteButton {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: center;
+  color: #3d3d3d;
+  background: white;
+  border-radius: 100px;
+  width: auto;
+  height: 25px;
+  font-family: "Pretendard-thin";
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 15px;
+  /* 그림자효과 */
+  box-shadow: 1px 1px 2px 0px rgba(0, 0, 0, 15%);
 }
 
 button:hover {

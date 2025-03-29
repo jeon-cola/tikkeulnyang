@@ -1,5 +1,6 @@
 package com.c107.paymenthistory.controller;
 
+import com.c107.paymenthistory.dto.CategoryStatisticsResponseDto;
 import com.c107.paymenthistory.dto.PaymentHistoryResponseDto;
 import com.c107.paymenthistory.service.PaymentHistoryService;
 import lombok.RequiredArgsConstructor;
@@ -75,11 +76,9 @@ public class PaymentHistoryController {
             @AuthenticationPrincipal String email,
             @PathVariable String date
     ) {
+        Map<String, Object> data = paymentHistoryService.getDailyConsumption(email, date);
 
-        PaymentHistoryResponseDto responseDto = paymentHistoryService.getDailyConsumption(
-                email, date);
-
-        return ResponseUtil.success("일별 소비 내역 조회에 성공했습니다.", responseDto);
+        return ResponseUtil.success("일별 소비 내역 조회 성공", data);
     }
 
     @PostMapping("/waste")
@@ -93,4 +92,35 @@ public class PaymentHistoryController {
 
         return ResponseUtil.success("낭비 소비 상태가 성공적으로 변경되었습니다.", response);
     }
+
+    @GetMapping("/statistics/category")
+    public ResponseEntity<?> getCategoryStatistics(
+            @AuthenticationPrincipal String email,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month
+    ) {
+        // 기본값으로 현재 연월 사용
+        LocalDate now = LocalDate.now();
+        int targetYear = (year != null) ? year : now.getYear();
+        int targetMonth = (month != null) ? month : now.getMonthValue();
+
+        CategoryStatisticsResponseDto responseDto =
+                paymentHistoryService.getCategoryStatistics(email, targetYear, targetMonth);
+
+        return ResponseUtil.success("카테고리별 소비 통계 조회에 성공했습니다.", responseDto);
+    }
+
+    @GetMapping("/statistics/category/{year}/{month}")
+    public ResponseEntity<?> getCategoryStatistics(
+            @AuthenticationPrincipal String email,
+            @PathVariable int year,
+            @PathVariable int month
+    ) {
+        CategoryStatisticsResponseDto responseDto =
+                paymentHistoryService.getCategoryStatistics(email, year, month);
+
+        return ResponseUtil.success("카테고리별 소비 통계 조회에 성공했습니다.", responseDto);
+    }
+    //
+
 }

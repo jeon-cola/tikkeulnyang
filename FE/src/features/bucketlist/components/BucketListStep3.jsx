@@ -1,12 +1,14 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Step from "../assets/Step"
 import step3Image from "../assets/step3.png"
 import { useNavigate } from "react-router-dom";
+import Api from "../../../services/Api";
 export default function BucketListStep3() {
   const [stepCheck, setStepCheck] = useState({
     day:"",
     amount:""
   });
+  const [dayList, setDayList] = useState([])
 
   const nav = useNavigate();
 
@@ -27,9 +29,39 @@ export default function BucketListStep3() {
 
   const isChecked = isNumber(stepCheck.amount) && stepCheck.day;
 
+  // 버킷리스트 생성 
   function creationHandler() {
-    nav("/bucketlist/list");
+    const fetchData = async() => {
+      try {
+        const response = await Api.post("api/bucket/date",{
+          "saving_amount":stepCheck.amount,
+          "saving_days":stepCheck.day
+        })
+        console.log(response.data)
+        if (response.data.status === "success") {
+          window.alert("버킷리스트 생성이 완료 되었습니다")
+          nav("/bucketlist/list");
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    fetchData();
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await Api.get("api/bucket/days")
+        console.log(response.data)
+        if (response.data.status === "success")
+          setDayList(response.data.data.days)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    fetchData();
+  },[])
 
   return(
     <div className="flex flex-col justify-center gap-4">
@@ -44,13 +76,9 @@ export default function BucketListStep3() {
           <p className="text-left" >요일을 선택해주세요</p>
           <select name="day" id="" className="w-full text-2xl font-semibold" value={stepCheck.day} onChange={inputHandler}>
             <option value="" >요일을 선택해주세요</option>
-            <option value="월요일">월요일</option>
-            <option value="화요일">화요일</option>
-            <option value="수요일">수요일</option>
-            <option value="목요일">목요일</option>
-            <option value="금요일">금요일</option>
-            <option value="토요일">토요일</option>
-            <option value="일요일">일요일</option>
+            {dayList.map((day,index)=> (
+              <option value={day} key={index}>{day}</option>
+            ))}
           </select>
         </div>
 
@@ -63,7 +91,7 @@ export default function BucketListStep3() {
         {/* 생성 버튼 */}
         <div className="w-full mx-auto flex flex-col items-center">
           <button 
-            className="hover:bg-blue-600 disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed mx-auto mb-[10px]" 
+            className="customButton hover:bg-blue-600 disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed mx-auto mb-[10px]" 
             disabled={!isChecked}
             onClick={creationHandler}
           >시작하기</button>

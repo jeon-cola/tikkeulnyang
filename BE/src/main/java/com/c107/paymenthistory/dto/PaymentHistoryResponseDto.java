@@ -23,6 +23,7 @@ public class PaymentHistoryResponseDto {
     private String status;
     private String message;
     private List<Transaction> transactions;
+    private List<Map<String, Object>> transactionsMap;
     private Integer paymentHistoryId;
     private String categoryId;
     @JsonProperty("is_waste")
@@ -56,9 +57,13 @@ public class PaymentHistoryResponseDto {
     @Builder
     public static class Transaction {
         private String date;
+        private String categoryId;
         private String categoryName;
         private String merchantName;
+        private String merchantId;
         private Integer transactionBalance;
+        private Integer paymentHistoryId;
+        private String transactionUniqueNo;
         private String category;
         private Integer amount;
         private String description;
