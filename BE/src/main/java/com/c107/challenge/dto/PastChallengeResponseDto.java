@@ -22,4 +22,5 @@ public class PastChallengeResponseDto {
     private LocalDateTime createdAt;
     private Integer limitAmount;
     private String participationStatus;
+    private String thumbnailUrl;
 }

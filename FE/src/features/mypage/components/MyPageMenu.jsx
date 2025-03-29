@@ -17,8 +17,7 @@ import Api from "../../../services/Api.jsx";
 
 export default function MyPageMenu() {
   const dispatch = useDispatch();
-  const {nickName, email, } = useSelector(state => state.user);
-  const [userImage, setUserImage] = useState(userProfile);
+  const {nickName, email,profileImg } = useSelector(state => state.user);
   const [userLevel, setUserLevel] = useState("LV.1");
   const [pendingChallenges, setPendingChallenges] = useState(0);
   const [activeChallenges, setActiveChallenges] = useState(0);
@@ -26,28 +25,36 @@ export default function MyPageMenu() {
   const [userCost, setUserCost] = useState(10000);
   const nav = useNavigate();
 
+  // 챌린지 참여 이력
   useEffect(() => {
-    // const fetchChallengeHistory  = async() => {
-    //   try {
-    //     // const response = await Api.get("/api/challenge/history");
-    //     const response = await axios.get("http://localhost:8080/api/challenge/history",{
-    //       withCredentials:true
-    //     })
-    //     console.log(response);
-    //   } catch (error) {
-    //     console.log(error);
-    //   }
-    // }
-    // fetchChallengeHistory ();
+    const fetchChallengeHistory  = async() => {
+      try {
+        const response = await Api.get("/api/challenge/past");
+        setCompletedChallenges(response.data.length)
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchChallengeHistory ();
   },[]);
+
+  // 진행 중인 챌린지 
+  useEffect(()=> {
+    const fetchActiveChallenge = async () => {
+      try {
+        const response = await Api.get("api/challenge/participated")
+        setActiveChallenges(response.data.length)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    fetchActiveChallenge()
+  })
 
   // 로그아웃 핸들러
   async function logoutHandler(e) {
     e.preventDefault();
       try {
-        // const response = await axios.post("http://localhost:8080/api/auth/logout",{},{
-        //   withCredentials:true
-        // })
         const response = await Api.post("api/auth/logout")
         if (response.data.status === "success") {
           dispatch(resetUser())
@@ -61,14 +68,14 @@ export default function MyPageMenu() {
   }
 
   return(
-      <div className="flex flex-col justify-center gap-5 min-w-[345px] mt-[50px] mb-[20px]">
+      <div className="flex flex-col justify-center gap-5 min-w-[345px] mt-[50px] mb-[30px]">
 
         <CustomHeader title="마이 페이지"/>
         
         {/* 유저 정보 */}
         <div className="w-full t flex items-center p-4 relative bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px]">
           <div className="mr-4">
-            <img src={userImage} alt="유저 이미지"/>
+            <img src={profileImg} alt="유저 이미지" className="w-[80px] h-[80px rounded-full "/>
           </div>
           <div className="flex flex-col">
             <div className="flex items-center mb-1 gap-3">
@@ -194,11 +201,9 @@ export default function MyPageMenu() {
                 <p className="font-regular">로그아웃</p>
               </div>
             </div>
-
+          
 
         </div>
-
-
 
       </div>
 
