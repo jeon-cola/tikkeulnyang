@@ -1,16 +1,23 @@
 package com.c107.challenge.controller;
 
+import com.c107.challenge.dto.ChallengeDetailResponseDto;
 import com.c107.challenge.dto.ChallengeResponseDto;
 import com.c107.challenge.dto.CreateChallengeRequest;
+import com.c107.challenge.dto.PastChallengeResponseDto;
 import com.c107.challenge.service.ChallengeService;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
+import com.c107.common.util.ResponseUtil;
+import com.c107.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/challenge")
@@ -18,6 +25,7 @@ import java.time.LocalDate;
 public class ChallangeController {
 
     private final ChallengeService challengeService;
+    private final S3Service s3Service;
 
     // 챌린지 생성 (로그인한 유저 정보 자동 등록)
     @PostMapping
@@ -76,5 +84,44 @@ public class ChallangeController {
         challengeService.cancelChallengeParticipation(challengeId);
         return ResponseEntity.ok("챌린지 참여 취소가 완료되었습니다.");
     }
+
+    @GetMapping("/participated")
+    public ResponseEntity<List<ChallengeResponseDto>> getParticipatedChallenges() {
+        List<ChallengeResponseDto> participatedChallenges = challengeService.getParticipatedChallenges();
+        return ResponseEntity.ok(participatedChallenges);
+    }
+
+    // 챌린지 상세조회 엔드포인트 (기존 정보 + 참가자수, 성공률 구간별 분포, 평균 성공률)
+    @GetMapping("/{challengeId}/detail")
+    public ResponseEntity<ChallengeDetailResponseDto> getChallengeDetail(@PathVariable Integer challengeId) {
+        ChallengeDetailResponseDto detail = challengeService.getChallengeDetail(challengeId);
+        return ResponseEntity.ok(detail);
+    }
+
+    @GetMapping("/past")
+    public ResponseEntity<List<PastChallengeResponseDto>> getPastParticipatedChallenges() {
+        List<PastChallengeResponseDto> pastChallenges = challengeService.getPastParticipatedChallenges();
+        return ResponseEntity.ok(pastChallenges);
+    }
+
+    // 챌린지 종료 후 환불 정산 엔드포인트
+    @PostMapping("/{challengeId}/settle")
+    public ResponseEntity<String> settleChallenge(@PathVariable Integer challengeId) {
+        challengeService.settleChallenge(challengeId);
+        return ResponseEntity.ok("챌린지 환불 정산이 완료되었습니다.");
+    }
+
+    @PostMapping("/{challengeId}/thumbnail")
+    public ResponseEntity<?> uploadChallengeThumbnail(@PathVariable Integer challengeId,
+                                                      @RequestParam("file") MultipartFile file) {
+        try {
+            String imageUrl = s3Service.uploadProfileImage(file, "CHALLENGE", challengeId);
+            return ResponseUtil.success("챌린지 썸네일 업로드 성공", imageUrl);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseUtil.badRequest("파일 업로드 실패", null);
+        }
+    }
+
 
 }

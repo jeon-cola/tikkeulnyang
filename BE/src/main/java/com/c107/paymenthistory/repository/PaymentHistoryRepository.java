@@ -27,4 +27,18 @@ public interface PaymentHistoryRepository extends JpaRepository<PaymentHistoryEn
 
     // 결재 내역 조회
     Optional<PaymentHistoryEntity> findById(Integer paymentHistoryId);
+
+    List<PaymentHistoryEntity> findByCardIdInAndTransactionDateBetweenAndIsWaste(
+            List<Integer> cardIds,
+            LocalDate startDate,
+            LocalDate endDate,
+            Integer isWaste
+    );
+
+    Optional<PaymentHistoryEntity> findByTransactionUniqueNo(String transactionUniqueNo);
+    List<PaymentHistoryEntity> findByCardId(Integer cardId);
+    List<PaymentHistoryEntity> findByCardNo(String cardNo);
+    List<PaymentHistoryEntity> findByCardNoAndTransactionDateBetween(String cardNo, LocalDate startDate, LocalDate endDate);
+
+
 }

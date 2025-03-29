@@ -22,4 +22,5 @@ public class ChallengeResponseDto {
     private LocalDateTime createdAt;
     private Integer maxParticipants;
     private Integer limitAmount;
+    private String thumbnailUrl;
 }

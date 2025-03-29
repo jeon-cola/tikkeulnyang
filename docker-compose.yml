@@ -8,8 +8,9 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ksh147!!
       MYSQL_DATABASE: catcat
+      MYSQL_ROOT_HOST: "%" # 모든 호스트에서 접속 허용 (내부 네트워크 전용)
     ports:
-      - "3307:3306" # 호스트 3307 -> 컨테이너 3306
+      - "3307:3306" # 외부(EC2) 3307 → 컨테이너 3306 (원격 접속용)
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -21,11 +22,10 @@ services:
     depends_on:
       - mysql
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/catcat?serverTimezone=UTC&characterEncoding=UTF-8
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ksh147!!
+      - TZ=Asia/Seoul
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=Asia/Seoul
     ports:
-      - "8081:8080" # 호스트의 모든 인터페이스에 8081 포트를 컨테이너의 8080에 매핑
+      - "8081:8080" # 외부(EC2) 8081 → 컨테이너 8080
     networks:
       - app_network
 
@@ -34,12 +34,10 @@ services:
     container_name: frontend
     depends_on:
       - backend
-    # 프론트엔드는 내부 네트워크로만 접근 (포트 매핑 제거)
+    ports:
+      - "3000:80" # 외부(EC2) 3000 → 컨테이너 80
     networks:
       - app_network
-    volumes:
-      - /etc/letsencrypt/live/j12c107.p.ssafy.io/fullchain.pem:/etc/letsencrypt/live/j12c107.p.ssafy.io/fullchain.pem:ro
-      - /etc/letsencrypt/live/j12c107.p.ssafy.io/privkey.pem:/etc/letsencrypt/live/j12c107.p.ssafy.io/privkey.pem:ro
 
 networks:
   app_network:

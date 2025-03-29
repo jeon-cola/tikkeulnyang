@@ -53,4 +53,17 @@ public class BudgetResponseDto {
 
 
     }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class BudgetWaste {
+        private Integer year;
+        private Integer month;
+
+        @JsonProperty("total_waste_amount")
+        private Integer totalWasteAmount;
+    }
 }

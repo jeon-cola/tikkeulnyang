@@ -1,4 +1,21 @@
+import { useNavigate } from "react-router-dom";
+
 export default function ChallengeDesc({ type, button }) {
+  const navigate = useNavigate();
+  let path = "";
+
+  const handleClick = () => {
+    console.log(type);
+    if (type == "추천 챌린지") {
+      path = "recommend";
+    } else if (type == "공식 챌린지") {
+      path = "official";
+    } else if (type == "유저 챌린지") {
+      path = "user";
+    }
+    navigate(`/challenge/total/${path}`);
+  };
+
   return (
     <>
       <div className="flex w-[370px] ">
@@ -9,7 +26,10 @@ export default function ChallengeDesc({ type, button }) {
           </h2>
 
           {/* 전체보기 > 버튼 */}
-          <span className="absolute w-[95.89px] h-[21px] right-0 top-[3px] font-inter font-normal text-[17px] leading-[21px] text-black">
+          <span
+            onClick={handleClick}
+            className="absolute w-[95.89px] h-[21px] right-0 top-[3px] font-inter font-normal text-[17px] leading-[21px] text-black"
+          >
             {button}
           </span>
         </div>
