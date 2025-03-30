@@ -60,25 +60,58 @@ const categories = [
   },
 ];
 
-export default function CategoryBox() {
-  const [activeCategory, setActiveCategory] = useState("all");
+// CategoryBox.jsx
+export default function CategoryBox({ activeCategory, setActiveCategory }) {
+  const categories = [
+    { id: "all", activeIcon: AllIcon, inactiveIcon: AllIconInactive },
+    { id: "food", activeIcon: FoodIcon, inactiveIcon: FoodIconInactive },
+    {
+      id: "housing",
+      activeIcon: HousingIcon,
+      inactiveIcon: HousingIconInactive,
+    },
+    {
+      id: "entertainment",
+      activeIcon: EntertainmentIcon,
+      inactiveIcon: EntertainmentIconInactive,
+    },
+    { id: "goods", activeIcon: GoodsIcon, inactiveIcon: GoodsIconInactive },
+    {
+      id: "medical",
+      activeIcon: MedicalIcon,
+      inactiveIcon: MedicalIconInactive,
+    },
+    {
+      id: "shopping",
+      activeIcon: ShoppingIcon,
+      inactiveIcon: ShoppingIconInactive,
+    },
+    {
+      id: "transportation",
+      activeIcon: TransportationIcon,
+      inactiveIcon: TransportationIconInactive,
+    },
+    { id: "income", activeIcon: IncomeIcon, inactiveIcon: IncomeIconInactive },
+    { id: "spense", activeIcon: SpenseIcon, inactiveIcon: SpenseIconInactive },
+  ];
 
   return (
     <div className="w-full bg-white rounded-lg shadow-sm p-4 flex items-center overflow-x-auto">
-      <div className="flex gap-4 snap-x snap-mandatory overflow-x-auto">
-        {categories.map((category) => (
-          <img
-            key={category.id}
-            src={
-              activeCategory === category.id
-                ? category.activeIcon
-                : category.inactiveIcon
-            }
-            alt={category.id}
-            className="w-10 h-10 cursor-pointer snap-center"
-            onClick={() => setActiveCategory(category.id)}
-          />
-        ))}
+      <div className="flex gap-3 snap-x snap-mandatory overflow-x-auto">
+        {categories.map((category) => {
+          // "all"인 경우 모든 아이콘을 active 상태로 표시
+          const isActive =
+            activeCategory === "all" || activeCategory === category.id;
+          return (
+            <img
+              key={category.id}
+              src={isActive ? category.activeIcon : category.inactiveIcon}
+              alt={category.id}
+              className="w-8 h-auto cursor-pointer snap-center"
+              onClick={() => setActiveCategory(category.id)}
+            />
+          );
+        })}
       </div>
     </div>
   );
