@@ -1,28 +1,25 @@
 package com.c107.share.service;
 
-import com.c107.budget.dto.BudgetResponseDto;
 import com.c107.budget.entity.BudgetEntity;
 import com.c107.budget.repository.BudgetRepository;
 import com.c107.paymenthistory.dto.PaymentHistoryResponseDto;
 import com.c107.paymenthistory.service.PaymentHistoryService;
 import com.c107.s3.repository.S3Repository;
-import com.c107.share.dto.InviteRequestDto;
+import com.c107.share.dto.ShareCommentDto;
 import com.c107.share.dto.ShareLedgerResponseDto;
 import com.c107.share.dto.SharePartnerDto;
 import com.c107.share.entity.ShareEntity;
+import com.c107.share.entity.ShareInteractionEntity;
+import com.c107.share.repository.ShareInteractionRepository;
 import com.c107.share.repository.ShareRepository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -41,6 +38,7 @@ public class ShareService {
     private final PaymentHistoryService paymentHistoryService;
     private final ShareRepository shareRepository;
     private final S3Repository s3Repository;
+    private final ShareInteractionRepository shareInteractionRepository;
 
     @Value("${app.base.url}")
     private String url;
@@ -351,5 +349,146 @@ public class ShareService {
         return dailyData;
     }
 
+
+    // 특정 날짜에 달린 댓글과 이모지 조회
+
+    @Transactional(readOnly = true)
+    public ShareCommentDto.DailyCommentsResponse getDailyComments(String dateStr, String email) {
+        // 요청자 정보 조회
+        User requester = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 날짜 형식 검증
+        LocalDate date;
+        try {
+            date = LocalDate.parse(dateStr); // YYYY-MM-DD 형식 검증
+        } catch (Exception e) {
+            throw new IllegalArgumentException("잘못된 날짜 형식입니다. YYYY-MM-DD 형식이어야 합니다.");
+        }
+
+        // 요청자가 포함된 공유 관계 찾기
+        List<ShareEntity> shares = shareRepository.findByUserInActiveShare(requester.getUserId());
+
+        List<ShareCommentDto.CommentResponse> allComments = new ArrayList<>();
+        int likeCount = 0;
+        int coolCount = 0;
+        int fightingCount = 0;
+
+        // 각 공유 관계에 대해 상호작용 조회
+        for (ShareEntity share : shares) {
+            // 요청자가 가계부 소유자인 경우에만 처리
+            if (share.getOwnerId().equals(requester.getUserId())) {
+                // 해당 공유 관계의 해당 날짜 상호작용 조회
+                List<ShareInteractionEntity> interactions = shareInteractionRepository
+                        .findByShareIdAndTargetDateOrderByCreatedAtDesc(share.getShareId(), date);
+
+                // 상호작용 정보를 DTO로 변환
+                for (ShareInteractionEntity interaction : interactions) {
+                    User commenter = userRepository.findById(interaction.getUserId())
+                            .orElse(null);
+
+                    String nickname = commenter != null ? commenter.getNickname() : "Unknown";
+                    String profileImageUrl = commenter != null ? getProfileImageForUser(commenter.getUserId()) : defalutImage;
+
+                    allComments.add(ShareCommentDto.CommentResponse.builder()
+                            .commentId(interaction.getInteractionId().longValue())
+                            .userId(interaction.getUserId())
+                            .userNickname(nickname)
+                            .profileImageUrl(profileImageUrl)
+                            .comment(interaction.getCommentContent())
+                            .emoji(interaction.getEmoji())
+                            .createdAt(interaction.getCreatedAt())
+                            .build());
+                }
+
+                // 이모지 개수 집계
+                likeCount += shareInteractionRepository.countByShareIdAndTargetDateAndEmoji(share.getShareId(), date, 0);
+                coolCount += shareInteractionRepository.countByShareIdAndTargetDateAndEmoji(share.getShareId(), date, 1);
+                fightingCount += shareInteractionRepository.countByShareIdAndTargetDateAndEmoji(share.getShareId(), date, 2);
+            }
+        }
+
+        // 최신 날짜순으로 정렬
+        allComments.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+
+        // 이모지 개수 DTO 생성
+        ShareCommentDto.EmojiCounts emojiCounts = ShareCommentDto.EmojiCounts.builder()
+                .like(likeCount)
+                .cool(coolCount)
+                .fighting(fightingCount)
+                .build();
+
+        // 최종 응답 생성
+        return ShareCommentDto.DailyCommentsResponse.builder()
+                .date(dateStr)
+                .comments(allComments)
+                .emojiCounts(emojiCounts)
+                .build();
+    }
+
+    // 타인의 가계부에 댓글 및 이모지 등록
+    @Transactional
+    public ShareCommentDto.CommentResponse addComment(Long targetUserId, String dateStr, ShareCommentDto.CommentRequest request, String email) {
+        // 요청자 정보 조회
+        User requester = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("요청자 정보를 찾을 수 없습니다."));
+
+        // 대상 사용자 정보 조회
+        User targetUser = userRepository.findById(targetUserId.intValue())
+                .orElseThrow(() -> new IllegalArgumentException("대상 사용자를 찾을 수 없습니다."));
+
+        // 공유 중인 관계 확인 (요청자와 targetUserId 간의 공유 관계)
+        ShareEntity shared = shareRepository.findActiveShareByUsers(requester.getUserId(), targetUserId.intValue())
+                .orElseThrow(() -> new IllegalArgumentException("공유 중인 관계가 없습니다."));
+
+        // 날짜 형식 검증
+        LocalDate date;
+        try {
+            date = LocalDate.parse(dateStr); // YYYY-MM-DD 형식 검증
+        } catch (Exception e) {
+            throw new IllegalArgumentException("잘못된 날짜 형식입니다. YYYY-MM-DD 형식이어야 합니다.");
+        }
+
+        // 이미 댓글/이모지를 남겼는지 확인
+        boolean alreadyCommented = shareInteractionRepository.existsByUserIdAndShareIdAndTargetDate(
+                requester.getUserId(), shared.getShareId(), date);
+
+        if (alreadyCommented) {
+            throw new IllegalArgumentException("이미 해당 날짜에 댓글 또는 이모지를 등록했습니다.");
+        }
+
+        // 이모지 값 검증
+        if (request.getEmoji() != null && (request.getEmoji() < 0 || request.getEmoji() > 2)) {
+            throw new IllegalArgumentException("유효하지 않은 이모지 값입니다. 0, 1, 2 중 하나여야 합니다.");
+        }
+
+        // 댓글 및 이모지 저장
+        LocalDateTime now = LocalDateTime.now();
+        ShareInteractionEntity interaction = ShareInteractionEntity.builder()
+                .shareId(shared.getShareId())
+                .userId(requester.getUserId())
+                .targetDate(date)
+                .commentContent(request.getComment())
+                .emoji(request.getEmoji())
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        ShareInteractionEntity savedInteraction = shareInteractionRepository.save(interaction);
+
+        // 프로필 이미지 URL 가져오기
+        String profileImageUrl = getProfileImageForUser(requester.getUserId());
+
+        // 응답 생성
+        return ShareCommentDto.CommentResponse.builder()
+                .commentId(savedInteraction.getInteractionId().longValue())
+                .userId(requester.getUserId())
+                .userNickname(requester.getNickname())
+                .profileImageUrl(profileImageUrl)
+                .comment(savedInteraction.getCommentContent())
+                .emoji(savedInteraction.getEmoji())
+                .createdAt(savedInteraction.getCreatedAt())
+                .build();
+    }
 
 }
