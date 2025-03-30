@@ -42,12 +42,11 @@ public class ShareController {
     }
 
     @PostMapping("/invite")
-    public ResponseEntity<?> inviteUser(
-            @AuthenticationPrincipal String ownerEmail
-    ) {
-        String invitationLink = shareService.generateInvitationLink(ownerEmail);
+    public ResponseEntity<?> inviteUser(@AuthenticationPrincipal String email) {
+        String invitationLink = shareService.generateInvitationLink(email);
         return ResponseUtil.success("초대 링크 생성에 성공했습니다.", invitationLink);
     }
+
 
     // 초대 수락 엔드포인트
     @PostMapping("/accept/{token}")
