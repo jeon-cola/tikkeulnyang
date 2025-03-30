@@ -28,7 +28,7 @@ const formatKoreanDate = (dateStr) => {
   const weekday = date.toLocaleDateString("ko-KR", { weekday: "long" }); // 화요일
   return `${day}일 ${weekday}`;
 };
-console.log(new Date());
+console.log("PaymentDetails에서 시간조회:", new Date());
 export default function PaymentDetails({ date }) {
   const [paymentData, setPaymentData] = useState(null);
 
@@ -39,9 +39,10 @@ export default function PaymentDetails({ date }) {
         console.log("일별 세부내역 데이터:", response.data.data);
         setPaymentData(response.data.data); // 여기서 저장
       } catch (error) {
-        console.error("월별 세부내역조회 실패", error);
+        console.error("일별 세부내역조회 실패", error);
       }
     };
+
     if (date) {
       fetchedPaymentData();
     }
