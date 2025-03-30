@@ -1,7 +1,41 @@
 import CustomHeader from "@/components/CustomHeader";
 import HomeWidget from "@/features/home/components/HomeWidget";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { useState } from "react";
 
 export default function RenderHome() {
+  const [widgets, setWidgets] = useState([
+    { id: "widget-1", title: "남은예산", content: "10,000원" },
+    { id: "widget-2", title: "결제예정", content: "20,000원" },
+    { id: "widget-3", title: "저번달통계", content: "" },
+    { id: "widget-4", title: "현재 소비 금액", content: "40,000원" },
+    { id: "widget-5", title: "남은 카드 실적", content: "50,000원" },
+    { id: "widget-6", title: "버킷리스트", content: "5,000원" },
+  ]);
+
+  const onDragEnd = (result) => {
+    // 드롭 위치가 없거나, 드래그가 취소된 경우
+    if (!result.destination) return;
+
+    // 위치가 변경되지 않은 경우
+    if (
+      result.destination.droppableId === result.source.droppableId &&
+      result.destination.index === result.source.index
+    )
+      return;
+
+    // 위젯 배열 복사
+    const newWidgets = Array.from(widgets);
+    // 드래그한 아이템 제거
+    const [reorderedItem] = newWidgets.splice(result.source.index, 1);
+    // 새 위치에 아이템 삽입
+    newWidgets.splice(result.destination.index, 0, reorderedItem);
+
+    console.log("드래그 끝");
+    // 상태 업데이트
+    setWidgets(newWidgets);
+  };
+
   return (
     <>
       <CustomHeader title="홈" />
@@ -69,20 +103,48 @@ export default function RenderHome() {
             </span>
           </div>
         </div>
-        <div className="flex flex-row justify-between w-full">
-          <HomeWidget title="남은예산" content="10,000원" />
-          <HomeWidget title="결제예정" content="20,000원" />
-        </div>
 
-        <div className="flex flex-row justify-between w-full pt-[34px]">
-          <HomeWidget title="저번달통계" />
-          <HomeWidget title="현재 소비 금액" content="40,000원" />
-        </div>
-
-        <div className="flex flex-row justify-between w-full pt-[34px]">
-          <HomeWidget title="남은 카드 실적" content="50,000원" />
-          <HomeWidget title="버킷리스트" content="5,000원" />
-        </div>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="widgets">
+            {(provided) => (
+              <div
+                className="grid grid-cols-2 gap-x-auto justify-items-stretch w-full"
+                {...provided.droppableProps} // 드롭 영역에 필수로 전달해야 하는 props 모음
+                ref={provided.innerRef} // React의 DOM 참조를 라이브러리에 전달
+              >
+                {widgets.map((widget, index) => (
+                  <Draggable
+                    key={widget.id}
+                    draggableId={widget.id}
+                    index={index}
+                  >
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        // 드래그 가능한 요소에 필요한 속성들. 주로 위치 조정과 관련
+                        {...provided.draggableProps}
+                        // 드래그 핸들 영역에 적용되는 속성으로, 사용자가 어디를 잡아당겨야 드래그가 시작되는지 정의
+                        {...provided.dragHandleProps}
+                        className={`${
+                          index % 2 === 0
+                            ? "justify-self-start"
+                            : "justify-self-end"
+                        } ${index > 1 ? "mt-6" : ""}`}
+                      >
+                        <HomeWidget
+                          title={widget.title}
+                          content={widget.content}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {/* {provided.placeholder} */}{" "}
+                {/* 드래그 중 원래 위치를 유지하기 위한 공간을 확보 */}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       </div>
     </>
   );
