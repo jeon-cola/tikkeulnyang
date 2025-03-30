@@ -130,11 +130,11 @@ public class ShareService {
                 .build();
     }
 
-    public String generateInvitationLink(String ownerEmail) {
+    public String generateInvitationLink(String email) {
         String token = UUID.randomUUID().toString();
         String invitationLink = url + "/" + token;
 
-        User owner = userRepository.findByEmail(ownerEmail)
+        User owner = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("가계부 소유자를 찾을 수 없습니다."));
 
         ShareEntity shareEntity = ShareEntity.builder()
@@ -150,6 +150,7 @@ public class ShareService {
 
         return invitationLink;
     }
+
 
 
     // 초대 수락 처리 메서드
