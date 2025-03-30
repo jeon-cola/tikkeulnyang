@@ -26,7 +26,7 @@ export default function LedgerHeader() {
           <Box
             text="예산을 설정하세요"
             variant="highlight"
-            onClick={() => navigate("/ledger/budgetmake")}
+            onClick={() => navigate("/ledger/budget")}
           >
             <img
               src={PurseImg}
