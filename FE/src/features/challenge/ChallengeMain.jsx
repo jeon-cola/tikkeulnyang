@@ -9,7 +9,7 @@ import CustomHeader from "@/components/CustomHeader";
 import { ChallengeService } from "@/features/challenge/services/ChallengeService";
 import { useSelector, useDispatch } from "react-redux";
 import { addOfficialChallenge } from "@/features/challenge/ChallengeSlice";
-import RenderHistory from "@/features/challenge/components/RenderHistory";
+import RenderList from "@/features/challenge/components/RenderList";
 import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
 
 export default function ChallengeMain() {
@@ -150,12 +150,17 @@ export default function ChallengeMain() {
           </>
         );
       case 1:
-        return <>{/* 참여중 챌린지 탭 */}</>;
+        return (
+          <>
+            {/* 참여중 챌린지 탭 */}
+            <RenderList pageType="particiated" />
+          </>
+        );
       case 2:
         return (
           <>
             {/* 참여 이력 탭 */}
-            <RenderHistory />
+            <RenderList pageType="past" />
           </>
         );
     }

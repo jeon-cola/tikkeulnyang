@@ -1,23 +1,25 @@
 import { Route, Routes } from "react-router-dom";
 import LedgerMain from "@/features/ledger/LedgerMain";
-import MyLedger from "@/features/ledger/MyLedger";
+import PersonalLedger from "@/features/ledger/PersonalLedger";
 import LedgerDetail from "@/features/ledger/LedgerDetail";
 import LedgerEdit from "@/features/ledger/LedgerEdit";
+import BudgetMain from "@/features/ledger/budget/BudgetMain";
 import BudgetMake from "@/features/ledger/budget/BudgetMake";
-import BudgetDetail from "@/features/ledger/budget/BudgetDetail";
 import BudgetReport from "@/features/ledger/budget/BudgetReport";
 
 export default function LedgerRouter() {
   return (
     <Routes>
-      {/* LedgerMain은 Layout용 (Outlet 포함) */}
+      {/* LedgerMain은 Layout 컴포넌트 (Outlet 필요) */}
       <Route path="/*" element={<LedgerMain />}>
-        <Route index element={<MyLedger />} />
+        <Route index element={<PersonalLedger />} />
         <Route path="detail" element={<LedgerDetail />} />
-        <Route path="Edit" element={<LedgerEdit />} />
-        <Route path="budget" element={<BudgetDetail />} />
-        <Route path="budgetmake" element={<BudgetMake />}>
-          <Route path="budgetReport" element={<BudgetReport />} />
+        <Route path="edit" element={<LedgerEdit />} />
+
+        {/* budget 중첩 라우팅 */}
+        <Route path="budget" element={<BudgetMain />}>
+          <Route path="make" element={<BudgetMake />} />
+          <Route path="report" element={<BudgetReport />} />
         </Route>
       </Route>
     </Routes>
