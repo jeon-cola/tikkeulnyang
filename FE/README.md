@@ -46,3 +46,10 @@ npm install chart.js react-chartjs-2
 ```
 npm install axios
 ```
+
+### react-slick
+
+```
+npm install react-slick --save
+npm install slick-carousel --save
+```
