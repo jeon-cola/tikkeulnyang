@@ -18,6 +18,8 @@ public class ShareLedgerResponseDto {
     private int totalSpent;
     private int totalBudget;
     private List<ShareLedgerResponseDto.DailyData> data;
+    private String ownerNickname;
+    private String ownerEmail;
 
     @Getter
     @NoArgsConstructor
