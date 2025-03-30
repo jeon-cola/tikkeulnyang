@@ -67,14 +67,14 @@
   background-color: #ff957a;
 }
 
-.react-calendar__navigation {
-  justify-content: flex-start !important; /* 전체 영역 왼쪽 정렬 */
-}
+/* .react-calendar__navigation {
+  justify-content: flex-start !important;
+} */
 
 .react-calendar__navigation__label {
   font-size: 20px;
   text-align: left !important;
-  flex-grow: 0 !important; /* 자동으로 가운데로 확장되는 걸 방지 */
+  flex-grow: 0 !important;
 }
 
 /* 빨간색 주말 날짜 -> 검정색으로 표시 */

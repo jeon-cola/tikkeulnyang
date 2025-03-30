@@ -39,7 +39,7 @@ export default function LedgerHeader() {
 
       {isDetailPage && (
         <>
-          <Box text="유저님의 가계부 세부내역" variant="title">
+          <Box text={`${userInfo.nickName}의 가계부 세부내역`} variant="title">
             <div className="flex flex-row gap-[5px]">
               <button
                 className="whiteButton"
