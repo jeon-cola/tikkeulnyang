@@ -2,6 +2,7 @@ package com.c107.share.controller;
 
 import com.c107.common.util.ResponseUtil;
 import com.c107.share.dto.InviteRequestDto;
+import com.c107.share.dto.ShareCommentDto;
 import com.c107.share.dto.ShareLedgerResponseDto;
 import com.c107.share.dto.SharePartnerDto;
 import com.c107.share.service.ShareService;
@@ -105,6 +106,28 @@ public class ShareController {
     ) {
         Map<String, Object> dailyData = shareService.getPartnerDailyLedger(targetUserId, date, myEmail);
         return ResponseUtil.success("상대방 일별 소비 내역 조회 성공", dailyData);
+    }
+
+    // 특정 날짜의 댓글, 이모지 조회
+    @GetMapping("/comments/{date}")
+    public ResponseEntity<?> getComments(
+            @PathVariable String date,
+            @AuthenticationPrincipal String myEmail
+    ) {
+        ShareCommentDto.DailyCommentsResponse comments = shareService.getDailyComments(date, myEmail);
+        return ResponseUtil.success("댓글 및 이모지 조회 성공", comments);
+    }
+
+    // 타인 평가 이모지, 댓글 등록
+    @PostMapping("/comments/{targetUserId}/{date}")
+    public ResponseEntity<?> addComment(
+            @PathVariable Long targetUserId,
+            @PathVariable String date,
+            @RequestBody ShareCommentDto.CommentRequest request,
+            @AuthenticationPrincipal String myEmail
+    ) {
+        ShareCommentDto.CommentResponse comment = shareService.addComment(targetUserId, date, request, myEmail);
+        return ResponseUtil.success("댓글 및 이모지 등록 성공", comment);
     }
 
 }
