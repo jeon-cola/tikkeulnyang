@@ -17,7 +17,7 @@ public class RecommendCard {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "reco_card_id")
-    private Integer recoCardId;
+    private Long recoCardId;
 
     @Column(name = "reco_card_name")
     private String recoCardName;
@@ -39,4 +39,5 @@ public class RecommendCard {
 
     @Column(name = "source_card_id")
     private Integer sourceCardId;
+
 }
