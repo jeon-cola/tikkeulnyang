@@ -48,11 +48,18 @@ public class GlobalExceptionHandler {
 
     // CustomException 처리
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<Map<String, Object>> handleCustomException(CustomException ex) {
+    public ResponseEntity<String> handleCustomException(CustomException ex) {
         logger.error("CustomException 발생: {}", ex.getMessage(), ex);
         ErrorCode errorCode = ex.getErrorCode();
-        return ResponseUtil.serverError(errorCode.getMessage(), null, errorCode.getHttpStatus());
+        if (errorCode == ErrorCode.VALIDATION_FAILED) {
+            // HTTP 400과 함께 단순 메시지만 반환합니다.
+            return new ResponseEntity<>(ex.getMessage(), errorCode.getHttpStatus());
+        }
+        // 그 외의 경우 기본 처리 (필요에 따라 수정)
+        return new ResponseEntity<>(ex.getMessage(), errorCode.getHttpStatus());
     }
+
+
 
     // 그 외 모든 Exception 처리 (500 Internal Server Error)
     @ExceptionHandler(Exception.class)
