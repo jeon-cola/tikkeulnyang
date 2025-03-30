@@ -284,12 +284,17 @@ public class AccountService {
         Account representativeAccount = repOpt.get();
         String representativeAccountNo = representativeAccount.getAccountNumber();
 
-        // 충전은 userKey로 로그인한 유저의 값을 사용하므로 isRefund false
+        // 충전할 금액과 대표계좌의 잔액 비교
+        int repBalance = Integer.parseInt(representativeAccount.getBalance());
+        int depositAmt = Integer.parseInt(amount);
+        if (depositAmt > repBalance) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "계좌잔액이 부족합니다.");
+        }
+
+        // isRefund false: 충전은 userKey로 진행
         Map<String, Object> response = transferDeposit(loggedInUserId, serviceAccountNo, representativeAccountNo, amount, false);
         logger.info("예치금 이체 API 응답: {}", response);
 
-        int repBalance = Integer.parseInt(representativeAccount.getBalance());
-        int depositAmt = Integer.parseInt(amount);
         int newRepBalance = repBalance - depositAmt;
         representativeAccount.setBalance(String.valueOf(newRepBalance));
         accountRepository.save(representativeAccount);
@@ -321,6 +326,7 @@ public class AccountService {
         logger.info("계좌 잔액 동기화 완료: {}", updatedAccounts);
     }
 
+
     /**
      * 예치금 환불 (서비스 계좌에서 사용자 대표계좌로 이체) 처리
      */
@@ -329,7 +335,7 @@ public class AccountService {
         User user = userRepository.findById(loggedInUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
         int currentDeposit = (user.getDeposit() != null ? user.getDeposit() : 0);
-        int refundAmt = Integer.parseInt(amount);
+        int refundAmt = (int) Long.parseLong(amount);
         if (refundAmt > currentDeposit) {
             throw new CustomException(ErrorCode.VALIDATION_FAILED, "환불 요청 금액이 예치금보다 많습니다.");
         }
