@@ -53,3 +53,9 @@ npm install axios
 npm install react-slick --save
 npm install slick-carousel --save
 ```
+
+### @hello-pangea/dnd
+
+```
+npm install @hello-pangea/dnd --save
+```
