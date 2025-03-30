@@ -134,6 +134,11 @@ p {
   padding: 2px 15px;
 }
 
+.blackButton:active {
+  background-color: #242424;
+}
+
+
 .smallButton {
   display: flex;
   flex-direction: row;
@@ -191,11 +196,15 @@ p {
   box-shadow: 1px 1px 2px 0px rgba(0, 0, 0, 15%);
 }
 
+.whiteButton:active {
+  background-color: white;
+}
+
 button:hover {
   border-color: #646cff;
 }
-button:focus,
-button:focus-visible {
+button:not(.blackButton):not(.whiteButton):focus,
+button:not(.blackButton):not(.whiteButton):focus-visible {
   background-color: #e87c62;
   outline: 4px auto;
 }
