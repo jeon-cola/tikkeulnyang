@@ -103,4 +103,15 @@ export const ChallengeService = {
       throw error;
     }
   },
+
+  // 챌린지 참여
+  postChallengeJoin: async (challengeId) => {
+    try {
+      const response = await Api.post(`api/challenge/${challengeId}/join`);
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
 };
