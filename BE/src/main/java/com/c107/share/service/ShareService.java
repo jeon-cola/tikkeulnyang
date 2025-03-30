@@ -319,5 +319,37 @@ public class ShareService {
         return getMyLedger(user.getEmail(), year, month);
     }
 
+    // 상대방의 일별 가계부 상세내역 조회
+    @Transactional(readOnly = true)
+    public Map<String, Object> getPartnerDailyLedger(Long targetUserId, String date, String requesterEmail) {
+        // 요청자 정보 조회
+        User requester = userRepository.findByEmail(requesterEmail)
+                .orElseThrow(() -> new IllegalArgumentException("요청자 정보를 찾을 수 없습니다."));
+
+        // 공유 중인 관계 확인 (요청자와 targetUserId 간의 공유 관계)
+        ShareEntity shared = shareRepository.findActiveShareByUsers(requester.getUserId(), targetUserId.intValue())
+                .orElseThrow(() -> new IllegalArgumentException("공유 중인 관계가 없습니다."));
+
+        // targetUserId 정보를 조회 (닉네임, 이메일 등)
+        User targetUser = userRepository.findById(targetUserId.intValue())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 날짜 형식 검증
+        try {
+            LocalDate.parse(date); // YYYY-MM-DD 형식 검증
+        } catch (Exception e) {
+            throw new IllegalArgumentException("잘못된 날짜 형식입니다. YYYY-MM-DD 형식이어야 합니다.");
+        }
+
+        // PaymentHistoryService의 일별 소비 내역 조회 메서드 활용
+        Map<String, Object> dailyData = paymentHistoryService.getDailyConsumption(targetUser.getEmail(), date);
+
+        // 응답 데이터에 상대방 정보 추가
+        dailyData.put("ownerNickname", targetUser.getNickname());
+        dailyData.put("ownerEmail", targetUser.getEmail());
+
+        return dailyData;
+    }
+
 
 }
