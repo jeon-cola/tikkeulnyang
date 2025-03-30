@@ -6,7 +6,6 @@ export const ChallengeService = {
     try {
       const response = await Api.get(
         `api/challenge/official?page=${page}&size=${size}`
-        //`/api_challenges_official?page=${page}&size=${size}`
       );
 
       return response;
@@ -21,8 +20,6 @@ export const ChallengeService = {
     try {
       const response = await Api.get(
         `api/challenge/user?page=${page}&size=${size}`
-        //`/challenge/user?page=0&size=4`
-        //`/api_challenge_user?page=${page}&size=${size}`
       );
 
       return response;
@@ -36,6 +33,7 @@ export const ChallengeService = {
   getPast: async () => {
     try {
       const response = await Api.get(`api/challenge/past`);
+
       return response;
     } catch (error) {
       console.error(error);
@@ -46,11 +44,7 @@ export const ChallengeService = {
   // 챌린지 상세조회
   getCurrChallenge: async (challengeId) => {
     try {
-      const response = await Api.get(
-        //`/challenge/current?challenge_id=${challengeId}`
-        `api/challenge/${challengeId}/detail`
-        //`/api_challenge_current?challenge_id=${challengeId}`
-      );
+      const response = await Api.get(`api/challenge/${challengeId}/detail`);
       return response;
     } catch (error) {
       console.error(error);
@@ -67,7 +61,6 @@ export const ChallengeService = {
 
       const response = await Api.post(`api/challenge`, challengeData);
 
-      console.log("challengeData", challengeData);
       return response;
     } catch (error) {
       console.error(error);
@@ -91,7 +84,30 @@ export const ChallengeService = {
         }
       );
 
-      console.log("thumbnail response : ", response);
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
+
+  // 참여중인 챌린지 리스트 조회
+  getChallengeParticipated: async () => {
+    try {
+      const response = await Api.get(`api/challenge/participated`);
+      console.log("challengeParticipated", response);
+      console.log("참여중인 챌린지 조회");
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
+
+  // 챌린지 참여
+  postChallengeJoin: async (challengeId) => {
+    try {
+      const response = await Api.post(`api/challenge/${challengeId}/join`);
       return response;
     } catch (error) {
       console.error(error);

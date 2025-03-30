@@ -1,5 +1,5 @@
 .react-calendar {
-  width: 100%;
+  width: 100% !important;
   max-width: 100%;
   border: none !important;
   font-family: "Pretendard-Regular";

@@ -1,28 +1,33 @@
-import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import CustomCalendar from "@/components/CustomCalendar";
-// import PaymentDetails from "./PaymentDetails";
+import PaymentDetails from "./PaymentDetails";
 import Api from "../../../services/Api";
 
 export default function PersonalLedgerCalendar() {
   const [value, setValue] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [calendarData, setCalendarData] = useState([]);
-  const navigate = useNavigate();
 
   const handleDateClick = (date) => {
     const formatted = date.toISOString().split("T")[0];
-    setSelectedDate(selectedDate === formatted ? null : formatted);
+    // 토글 기능: 이미 선택된 날짜면 닫기
+    const newSelected = selectedDate === formatted ? null : formatted;
+    setSelectedDate(newSelected);
+
+    // 스크롤 이동: 해당 날짜 셀을 달력 위로 올림
+    setTimeout(() => {
+      const target = document.getElementById(`date-${formatted}`);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 50);
   };
 
   useEffect(() => {
     const fetchCalendarData = async () => {
       try {
         const response = await Api.get("api/payment/consumption");
-        console.log("서버 데이터:", response.data.data);
-        // response.data.data.data에 날짜 배열이 있음
         const fetchedData = response.data.data.data;
-        // API의 expense를 spending으로 변환하여 달력에서 사용
         const formattedData = fetchedData.map((item) => ({
           date: item.date,
           income: item.income,
@@ -38,8 +43,7 @@ export default function PersonalLedgerCalendar() {
   }, []);
 
   return (
-    <div className="relative max-w-[320px]">
-      {/* CustomCalendar에 API 데이터를 prop으로 전달 */}
+    <div>
       <CustomCalendar
         value={value}
         onChange={(date) => {
@@ -48,17 +52,26 @@ export default function PersonalLedgerCalendar() {
         }}
         tileContent={({ date, view }) => {
           if (view === "month") {
-            const formattedDate = date.toISOString().split("T")[0];
+            const formattedDate = date.toLocaleDateString("en-CA", {
+              timeZone: "Asia/Seoul",
+            });
             const entry = calendarData.find(
               (item) => item.date === formattedDate
             );
             return entry ? (
-              <div className="flex flex-col items-center mt-5 text-xs relative z-10">
+              <div
+                id={`date-${formattedDate}`}
+                className="flex flex-col items-center mt-3 text-[9px] relative z-10"
+              >
                 {entry.income > 0 && (
-                  <span className="text-blue-500">+{entry.income}</span>
+                  <span className="text-[#37C7EF]">
+                    +{entry.income.toLocaleString()}
+                  </span>
                 )}
                 {entry.spending > 0 && (
-                  <span className="text-red-500">-{entry.spending}</span>
+                  <span className="text-[#FF886B]">
+                    -{entry.spending.toLocaleString()}
+                  </span>
                 )}
               </div>
             ) : null;
@@ -67,13 +80,12 @@ export default function PersonalLedgerCalendar() {
         }}
         data={calendarData}
       />
-
       {/* 선택된 날짜가 있을 경우 결제 정보 표시 */}
-      {/* {selectedDate && (
+      {selectedDate && (
         <div className="mt-4">
           <PaymentDetails date={selectedDate} />
         </div>
-      )} */}
+      )}
     </div>
   );
 }
