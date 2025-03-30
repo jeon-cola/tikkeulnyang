@@ -5,15 +5,27 @@ import com.c107.budget.entity.BudgetEntity;
 import com.c107.budget.repository.BudgetRepository;
 import com.c107.paymenthistory.dto.PaymentHistoryResponseDto;
 import com.c107.paymenthistory.service.PaymentHistoryService;
+import com.c107.s3.repository.S3Repository;
+import com.c107.share.dto.InviteRequestDto;
 import com.c107.share.dto.ShareLedgerResponseDto;
+import com.c107.share.dto.SharePartnerDto;
+import com.c107.share.entity.ShareEntity;
+import com.c107.share.repository.ShareRepository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -27,6 +39,15 @@ public class ShareService {
     private final UserRepository userRepository;
     private final BudgetRepository budgetRepository;
     private final PaymentHistoryService paymentHistoryService;
+    private final ShareRepository shareRepository;
+    private final S3Repository s3Repository;
+
+    @Value("${app.base.url}")
+    private String url;
+
+    @Value("${default.profile.image.url}")
+    private String defalutImage;
+
 
     @Transactional(readOnly = true)
     public ShareLedgerResponseDto getMyLedger(String email, Integer year, Integer month) {
@@ -108,4 +129,194 @@ public class ShareService {
                 .data(dailyDataList)
                 .build();
     }
+
+    public String generateInvitationLink(String ownerEmail) {
+        String token = UUID.randomUUID().toString();
+        String invitationLink = url + "/" + token;
+
+        User owner = userRepository.findByEmail(ownerEmail)
+                .orElseThrow(() -> new IllegalArgumentException("가계부 소유자를 찾을 수 없습니다."));
+
+        ShareEntity shareEntity = ShareEntity.builder()
+                .ownerId(owner.getUserId())
+                .invitationLink(invitationLink)
+                .linkExpire(LocalDateTime.now().plusDays(7))
+                .status(0)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        shareRepository.save(shareEntity);
+
+        return invitationLink;
+    }
+
+
+    // 초대 수락 처리 메서드
+    @Transactional
+    public String acceptInvitation(String token, String invitedEmail) {
+        // invitationLink의 마지막 부분(token)으로 ShareEntity를 조회
+        ShareEntity shareEntity = shareRepository.findByInvitationLinkEndingWith(token)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 링크입니다."));
+
+        // 만료 여부 확인
+        if (shareEntity.getLinkExpire().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("초대 링크가 만료되었습니다.");
+        }
+
+        // 초대받은 사용자 조회
+        User invitedUser = userRepository.findByEmail(invitedEmail)
+                .orElseThrow(() -> new IllegalArgumentException("초대받은 사용자를 찾을 수 없습니다."));
+
+        // 이미 수락된 경우 중복 수락 방지
+        if (shareEntity.getSharedUserId() != null) {
+            throw new IllegalArgumentException("이미 초대가 수락되었습니다.");
+        }
+
+        // 초대 수락 처리: sharedUserId 업데이트, 상태를 1(공유 중)으로 변경
+        shareEntity.setSharedUserId(invitedUser.getUserId());
+        shareEntity.setStatus(1);
+        shareRepository.save(shareEntity);
+
+        return "초대가 수락되었습니다.";
+    }
+
+    @Transactional(readOnly = true)
+    public ShareLedgerResponseDto getSharedLedger(String token, String requesterEmail, Integer year, Integer month) {
+        // 초대 링크 토큰으로 ShareEntity 조회
+        ShareEntity shareEntity = shareRepository.findByInvitationLinkEndingWith(token)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 링크입니다."));
+
+        // 요청한 사용자 정보 조회
+        User requester = userRepository.findByEmail(requesterEmail)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 요청한 사용자가 가계부 소유자(owner) 또는 초대받은 사용자(sharedUser)여야 함
+        if (!requester.getUserId().equals(shareEntity.getOwnerId()) &&
+                !requester.getUserId().equals(shareEntity.getSharedUserId())) {
+            throw new IllegalArgumentException("접근 권한이 없습니다.");
+        }
+
+        // 가계부 소유자 정보 조회
+        User owner = userRepository.findById(shareEntity.getOwnerId())
+                .orElseThrow(() -> new IllegalArgumentException("가계부 소유자를 찾을 수 없습니다."));
+
+        // 원래 가계부 데이터 조회
+        ShareLedgerResponseDto baseDto = getMyLedger(owner.getEmail(), year, month);
+
+        // 공유 응답 DTO에 추가 정보 포함시켜 새로 빌드
+        return ShareLedgerResponseDto.builder()
+                .year(baseDto.getYear())
+                .month(baseDto.getMonth())
+                .totalIncome(baseDto.getTotalIncome())
+                .totalSpent(baseDto.getTotalSpent())
+                .totalBudget(baseDto.getTotalBudget())
+                .data(baseDto.getData())
+                .ownerNickname(owner.getNickname())
+                .ownerEmail(owner.getEmail())
+                .build();
+    }
+
+
+    public List<SharePartnerDto> getMyPartners(String email) {
+        User me = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        Integer myId = me.getUserId();
+
+        // 내가 owner이거나 shared_user인 모든 공유 관계 중 status=1 (공유 중)인 것들
+        List<ShareEntity> sharedRelations = shareRepository.findByUserInActiveShare(myId);
+
+        return sharedRelations.stream().map(share -> {
+            User partner;
+
+            if (share.getOwnerId().equals(myId)) {
+                partner = userRepository.findById(share.getSharedUserId()).orElse(null);
+            } else {
+                partner = userRepository.findById(share.getOwnerId()).orElse(null);
+            }
+
+            if (partner == null) return null;
+
+            // 프로필 이미지 URL은 S3 연동된 이미지 테이블에서 가져오거나, User 엔티티에 있을 수도 있음
+            String profileImageUrl = getProfileImageForUser(partner.getUserId());
+
+            return SharePartnerDto.builder()
+                    .userId(partner.getUserId().longValue())
+                    .nickname(partner.getNickname())
+                    .profileImageUrl(profileImageUrl)
+                    .build();
+        }).filter(Objects::nonNull).toList();
+    }
+
+    public String getProfileImageForUser(Integer userId) {
+        return s3Repository.findTopByUsageTypeAndUsageIdOrderByCreatedAtDesc("PROFILE", userId)
+                .map(image -> image.getUrl())
+                .orElse(defalutImage);
+    }
+
+    @Transactional
+    public void unsharePartner(String myEmail, Long partnerUserId) {
+        // 내 정보 조회
+        User me = userRepository.findByEmail(myEmail)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        Integer myId = me.getUserId();
+
+        // 공유 중인 관계 찾기 (내가 소유자이거나 초대받은 사용자일 수 있음)
+        ShareEntity share = shareRepository.findActiveShareByUsers(myId, partnerUserId.intValue())
+                .orElseThrow(() -> new IllegalArgumentException("공유 중인 관계가 없습니다."));
+
+        // 공유 해제
+        share.setStatus(2); // 2 = 공유 해제 상태
+        shareRepository.save(share);
+    }
+
+    // 매일 새벽 3시에 실행 (cron: 초 분 시 일 월 요일)
+    @Scheduled(cron = "0 0 3 * * *")
+    @Transactional
+    public void deleteExpiredInvitationLinks() {
+        LocalDateTime now = LocalDateTime.now();
+        int deletedCount = shareRepository.deleteByStatusAndLinkExpireBefore(0, now);
+        log.info("[스케줄러] 만료된 초대 링크 {}개 삭제됨", deletedCount);
+    }
+
+    @Transactional(readOnly = true)
+    public ShareLedgerResponseDto getSharedLedgerByUserId(Long targetUserId, String requesterEmail, Integer year, Integer month) {
+        // 요청자 정보 조회
+        User requester = userRepository.findByEmail(requesterEmail)
+                .orElseThrow(() -> new IllegalArgumentException("요청자 정보를 찾을 수 없습니다."));
+
+        // 공유 중인 관계 확인 (요청자와 targetUserId 간의 공유 관계)
+        ShareEntity shared = shareRepository.findActiveShareByUsers(requester.getUserId(), targetUserId.intValue())
+                .orElseThrow(() -> new IllegalArgumentException("공유 중인 관계가 없습니다."));
+
+        // targetUserId의 데이터를 조회하도록 변경
+        ShareLedgerResponseDto baseDto = getMyLedgerByUserId(targetUserId.intValue(), year, month);
+
+        // targetUserId 정보를 조회 (닉네임, 이메일 등)
+        User targetUser = userRepository.findById(targetUserId.intValue())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 조회한 데이터를 기반으로 응답 DTO 생성
+        return ShareLedgerResponseDto.builder()
+                .year(baseDto.getYear())
+                .month(baseDto.getMonth())
+                .totalIncome(baseDto.getTotalIncome())
+                .totalSpent(baseDto.getTotalSpent())
+                .totalBudget(baseDto.getTotalBudget())
+                .data(baseDto.getData())
+                .ownerNickname(targetUser.getNickname())
+                .ownerEmail(targetUser.getEmail())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public ShareLedgerResponseDto getMyLedgerByUserId(Integer userId, Integer year, Integer month) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+
+        return getMyLedger(user.getEmail(), year, month);
+    }
+
+
 }
