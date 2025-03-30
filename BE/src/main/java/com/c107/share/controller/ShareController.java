@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -96,7 +97,14 @@ public class ShareController {
         return ResponseUtil.success("상대방 가계부 조회에 성공했습니다.", responseDto);
     }
 
-
-
+    @GetMapping("/ledger/user/{targetUserId}/daily/{date}")
+    public ResponseEntity<?> getPartnerDailyLedger(
+            @PathVariable Long targetUserId,
+            @PathVariable String date,
+            @AuthenticationPrincipal String myEmail
+    ) {
+        Map<String, Object> dailyData = shareService.getPartnerDailyLedger(targetUserId, date, myEmail);
+        return ResponseUtil.success("상대방 일별 소비 내역 조회 성공", dailyData);
+    }
 
 }
