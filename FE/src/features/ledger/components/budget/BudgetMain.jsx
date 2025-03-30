@@ -1,5 +1,5 @@
 import Container from "@/components/Container";
-import Box from "../components/Box";
+import Box from "../Box";
 export default function Bud() {
   return (
     <>
