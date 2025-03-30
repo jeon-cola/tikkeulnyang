@@ -10,7 +10,7 @@ export default function CustomCalendar({
   tileClassName: customTileClassName,
 }) {
   return (
-    <div className="relative max-w-[320px]">
+    <div>
       <Calendar
         onChange={onChange}
         value={value}
