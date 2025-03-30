@@ -2,6 +2,7 @@ import Education from "../../assets/Education.png"
 
 export default function EducationPage ({title, current_savings, target_amount,color}) {
     const currentProgress = current_savings > 0 && target_amount > 0 ? Math.min((current_savings / target_amount) * 100, 100) : 0
+    console.log(current_savings)
     return(
         <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 flex flex-col gap-3">
             <div className="w-full flex flex-row">
