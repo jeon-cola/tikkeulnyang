@@ -69,9 +69,12 @@ export default function ChallengeEnter() {
     fetchData();
   }, []);
 
-  const handleClick = () => {
+  const handleClick = async () => {
+    const response = await ChallengeService.postChallengeJoin(id);
+    console.log("ChallengeJoin result : ", response);
     navigate(`/challenge/%{id}`); // 추후에 결제 완료 알림창 뜨도록 하게 할것
   };
+
   return (
     <>
       {isLoading ? (
