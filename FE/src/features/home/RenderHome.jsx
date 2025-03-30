@@ -48,12 +48,10 @@ export default function RenderHome() {
 
         <div className="flex flex-col p-[12px_20px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
           <div className="flex flex-col items-start mt-[20px]">
-            {/* 출석체크하고 경험치 받기 - 제목 텍스트 */}
             <h2 className=" font-['Pretendard'] text-left font-semibold text-[14px] leading-[17px] tracking-[0.07em] text-black mb-[7px]">
               가계부로 이동
             </h2>
 
-            {/* 귀여운 발도장 받고 캐릭터 레벨업 해요 - 설명 텍스트 */}
             <p className="mb-[24px] text-left font-['Pretendard'] font-semibold text-[12px] leading-[14px] tracking-[0.07em] text-black">
               오늘의 지출 확인하기
             </p>
@@ -61,12 +59,10 @@ export default function RenderHome() {
         </div>
 
         <div className="flex justify-between w-full h-auto mt-[1px]">
-          {/* 위젯으로 모아보는 티끌냥 - 헤더 제목 */}
           <h2 className="ml-[20px] font-['Pretendard'] font-semibold text-[14px] leading-[17px] tracking-[0.01em] text-black">
             위젯으로 모아보는 티끌냥
           </h2>
 
-          {/* 개인 버튼 */}
           <div className="flex justify-center items-center px-[5px] py-[3px] w-[52px] h-[23px] bg-white shadow-[1px_1px_4px_rgba(0,0,0,0.1)] rounded-[30px]">
             <span className="font-['Pretendard'] font-normal text-[12px] leading-[14px] tracking-[0.07em] text-[#303030]">
               편집
@@ -74,18 +70,18 @@ export default function RenderHome() {
           </div>
         </div>
         <div className="flex flex-row justify-between w-full">
-          <HomeWidget />
-          <HomeWidget />
+          <HomeWidget title="남은예산" content="10,000원" />
+          <HomeWidget title="결제예정" content="20,000원" />
         </div>
 
         <div className="flex flex-row justify-between w-full pt-[34px]">
-          <HomeWidget />
-          <HomeWidget />
+          <HomeWidget title="저번달통계" />
+          <HomeWidget title="현재 소비 금액" content="40,000원" />
         </div>
 
         <div className="flex flex-row justify-between w-full pt-[34px]">
-          <HomeWidget />
-          <HomeWidget />
+          <HomeWidget title="남은 카드 실적" content="50,000원" />
+          <HomeWidget title="버킷리스트" content="5,000원" />
         </div>
       </div>
     </>
