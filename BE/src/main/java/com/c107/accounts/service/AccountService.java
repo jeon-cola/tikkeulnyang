@@ -348,7 +348,6 @@ public class AccountService {
         String representativeAccountNo = representativeAccount.getAccountNumber();
         String serviceAccountNo = "0018031273647742";
 
-        // 환불은 고정 userKey를 사용하므로 isRefund true
         Map<String, Object> response = transferDeposit(loggedInUserId, representativeAccountNo, serviceAccountNo, amount, true);
         logger.info("환불 이체 API 응답: {}", response);
 
@@ -383,7 +382,6 @@ public class AccountService {
 
     /**
      * 예치금 이체 Open API 호출 (transferDeposit)
-     * isRefund 플래그를 이용해 환불 시 고정 userKey를 사용합니다.
      */
     @Transactional
     public Map<String, Object> transferDeposit(Integer loggedInUserId,
