@@ -5,6 +5,7 @@ import { setEmail, setNickName, setProfileImg } from "../user/UserSlice";
 import axios from "axios";
 import { Route, Routes } from "react-router-dom";
 import SubScribe from "./components/SubScribe";
+import RenderHome from "@/features/home/RenderHome";
 
 export default function HomeMain() {
   const dispatch = useDispatch();
@@ -30,8 +31,8 @@ export default function HomeMain() {
   }, [dispatch]);
   return (
     <Routes>
-      <Route path="/"/>
-      <Route path="subscribe" element={<SubScribe/>}/>
+      <Route path="/" element={<RenderHome />} />
+      <Route path="subscribe" element={<SubScribe />} />
     </Routes>
   );
 }
