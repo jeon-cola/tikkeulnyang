@@ -4,6 +4,7 @@ import Container from "@/components/Container";
 import LedgerHeader from "./components/LedgerHeader";
 import CategoryBox from "./components/CategoryBox";
 import Api from "../../services/Api";
+
 import EntertainmentIcon from "./assets/category/entertainment_icon.png";
 import FoodIcon from "./assets/category/food_icon.png";
 import GoodsIcon from "./assets/category/goods_icon.png";
@@ -13,6 +14,9 @@ import ShoppingIcon from "./assets/category/shopping_icon.png";
 import TransportationIcon from "./assets/category/transportation_icon.png";
 import IncomeIcon from "./assets/category/income_icon.png";
 import SpenseIcon from "./assets/category/spense_icon.png";
+
+import WasteIcon from "./assets/waste_icon.png";
+import EmptyIcon from "./assets/empty_icon.png";
 
 const categories = [
   { id: "식비", Icon: FoodIcon },
@@ -36,6 +40,7 @@ export default function LedgerDetail() {
   });
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalSpent, setTotalSpent] = useState(0);
+  const [wasteStates, setWasteStates] = useState({}); // index: true/false
 
   useEffect(() => {
     const fetchMonthlyData = async () => {
@@ -76,6 +81,15 @@ export default function LedgerDetail() {
           return item.categoryName === categoryMapping[activeCategory];
         });
 
+  const handleWasteToggle = (index) => {
+    setWasteStates((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+
+    // API.post 등 추가 저장 로직도 여기에 삽입 가능
+  };
+
   return (
     <div>
       <Container>
@@ -89,25 +103,23 @@ export default function LedgerDetail() {
           setActiveDate={setActiveDate}
           onYearMonthChange={({ year, month }) => {
             console.log("선택된 연/월:", year, month);
-            // 추가적인 API 호출이나 상태 업데이트 가능
           }}
         />
 
         {/* 수입/지출 요약 카드 */}
         <div className="w-full bg-white rounded-lg shadow-sm p-4 flex flex-col gap-3">
-          {/* 좌) month, 우) totalIncome과 totalSpent */}
           <div className="flex justify-between">
-            <p className="text-2xl flex flex-start text-gray-800">
+            <p className="text-2xl text-gray-800">
               {activeDate.getMonth() + 1}월
             </p>
-            <div className="flex gap-6 text-sm text-left">
-              <div className="text-left">
+            <div className="flex gap-6 text-sm">
+              <div>
                 <p className="text-[#A2A2A2] text-xs">총 수입</p>
                 <p className="text-[#FF957A] font-semibold">
                   {totalIncome.toLocaleString()}
                 </p>
               </div>
-              <div className="text-left">
+              <div>
                 <p className="text-[#A2A2A2] text-xs">총 지출</p>
                 <p className="text-[#64C9F5] font-semibold">
                   {totalSpent.toLocaleString()}
@@ -117,48 +129,79 @@ export default function LedgerDetail() {
           </div>
 
           {/* 상세 내역 */}
-          <div>
-            <ul>
-              {filteredTransactions.map((item, index) => {
-                const matchedCategory = categories.find(
-                  (cat) => cat.id === item.categoryName
-                );
-                const Icon = matchedCategory?.Icon;
+          <ul>
+            {filteredTransactions.map((item, index) => {
+              const matchedCategory = categories.find(
+                (cat) => cat.id === item.categoryName
+              );
+              const Icon = matchedCategory?.Icon;
 
-                const dateObj = new Date(item.date);
-                const formattedDate = `${
-                  dateObj.getMonth() + 1
-                }/${dateObj.getDate()}`;
+              const dateObj = new Date(item.date);
+              const formattedDate = `${
+                dateObj.getMonth() + 1
+              }/${dateObj.getDate()}`;
 
-                return (
-                  <li
-                    key={index}
-                    className="flex items-center justify-between text-sm mb-2"
-                  >
-                    {/* 왼쪽: 아이콘 + 날짜 + 상호명 */}
-                    <div className="flex items-center gap-2">
-                      {Icon && (
-                        <img
-                          src={Icon}
-                          alt={item.category}
-                          className="w-6 h-6 mr-[5px]"
-                        />
-                      )}
-                      <span>{formattedDate}</span>
-                      <span className="ml-8">{item.merchantName || "-"}</span>
-                    </div>
+              const isWaste = wasteStates[index] || false;
 
-                    {/* 오른쪽: 금액 */}
-                    <div className="text-right min-w-[100px] font-semibold text-gray-800">
+              return (
+                <li
+                  key={index}
+                  className="flex items-center justify-between text-sm mb-2"
+                >
+                  {/* 왼쪽: 아이콘 + 날짜 + 상호명 */}
+                  <div className="flex items-center gap-2">
+                    {Icon && (
+                      <img
+                        src={Icon}
+                        alt={item.category}
+                        className="w-6 h-6 mr-[5px]"
+                      />
+                    )}
+                    <span>{formattedDate}</span>
+                    <span className="ml-8">{item.merchantName || "-"}</span>
+                  </div>
+
+                  {/* 오른쪽: 금액 + 낭비 아이콘 */}
+                  <div className="flex items-center gap-4">
+                    <div className="min-w-[100px] font-semibold text-gray-800">
                       {item.amount.toLocaleString()}
                     </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+                    <img
+                      src={isWaste ? WasteIcon : EmptyIcon}
+                      alt="낭비 체크"
+                      onClick={() => handleWasteToggle(index)}
+                      className={`w-6 h-6 cursor-pointer transition-all duration-300 ${
+                        isWaste ? "animate-pop" : ""
+                      }`}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </Container>
+
+      {/* 애니메이션 스타일 */}
+      <style jsx>{`
+        @keyframes pop {
+          0% {
+            transform: scale(0.5);
+            opacity: 0;
+          }
+          50% {
+            transform: scale(1.2);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+        .animate-pop {
+          animation: pop 0.4s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
