@@ -53,6 +53,7 @@ public class MainController {
                     .orElse(null);
         }
 
+        //
         // 3. 버킷리스트: 생성일(created_at)이 가장 최근인 항목 1건 선택
         List<BucketListResponseDto> bucketLists = bucketService.getBucketLists(email);
         BucketListResponseDto recentBucket = null;
