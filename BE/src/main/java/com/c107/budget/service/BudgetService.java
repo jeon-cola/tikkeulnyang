@@ -236,23 +236,53 @@ public class BudgetService {
         // 모든 카테고리 조회
         List<BudgetCategoryEntity> allCategories = budgetCategoryRepository.findAll();
 
-        // 총합 계산 (기존 getBudgetPlan과 동일하게)
-        int totalAmount = 0;
-        int totalSpendingAmount = 0;
-        int totalRemainingAmount = 0;
-        boolean totalIsExceed = false;
+        // 해당 기간의 실제 카테고리별 소비 내역 조회
+        List<Integer> userCardIds = cardRepository.findByUserId(user.getUserId())
+                .stream()
+                .map(CardEntity::getCardId)
+                .collect(Collectors.toList());
 
-        for (BudgetEntity budget : userBudgets) {
-            totalAmount += budget.getAmount() != null ? budget.getAmount() : 0;
-            totalSpendingAmount += budget.getSpendingAmount() != null ? budget.getSpendingAmount() : 0;
-            totalRemainingAmount += budget.getRemainingAmount() != null ? budget.getRemainingAmount() : 0;
+        // PaymentHistory 테이블에서 소비 내역 조회
+        List<PaymentHistoryEntity> payments = paymentHistoryRepository
+                .findByCardIdInAndTransactionDateBetween(userCardIds, startDate, endDate);
 
-            if (budget.getIsExceed() != null && budget.getIsExceed()) {
-                totalIsExceed = true;
+        // 카테고리별 실제 소비 금액 계산
+        Map<Integer, Integer> categorySpending = new HashMap<>();
+
+        // 결제 내역에서 카테고리별 지출 합산
+        for (PaymentHistoryEntity payment : payments) {
+            try {
+                // 카테고리 ID 확인
+                String categoryIdStr = payment.getCategoryId();
+                if (categoryIdStr == null || categoryIdStr.isEmpty()) continue;
+
+                Integer categoryId;
+                try {
+                    categoryId = Integer.parseInt(categoryIdStr);
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+
+                Integer budgetCategoryId = categoryId;
+
+                int amount = Math.abs(Integer.parseInt(payment.getTransactionBalance().trim().replace(",", "")));
+
+                categorySpending.put(
+                        budgetCategoryId,
+                        categorySpending.getOrDefault(budgetCategoryId, 0) + amount
+                );
+
+            } catch (Exception e) {
+                // 오류 발생 시 로깅하고 계속 진행
             }
         }
 
-        // DTO 변환
+        // 최종 계산을 위한 합계 변수들
+        final int[] totalAmountArr = {0};
+        final int[] totalSpendingAmountArr = {0};
+        final int[] totalRemainingAmountArr = {0};
+        final boolean[] totalIsExceedArr = {false};
+
         List<CategoryResponseDto.Category> categoryDtos = allCategories.stream()
                 .map(category -> {
                     Integer categoryId = category.getBudgetCategoryId();
@@ -260,21 +290,36 @@ public class BudgetService {
                     boolean hasBudget = budget != null;
 
                     // 기본값 설정
-                    Integer amount = 0;
-                    Integer spendingAmount = 0;
-                    Integer remainingAmount = 0;
-                    Integer isExceed = 0;
+                    int amount = 0;
+                    int spendingAmount = categorySpending.getOrDefault(categoryId, 0); // 실제 소비 금액
+                    int remainingAmount = 0;
+                    int isExceed = 0;
                     String createdAt = null;
                     String updatedAt = null;
 
                     // 예산이 설정된 경우 실제 값으로 업데이트
                     if (hasBudget) {
-                        amount = budget.getAmount();
-                        spendingAmount = budget.getSpendingAmount();
-                        remainingAmount = budget.getRemainingAmount();
-                        isExceed = budget.getIsExceed() != null && budget.getIsExceed() ? 1 : 0;
+                        amount = budget.getAmount() != null ? budget.getAmount() : 0;
+                        // spendingAmount는 위에서 계산한 실제 소비 금액 사용
+                        remainingAmount = amount - spendingAmount;
+                        isExceed = (spendingAmount > amount && amount > 0) ? 1 : 0;
                         createdAt = budget.getCreatedAt() != null ? budget.getCreatedAt().toString() : null;
                         updatedAt = budget.getUpdatedAt() != null ? budget.getUpdatedAt().toString() : null;
+
+                        totalAmountArr[0] += amount;
+                        totalSpendingAmountArr[0] += spendingAmount;
+                        totalRemainingAmountArr[0] += remainingAmount;
+
+                        if (isExceed == 1) {
+                            totalIsExceedArr[0] = true;
+                        }
+                    } else {
+                        // 예산이 없어도 지출이 있는 경우, 지출 정보는 유지
+                        remainingAmount = -spendingAmount; // 예산 없이 지출했으므로 마이너스 표시
+
+                        // 총합에 지출 금액만 추가
+                        totalSpendingAmountArr[0] += spendingAmount;
+                        totalRemainingAmountArr[0] -= spendingAmount; // 남은 예산에서 차감
                     }
 
                     return CategoryResponseDto.Category.builder()
@@ -293,15 +338,13 @@ public class BudgetService {
                 })
                 .collect(Collectors.toList());
 
-        // 카테고리별 정렬 (카테고리 ID 기준)
         categoryDtos.sort(Comparator.comparing(CategoryResponseDto.Category::getCategoryId));
 
-        // 총합 정보 설정
         CategoryResponseDto.Totals totals = CategoryResponseDto.Totals.builder()
-                .totalAmount(totalAmount)
-                .totalSpendingAmount(totalSpendingAmount)
-                .totalRemainingAmount(totalRemainingAmount)
-                .totalIsExceed(totalIsExceed ? 1 : 0)
+                .totalAmount(totalAmountArr[0])
+                .totalSpendingAmount(totalSpendingAmountArr[0])
+                .totalRemainingAmount(totalRemainingAmountArr[0])
+                .totalIsExceed(totalIsExceedArr[0] ? 1 : 0)
                 .build();
 
         return CategoryResponseDto.builder()
