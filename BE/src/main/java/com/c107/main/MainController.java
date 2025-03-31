@@ -17,6 +17,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/main")
@@ -44,24 +45,14 @@ public class MainController {
             remainingPercentage = (double) remainingAmount / totalBudget * 100;
         }
 
-        // 2. 결제 예정 구독: 남은 일수가 가장 적은 구독 1건 선택
-        List<SubscribeResponseDto> allUpcomingSubscriptions = subscribeService.getSubscribesByPaymentDateOrder(email);
-        SubscribeResponseDto upcomingSubscription = null;
-        if (allUpcomingSubscriptions != null && !allUpcomingSubscriptions.isEmpty()) {
-            upcomingSubscription = allUpcomingSubscriptions.stream()
-                    .min(Comparator.comparing(SubscribeResponseDto::getDaysRemaining))
-                    .orElse(null);
-        }
+        // 2. 결제 예정 구독: 결제일 순(오름차순) 정렬된 전체 구독 리스트
+        List<SubscribeResponseDto> upcomingSubscriptions = subscribeService.getSubscribesByPaymentDateOrder(email);
 
-        //
-        // 3. 버킷리스트: 생성일(created_at)이 가장 최근인 항목 1건 선택
+        // 3. 버킷리스트: 생성일(created_at) 기준 내림차순 정렬 (가장 최근 생성된 항목이 먼저)
         List<BucketListResponseDto> bucketLists = bucketService.getBucketLists(email);
-        BucketListResponseDto recentBucket = null;
-        if (bucketLists != null && !bucketLists.isEmpty()) {
-            recentBucket = bucketLists.stream()
-                    .max(Comparator.comparing(BucketListResponseDto::getCreated_at))
-                    .orElse(null);
-        }
+        List<BucketListResponseDto> sortedBuckets = bucketLists.stream()
+                .sorted(Comparator.comparing(BucketListResponseDto::getCreated_at).reversed())
+                .collect(Collectors.toList());
 
         // 4. 응답 데이터 구성
         Map<String, Object> mainData = new HashMap<>();
@@ -70,10 +61,9 @@ public class MainController {
         remainingBudgetMap.put("percentage", remainingPercentage);
 
         mainData.put("remaining_budget", remainingBudgetMap);
-        // 키 이름은 단수로 변경 (한 건만 전달)
-        mainData.put("upcoming_subscription", upcomingSubscription);
+        mainData.put("upcoming_subscriptions", upcomingSubscriptions);
         mainData.put("current_consumption_amount", currentConsumptionAmount);
-        mainData.put("bucket", recentBucket);
+        mainData.put("buckets", sortedBuckets);
 
         return ResponseUtil.success("메인 정보 조회 성공", mainData);
     }
