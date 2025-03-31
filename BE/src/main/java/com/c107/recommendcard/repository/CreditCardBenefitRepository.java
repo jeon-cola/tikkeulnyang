@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface CreditCardBenefitRepository extends JpaRepository<CreditCardBenefit, Long> {
     List<CreditCardBenefit> findByRecoCardId(Long recoCardId);
+
+    List<CreditCardBenefit> findBySourceCardId(Integer sourceCardId);
 }
