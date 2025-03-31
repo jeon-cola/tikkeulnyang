@@ -266,28 +266,50 @@ public class RecommendCardService {
 
         if ("체크카드".equals(card.getCardType())) {
             List<CheckCardBenefit> benefits = checkCardBenefitRepository.findBySourceCardId(card.getSourceCardId());
-
             benefitDtos = benefits.stream()
                     .map(b -> {
                         CheckBenefit benefit = checkBenefitRepository.findById(b.getBenefitId())
                                 .orElseThrow(() -> new RuntimeException("혜택 정보를 찾을 수 없습니다: " + b.getBenefitId()));
+
+                        // BudgetCheckMapping을 통해 예산 카테고리 정보 조회
+                        Optional<BudgetCheckMapping> mappingOpt = budgetCheckMappingRepository.findByBenefitId(b.getBenefitId());
+                        String budgetCategoryName = "";
+                        if (mappingOpt.isPresent()) {
+                            int budgetCategoryId = mappingOpt.get().getBudgetCategoryId();
+                            budgetCategoryName = budgetCategoryRepository.findById(budgetCategoryId)
+                                    .map(bc -> bc.getCategoryName())
+                                    .orElse("");
+                        }
+
                         return RecommendCardDetailResponseDto.CategoryBenefitDto.builder()
                                 .category(benefit.getCategory())
                                 .description(b.getDescription())
+                                .budgetCategory(budgetCategoryName)
                                 .build();
                     })
                     .collect(Collectors.toList());
-
         } else {
+            // 신용카드인 경우: BudgetCreditMapping 테이블을 사용하여 예산 카테고리 정보 조회
             List<CreditCardBenefit> benefits = creditCardBenefitRepository.findBySourceCardId(card.getSourceCardId());
-
             benefitDtos = benefits.stream()
                     .map(b -> {
-                        CreditBenefit benefit = creditBenefitRepository.findById(b.getCreditBenefitsId())
+                        CreditBenefit creditBenefit = creditBenefitRepository.findById(b.getCreditBenefitsId())
                                 .orElseThrow(() -> new RuntimeException("혜택 정보를 찾을 수 없습니다: " + b.getCreditBenefitsId()));
+
+                        // BudgetCreditMapping을 조회하여 예산 카테고리 정보 가져오기
+                        Optional<BudgetCreditMapping> mappingOpt = budgetCreditMappingRepository.findByCreditBenefitsId(b.getCreditBenefitsId());
+                        String budgetCategoryName = "";
+                        if (mappingOpt.isPresent()) {
+                            int budgetCategoryId = mappingOpt.get().getBudgetCategoryId();
+                            budgetCategoryName = budgetCategoryRepository.findById(budgetCategoryId)
+                                    .map(bc -> bc.getCategoryName())
+                                    .orElse("");
+                        }
+
                         return RecommendCardDetailResponseDto.CategoryBenefitDto.builder()
-                                .category(benefit.getCategory())
+                                .category(creditBenefit.getCategory())
                                 .description(b.getDescription())
+                                .budgetCategory(budgetCategoryName)
                                 .build();
                     })
                     .collect(Collectors.toList());
@@ -302,6 +324,4 @@ public class RecommendCardService {
                 .benefits(benefitDtos)
                 .build();
     }
-
-
 }

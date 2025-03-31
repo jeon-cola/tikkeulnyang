@@ -26,5 +26,6 @@ public class RecommendCardDetailResponseDto {
     public static class CategoryBenefitDto {
         private String category;
         private String description;
+        private String budgetCategory;
     }
 }
