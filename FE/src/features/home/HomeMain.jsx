@@ -8,27 +8,6 @@ import SubScribe from "./components/SubScribe";
 import RenderHome from "@/features/home/RenderHome";
 
 export default function HomeMain() {
-  const dispatch = useDispatch();
-  const { nickName, email, profileImg } = useSelector((state) => state.user);
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await Api.get("/api/user/me");
-
-        console.log(response.data);
-        if (response.data.body.status === "success") {
-          const userData = response.data.body.data;
-          dispatch(setEmail(userData.email));
-          console.log("email", userData.email);
-          dispatch(setNickName(userData.nickname));
-          console.log("nickname", userData.nickname);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchData();
-  }, [dispatch]);
   return (
     <Routes>
       <Route path="/" element={<RenderHome />} />
