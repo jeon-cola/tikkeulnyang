@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import LedgerMain from "@/features/ledger/LedgerMain";
 import PersonalLedger from "@/features/ledger/PersonalLedger";
+import SharedLedger from "../features/ledger/SharedLedger";
 import LedgerDetail from "@/features/ledger/LedgerDetail";
 import LedgerEdit from "@/features/ledger/LedgerEdit";
 import BudgetMain from "@/features/ledger/components/budget/BudgetMain";
@@ -13,6 +14,7 @@ export default function LedgerRouter() {
       {/* LedgerMain은 Layout 컴포넌트 (Outlet 필요) */}
       <Route path="/*" element={<LedgerMain />}>
         <Route index element={<PersonalLedger />} />
+        <Route path="share" element={<SharedLedger />} />
         <Route path="detail" element={<LedgerDetail />} />
         <Route path="edit" element={<LedgerEdit />} />
 
