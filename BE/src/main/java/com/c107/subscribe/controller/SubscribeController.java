@@ -42,11 +42,10 @@ SubscribeController {
     // 사용자의 모든 구독 정보 조회
     @GetMapping("/user")
     public ResponseEntity<Map<String, Object>> getUserSubscribes(@AuthenticationPrincipal String email) {
-        log.info("사용자 구독 목록 조회 요청: email={}", email);
-
-        List<SubscribeEntity> subscribes = subscribeService.getUserSubscribes(email);
+        List<SubscribeResponseDto> subscribes = subscribeService.getUserSubscribes(email);
         return ResponseUtil.success("구독 목록 조회 성공", subscribes);
     }
+
 
     // 결제일 순으로 구독 리스트 조회
     @GetMapping("/day")
