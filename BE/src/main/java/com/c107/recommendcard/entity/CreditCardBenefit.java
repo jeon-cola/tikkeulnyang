@@ -15,6 +15,9 @@ public class CreditCardBenefit {
     @Column(name = "reco_card_id")
     private Long recoCardId;
 
+    @Column(name = "reco_card_id")
+    private Integer sourceCardId;
+
     @Id
     @Column(name = "credit_benefits_id")
     private Integer creditBenefitsId;

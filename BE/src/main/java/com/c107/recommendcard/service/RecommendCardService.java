@@ -1,9 +1,8 @@
 package com.c107.recommendcard.service;
 
+import com.c107.recommendcard.dto.RecommendCardDetailResponseDto;
 import com.c107.recommendcard.dto.RecommendCardResponseDto;
-import com.c107.recommendcard.entity.CheckCardBenefit;
-import com.c107.recommendcard.entity.CreditCardBenefit;
-import com.c107.recommendcard.entity.RecommendCard;
+import com.c107.recommendcard.entity.*;
 import com.c107.recommendcard.repository.*;
 import com.c107.paymenthistory.entity.CategoryEntity;
 import com.c107.paymenthistory.repository.BudgetCategoryRepository;
@@ -34,6 +33,9 @@ public class RecommendCardService {
     private final CreditCardBenefitRepository creditCardBenefitRepository;
     private final BudgetCheckMappingRepository budgetCheckMappingRepository;
     private final CheckCardBenefitRepository checkCardBenefitRepository;
+    private final CheckBenefitRepository checkBenefitRepository;
+    private final CreditBenefitRepository creditBenefitRepository;
+
 
     /**
      * 소비 내역에서 상위 소비 카테고리를 추출하는 공통 로직
@@ -81,7 +83,7 @@ public class RecommendCardService {
         }
         return categoryAmounts.entrySet().stream()
                 .sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue()))
-                .limit(5)
+                .limit(10)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
     }
@@ -101,6 +103,21 @@ public class RecommendCardService {
                 .stream()
                 .collect(Collectors.toMap(b -> b.getCategoryName(), b -> b.getBudgetCategoryId()));
 
+        // 각 상위 카테고리에 대해 budget_credit_mapping을 조회하여, 해당 카테고리와 매핑된 creditBenefitId 집합 구성
+        Map<String, Set<Integer>> categoryToCreditBenefitIds = new HashMap<>();
+        for (String category : topCategories) {
+            Integer budgetCategoryId = budgetCategoryNameToId.get(category);
+            if (budgetCategoryId != null) {
+                List<Integer> benefitIds = budgetCheckMappingRepository.findByBudgetCategoryId(budgetCategoryId)
+                        .stream()
+                        .map(mapping -> mapping.getBenefitId())
+                        .collect(Collectors.toList());
+
+                categoryToCreditBenefitIds.put(category, new HashSet<>(benefitIds));
+            }
+        }
+
+        // 각 상위 카테고리별로 추천 카드 조회
         for (String category : topCategories) {
             Integer budgetCategoryId = budgetCategoryNameToId.get(category);
             if (budgetCategoryId != null) {
@@ -114,24 +131,48 @@ public class RecommendCardService {
                     continue;
                 }
             }
+            // fallback
             List<RecommendCard> fallbackCards = recommendCardRepository.findByCreditBenefitCategory(category);
             recommendedCards.addAll(fallbackCards);
         }
-        // 정렬: recoCardId 오름차순, limit 5 적용
-        return recommendedCards.stream()
-                .sorted(Comparator.comparing(RecommendCard::getRecoCardId))
-                .limit(5)
-                .map(card -> {
-                    // 해당 카드의 혜택 내용 조회
+
+        // 각 카드에 대해, 상위 카테고리 중 몇 개와 매핑되어 있는지 점수를 계산
+        Map<RecommendCard, Long> cardScoreMap = recommendedCards.stream().collect(Collectors.toMap(
+                card -> card,
+                card -> {
+                    // 해당 카드의 모든 혜택 조회
                     List<CreditCardBenefit> benefits = creditCardBenefitRepository.findByRecoCardId(card.getRecoCardId());
-                    // 혜택 내용과 해당 카드의 혜택 카테고리를 문자열로 결합 (예: "카테고리명: 혜택내용")
+                    // 각 topCategory에 대해, 이 카드의 혜택이 해당 카테고리 매핑 집합에 속하는지 체크
+                    long score = topCategories.stream().filter(category -> {
+                        Set<Integer> mappedIds = categoryToCreditBenefitIds.getOrDefault(category, Collections.emptySet());
+                        return benefits.stream().anyMatch(b -> mappedIds.contains(b.getCreditBenefitsId()));
+                    }).count();
+                    return score;
+                }
+        ));
+
+        // 점수가 높은 순으로 내림차순 정렬 후, 동일하면 recoCardId 오름차순 정렬하여 limit 적용
+        return cardScoreMap.entrySet().stream()
+                .sorted((e1, e2) -> {
+                    int cmp = Long.compare(e2.getValue(), e1.getValue());
+                    if (cmp == 0) {
+                        return Long.compare(e1.getKey().getRecoCardId(), e2.getKey().getRecoCardId());
+                    }
+                    return cmp;
+                })
+                .limit(10)
+                .map(e -> {
+                    RecommendCard card = e.getKey();
+                    List<CreditCardBenefit> benefits = creditCardBenefitRepository.findByRecoCardId(card.getRecoCardId());
                     String benefitDesc = benefits.stream()
                             .map(b -> b.getDescription())
                             .collect(Collectors.joining(", "));
+                    // 예를 들어, 추가로 점수를 포함하고 싶다면 benefitDesc에 e.getValue()도 붙일 수 있습니다.
                     return RecommendCardResponseDto.of(card, benefitDesc);
                 })
                 .collect(Collectors.toList());
     }
+
 
     /**
      * 체크카드 추천
@@ -144,38 +185,70 @@ public class RecommendCardService {
         log.info("체크카드 추천 대상 상위 카테고리: {}", topCategories);
 
         Set<RecommendCard> recommendedCards = new HashSet<>();
-        // budget_category 테이블 데이터를 Map (categoryName -> budgetCategoryId)
+        // budget_category 데이터를 (categoryName -> budgetCategoryId) 맵으로 구성
         Map<String, Integer> budgetCategoryNameToId = budgetCategoryRepository.findAll()
                 .stream()
                 .collect(Collectors.toMap(b -> b.getCategoryName(), b -> b.getBudgetCategoryId()));
 
+        // 각 상위 카테고리별로 BudgetCheckMapping을 조회해서 체크 혜택 ID 집합 구성
+        Map<String, Set<Integer>> categoryToCheckBenefitIds = new HashMap<>();
         for (String category : topCategories) {
             Integer budgetCategoryId = budgetCategoryNameToId.get(category);
             if (budgetCategoryId != null) {
-                // BudgetCheckMapping을 이용해 check_benefits_id 목록 조회
                 List<Integer> checkBenefitIds = budgetCheckMappingRepository.findByBudgetCategoryId(budgetCategoryId)
                         .stream()
-                        .map(mapping -> mapping.getCheckBenefitsId())
+                        .map(mapping -> mapping.getBenefitId())  // 여기서 올바른 필드(getBenefitId()) 사용
+                        .collect(Collectors.toList());
+                categoryToCheckBenefitIds.put(category, new HashSet<>(checkBenefitIds));
+            }
+        }
+
+        // 각 상위 카테고리별로 추천 카드 조회
+        for (String category : topCategories) {
+            Integer budgetCategoryId = budgetCategoryNameToId.get(category);
+            if (budgetCategoryId != null) {
+                List<Integer> checkBenefitIds = budgetCheckMappingRepository.findByBudgetCategoryId(budgetCategoryId)
+                        .stream()
+                        .map(mapping -> mapping.getBenefitId())
                         .collect(Collectors.toList());
                 if (!checkBenefitIds.isEmpty()) {
-                    // 기존의 findByBenefitCategory 메서드 대신, checkBenefitIds를 조건으로 하는 쿼리를 추가할 수 있다면 사용합니다.
-                    // 만약 해당 Repository 메서드가 없다면, 기존 방식으로 조회하고, 필요에 따라 필터링 할 수 있습니다.
-                    // 예를 들어:
-                    List<RecommendCard> checkCards = recommendCardRepository.findByBenefitCategory(category);
+                    // 체크카드 전용 매핑 기반 조회 메서드 호출
+                    List<RecommendCard> checkCards = recommendCardRepository.findByCheckBenefitIds(checkBenefitIds);
                     recommendedCards.addAll(checkCards);
                     continue;
                 }
             }
-            List<RecommendCard> fallbackCards = recommendCardRepository.findByBenefitCategory(category);
+            // 매핑 데이터가 없으면 fallback: 기존 방식으로 조회
+            List<RecommendCard> fallbackCards = recommendCardRepository.findByCheckBenefitCategory(category);
             recommendedCards.addAll(fallbackCards);
         }
-        // 정렬: recoCardId 오름차순, limit 5 적용
-        return recommendedCards.stream()
-                .sorted(Comparator.comparing(RecommendCard::getRecoCardId))
-                .limit(5)
-                .map(card -> {
-                    // 해당 카드의 체크카드 혜택 내용 조회
-                    List<CheckCardBenefit> benefits = checkCardBenefitRepository.findByRecoCardId(card.getRecoCardId());
+
+        // 각 카드에 대해 상위 카테고리와 매핑된 횟수를 점수로 계산
+        Map<RecommendCard, Long> cardScoreMap = recommendedCards.stream().collect(Collectors.toMap(
+                card -> card,
+                card -> {
+                    List<CheckCardBenefit> benefits = checkCardBenefitRepository.findBySourceCardId(card.getSourceCardId());
+                    long score = topCategories.stream().filter(category -> {
+                        Set<Integer> mappedIds = categoryToCheckBenefitIds.getOrDefault(category, Collections.emptySet());
+                        return benefits.stream().anyMatch(b -> mappedIds.contains(b.getBenefitId()));
+                    }).count();
+                    return score;
+                }
+        ));
+
+        // 점수가 높은 순 내림차순, 동일 시 recoCardId 오름차순 정렬 후 상위 10개 추천
+        return cardScoreMap.entrySet().stream()
+                .sorted((e1, e2) -> {
+                    int cmp = Long.compare(e2.getValue(), e1.getValue());
+                    if (cmp == 0) {
+                        return Long.compare(e1.getKey().getRecoCardId(), e2.getKey().getRecoCardId());
+                    }
+                    return cmp;
+                })
+                .limit(10)
+                .map(e -> {
+                    RecommendCard card = e.getKey();
+                    List<CheckCardBenefit> benefits = checkCardBenefitRepository.findBySourceCardId(card.getSourceCardId());
                     String benefitDesc = benefits.stream()
                             .map(b -> b.getDescription())
                             .collect(Collectors.joining(", "));
@@ -183,5 +256,52 @@ public class RecommendCardService {
                 })
                 .collect(Collectors.toList());
     }
+
+    @Transactional
+    public RecommendCardDetailResponseDto getCardDetail(int recoCardId) {
+        RecommendCard card = recommendCardRepository.findById(recoCardId)
+                .orElseThrow(() -> new RuntimeException("해당 카드가 없습니다: " + recoCardId));
+
+        List<RecommendCardDetailResponseDto.CategoryBenefitDto> benefitDtos;
+
+        if ("체크카드".equals(card.getCardType())) {
+            List<CheckCardBenefit> benefits = checkCardBenefitRepository.findBySourceCardId(card.getSourceCardId());
+
+            benefitDtos = benefits.stream()
+                    .map(b -> {
+                        CheckBenefit benefit = checkBenefitRepository.findById(b.getBenefitId())
+                                .orElseThrow(() -> new RuntimeException("혜택 정보를 찾을 수 없습니다: " + b.getBenefitId()));
+                        return RecommendCardDetailResponseDto.CategoryBenefitDto.builder()
+                                .category(benefit.getCategory())
+                                .description(b.getDescription())
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+
+        } else {
+            List<CreditCardBenefit> benefits = creditCardBenefitRepository.findBySourceCardId(card.getSourceCardId());
+
+            benefitDtos = benefits.stream()
+                    .map(b -> {
+                        CreditBenefit benefit = creditBenefitRepository.findById(b.getCreditBenefitsId())
+                                .orElseThrow(() -> new RuntimeException("혜택 정보를 찾을 수 없습니다: " + b.getCreditBenefitsId()));
+                        return RecommendCardDetailResponseDto.CategoryBenefitDto.builder()
+                                .category(benefit.getCategory())
+                                .description(b.getDescription())
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        return RecommendCardDetailResponseDto.builder()
+                .recoCardId(Math.toIntExact(card.getRecoCardId()))
+                .cardName(card.getRecoCardName())
+                .cardType(card.getCardType())
+                .corpName(card.getCorpName())
+                .imagePath(card.getImagePath())
+                .benefits(benefitDtos)
+                .build();
+    }
+
 
 }

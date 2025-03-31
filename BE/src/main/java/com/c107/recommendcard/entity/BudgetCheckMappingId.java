@@ -10,7 +10,7 @@ import lombok.Setter;
 @EqualsAndHashCode
 public class BudgetCheckMappingId implements Serializable {
     private Integer budgetCategoryId;
-    private Integer checkBenefitsId;
+    private Integer benefitId;
 
 
 }

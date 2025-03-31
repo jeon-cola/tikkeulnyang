@@ -1,5 +1,6 @@
 package com.c107.recommendcard.controller;
 
+import com.c107.recommendcard.dto.RecommendCardDetailResponseDto;
 import com.c107.recommendcard.dto.RecommendCardResponseDto;
 import com.c107.recommendcard.service.RecommendCardService;
 import com.c107.common.util.ResponseUtil;
@@ -21,7 +22,7 @@ public class RecommendCardController {
 
     /**
      * 체크카드 추천 조회 엔드포인트
-     * URL 예시: GET /api/recommend/cards/check
+     * GET /api/recommend/cards/check
      */
     @GetMapping("/check")
     public ResponseEntity<?> getRecommendedCheckCards(@AuthenticationPrincipal String email) {
@@ -36,7 +37,7 @@ public class RecommendCardController {
 
     /**
      * 신용카드 추천 조회 엔드포인트
-     * URL 예시: GET /api/recommend/cards/credit
+     * GET /api/recommend/cards/credit
      */
     @GetMapping("/credit")
     public ResponseEntity<?> getRecommendedCreditCards(@AuthenticationPrincipal String email) {
@@ -48,4 +49,10 @@ public class RecommendCardController {
             return ResponseUtil.badRequest("신용카드 추천 조회에 실패했습니다.",null);
         }
     }
+
+    @GetMapping("/{cardId}")
+    public ResponseEntity<RecommendCardDetailResponseDto> getCardDetail(@PathVariable int cardId) {
+        return ResponseEntity.ok(recommendCardService.getCardDetail(cardId));
+    }
+
 }
