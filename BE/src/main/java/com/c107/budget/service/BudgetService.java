@@ -9,16 +9,17 @@ import com.c107.budget.entity.BudgetEntity;
 import com.c107.budget.repository.BudgetRepository;
 import com.c107.common.util.JwtUtil;
 import com.c107.paymenthistory.entity.BudgetCategoryEntity;
-import com.c107.paymenthistory.entity.PaymentHistoryEntity;
 import com.c107.paymenthistory.entity.CardEntity;
+import com.c107.paymenthistory.entity.PaymentHistoryEntity;
 import com.c107.paymenthistory.repository.BudgetCategoryRepository;
 import com.c107.paymenthistory.repository.CardRepository;
 import com.c107.paymenthistory.repository.PaymentHistoryRepository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -308,4 +309,31 @@ public class BudgetService {
                 .categories(categoryDtos)
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    public Integer getTotalBudget(String email) {
+        LocalDate now = LocalDate.now();
+        LocalDate startDate = now.withDayOfMonth(1);
+        LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth());
+        List<BudgetEntity> budgetEntities = budgetRepository.findByEmailAndStartDateAndEndDate(email, startDate, endDate);
+
+        int totalBudget = budgetEntities.stream()
+                .mapToInt(budget -> budget.getAmount() != null ? budget.getAmount() : 0)
+                .sum();
+        return totalBudget;
+    }
+
+    @Transactional(readOnly = true)
+    public Integer getCurrentConsumption(String email) {
+        LocalDate now = LocalDate.now();
+        LocalDate startDate = now.withDayOfMonth(1);
+        LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth());
+        List<BudgetEntity> budgetEntities = budgetRepository.findByEmailAndStartDateAndEndDate(email, startDate, endDate);
+
+        int totalConsumption = budgetEntities.stream()
+                .mapToInt(budget -> budget.getSpendingAmount() != null ? budget.getSpendingAmount() : 0)
+                .sum();
+        return totalConsumption;
+    }
+
 }
