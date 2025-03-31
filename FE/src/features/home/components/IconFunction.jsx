@@ -7,7 +7,7 @@ import Watcha from "../assets/Watcha.png"
 import Melon from "../assets/Melon.png"
 import Jenie from "../assets/Jenie.png"
 import Youtube from "../assets/Youtube.png"
-import spotify from '../assets/spotify.png'
+import spotify from '../assets/Spotify.png'
 import Millie from "../assets/Millie.png"
 import GPT from "../assets/GPT.png"
 import Claude from "../assets/Claude.png"
