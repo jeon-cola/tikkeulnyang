@@ -1,19 +1,81 @@
 import CustomHeader from "@/components/CustomHeader";
 import HomeWidget from "@/features/home/components/HomeWidget";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { HomeService } from "@/features/home/services/HomeService";
 
 export default function RenderHome() {
+  const [remainingBudget, setRemainingBudget] = useState(0);
+  const [upcomingSubscriptions, setUpcomingSubscriptions] = useState([]);
+  const [currentConsumptionAmount, setCurrentConsumptionAmount] = useState(0);
+  const [buckets, setBuckets] = useState([]);
+
   const [widgets, setWidgets] = useState([
-    { id: "widget-1", title: "남은예산", content: "10,000원" },
-    { id: "widget-2", title: "결제예정", content: "20,000원" },
+    { id: "widget-1", title: "남은예산", content: "0원" },
+    { id: "widget-2", title: "결제예정", content: "" },
     { id: "widget-3", title: "저번달통계", content: "" },
-    { id: "widget-4", title: "현재 소비 금액", content: "40,000원" },
+    { id: "widget-4", title: "현재 소비 금액", content: "0원" },
     { id: "widget-5", title: "남은 카드 실적", content: "50,000원" },
-    { id: "widget-6", title: "버킷리스트", content: "5,000원" },
+    { id: "widget-6", title: "버킷리스트", content: "" },
   ]);
 
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    fetchMain();
+  }, []);
+
+  // 데이터가 변경될 때마다 위젯 내용 업데이트
+  useEffect(() => {
+    updateWidgets();
+  }, [
+    remainingBudget,
+    upcomingSubscriptions,
+    currentConsumptionAmount,
+    buckets,
+  ]);
+
+  // 위젯 내용 업데이트 함수
+  const updateWidgets = () => {
+    const updatedWidgets = [...widgets];
+
+    // 남은 예산 업데이트
+    const budgetWidget = updatedWidgets.find(
+      (widget) => widget.id === "widget-1"
+    );
+    if (budgetWidget) {
+      budgetWidget.content = `${remainingBudget.toLocaleString()}원`;
+    }
+
+    // 결제 예정 업데이트
+    const subscriptionWidget = updatedWidgets.find(
+      (widget) => widget.id === "widget-2"
+    );
+    if (subscriptionWidget && upcomingSubscriptions.length > 0) {
+      subscriptionWidget.content = `${
+        upcomingSubscriptions[0].subscribeName
+      }: ${upcomingSubscriptions[0].subscribePrice.toLocaleString()}원`;
+    }
+
+    // 현재 소비 금액 업데이트
+    const consumptionWidget = updatedWidgets.find(
+      (widget) => widget.id === "widget-4"
+    );
+    if (consumptionWidget) {
+      consumptionWidget.content = `${currentConsumptionAmount.toLocaleString()}원`;
+    }
+
+    // 버킷리스트 업데이트
+    const bucketWidget = updatedWidgets.find(
+      (widget) => widget.id === "widget-6"
+    );
+    if (bucketWidget && buckets.length > 0) {
+      bucketWidget.content = `${buckets[0].title}`;
+    }
+
+    setWidgets(updatedWidgets);
+  };
+
   // 드래그 중인 상태를 추적하기 위한 ref
   const isDraggingRef = useRef(false);
 
@@ -98,6 +160,39 @@ export default function RenderHome() {
     requestAnimationFrame(() => {
       setWidgets(newWidgets);
     });
+  };
+
+  const fetchMain = async () => {
+    try {
+      const response = await HomeService.getMain();
+      console.log(response);
+
+      if (response && response.data && response.data.data) {
+        const data = response.data.data;
+
+        // 남은 예산 데이터 추출
+        if (data.remaining_budget) {
+          setRemainingBudget(data.remaining_budget.amount);
+        }
+
+        // 결제 예정 데이터 추출
+        if (data.upcoming_subscriptions) {
+          setUpcomingSubscriptions(data.upcoming_subscriptions);
+        }
+
+        // 현재 소비 금액 데이터 추출
+        if (data.current_consumption_amount !== undefined) {
+          setCurrentConsumptionAmount(data.current_consumption_amount);
+        }
+
+        // 버킷리스트 데이터 추출
+        if (data.buckets) {
+          setBuckets(data.buckets);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
