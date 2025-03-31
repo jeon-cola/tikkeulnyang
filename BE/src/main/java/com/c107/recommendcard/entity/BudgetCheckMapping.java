@@ -12,10 +12,10 @@ import lombok.Setter;
 public class BudgetCheckMapping {
 
     @Id
-    @Column(name = "budget_category_id")
-    private Integer budgetCategoryId;
+    @Column(name = "benefit_id")
+    private Integer benefitId;
 
     @Id
-    @Column(name = "check_benefits_id")
-    private Integer checkBenefitsId;
+    @Column(name = "budget_category_id")
+    private Integer budgetCategoryId;
 }
