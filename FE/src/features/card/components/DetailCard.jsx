@@ -36,12 +36,17 @@ export default function DetailCard() {
 
   return(
     <div className="w-full flex flex-col gap-5">
+
       <CustomBackHeader title={cardList.cardName}/>
+
       <div className="w-full flex justify-center">
         <img src={`/${cardList.imagePath}`} alt="카드 이미지" style={{width:"225px", height:"360px"}} />
       </div>
+
       <p className="font-semibold text-2xl">{cardList.cardName}</p>
+
       <p className="text-xl">{cardList.corpName}</p>
+
       <div className="w-full flex flex-col gap-3">
         <div className="w-full flex flex-col justify-center">
          {(Array.isArray(cardList.benefits) && cardList.benefits.length > 0)?cardList.benefits.map((benefit)=>
@@ -50,6 +55,7 @@ export default function DetailCard() {
         ):""}
         </div>
       </div>
+      
     </div>
   )
 }
