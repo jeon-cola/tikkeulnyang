@@ -3,8 +3,10 @@ import HomeWidget from "@/features/home/components/HomeWidget";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useState, useRef, useEffect } from "react";
 import { HomeService } from "@/features/home/services/HomeService";
+import { useNavigate } from "react-router-dom";
 
 export default function RenderHome() {
+  const navigate = useNavigate();
   const [widgets, setWidgets] = useState([
     { id: "widget-1", title: "남은예산", content: ["0원"] },
     { id: "widget-2", title: "결제예정", content: [] },
@@ -28,8 +30,6 @@ export default function RenderHome() {
   const handleClick = (id) => {
     // 위젯 편집 모드 전환
     if (!id) {
-      console.log("편집 버튼");
-
       if (isEditing === false) {
         setIsEditing(true);
       } else {
@@ -41,31 +41,29 @@ export default function RenderHome() {
     // 위젯 ID에 따른 다른 동작 수행
     switch (id) {
       case "widget-1":
-        console.log("남은예산 위젯 클릭됨");
-        // 남은예산 관련 동작
+        // 예산 페이지로 이동
+        navigate(`/ledger`);
         break;
       case "widget-2":
-        console.log("결제예정 위젯 클릭됨");
-        // 결제예정 관련 동작
+        // 구독 페이지로 이동
+        navigate(`/home/subscribe`);
         break;
       case "widget-3":
-        console.log("저번달통계 위젯 클릭됨");
-        // 저번달통계 관련 동작
+        console.log("통계 페이지 미완");
+
         break;
       case "widget-4":
         console.log("현재 소비 금액 위젯 클릭됨");
-        // 현재 소비 금액 관련 동작
+
         break;
       case "widget-5":
-        console.log("남은 카드 실적 위젯 클릭됨");
-        // 남은 카드 실적 관련 동작
+        navigate(`/card`);
+
         break;
       case "widget-6":
-        console.log("버킷리스트 위젯 클릭됨");
-        // 버킷리스트 관련 동작
+        navigate(`/bucketlist`);
+
         break;
-      default:
-        console.log("알 수 없는 위젯 클릭됨");
     }
   };
 
@@ -116,26 +114,6 @@ export default function RenderHome() {
 
       if (response && response.data && response.data.data) {
         const data = response.data.data;
-
-        console.log(data.remaining_budget.amount);
-        console.log(
-          data.upcoming_subscriptions.map((item) => {
-            return {
-              subscribeName: item.subscribeName,
-              subscribePrice: item.subscribePrice,
-            };
-          })
-        );
-
-        console.log(data.current_consumption_amount);
-        console.log(
-          data.buckets.map((item) => {
-            return {
-              bucketsTitle: item.title,
-              bucketsPrice: item.target_amount,
-            };
-          })
-        );
 
         // 받아온 response를 위젯에 넣어준다.
         setWidgets((prevWidgets) => {

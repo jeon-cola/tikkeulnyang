@@ -11,6 +11,8 @@ export default function Homewidget({ title, content }) {
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: Math.floor(Math.random() * (10000 - 2000 + 1)) + 5000, // 5초~10초 사이에 자동 재생
     appendDots: (dots) => (
       <div
         style={{
