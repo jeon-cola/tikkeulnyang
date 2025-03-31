@@ -9,8 +9,19 @@ import java.util.List;
 
 public interface RecommendCardRepository extends JpaRepository<RecommendCard, Integer> {
     @Query("SELECT DISTINCT rc FROM RecommendCard rc, CheckCardBenefit cb, CheckBenefit b " +
-            "WHERE cb.recoCardId = rc.recoCardId AND cb.benefitId = b.benefitId AND b.category = :category")
-    List<RecommendCard> findByBenefitCategory(@Param("category") String category);
+            "WHERE cb.recoCardId = rc.sourceCardId " + // 여기 변경
+            "AND cb.benefitId = b.benefitId " +
+            "AND b.category = :category " +
+            "AND rc.cardType = '체크카드'")
+    List<RecommendCard> findByCheckBenefitCategory(@Param("category") String category);
+
+    @Query("SELECT DISTINCT rc FROM RecommendCard rc, CheckCardBenefit cb, CheckBenefit b " +
+            "WHERE cb.recoCardId = rc.sourceCardId " +
+            "AND cb.benefitId = b.benefitId " +
+            "AND b.benefitId IN :checkBenefitIds " +
+            "AND rc.cardType = '체크카드'")
+    List<RecommendCard> findByCheckBenefitIds(@Param("checkBenefitIds") List<Integer> checkBenefitIds);
+
 
     // 신용카드 혜택 기준 추천 카드 조회
     @Query("SELECT DISTINCT rc FROM RecommendCard rc, CreditCardBenefit ccb, CreditBenefit cb " +
