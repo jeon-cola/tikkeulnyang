@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CustomCalendar from "@/components/CustomCalendar";
 import PaymentDetails from "./PaymentDetails";
 import Api from "../../../services/Api";
 
 export default function PersonalLedgerCalendar() {
+  const navigate = useNavigate();
   const [value, setValue] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [calendarData, setCalendarData] = useState([]);
@@ -43,7 +45,7 @@ export default function PersonalLedgerCalendar() {
   }, []);
 
   return (
-    <div>
+    <div className="relative">
       <CustomCalendar
         value={value}
         onChange={(date) => {
@@ -80,6 +82,12 @@ export default function PersonalLedgerCalendar() {
         }}
         data={calendarData}
       />
+      <button
+        className="blackButton absolute z-10 right-4 top-4"
+        onClick={() => navigate("/ledger/detail")}
+      >
+        세부내역
+      </button>
       {/* 선택된 날짜가 있을 경우 결제 정보 표시 */}
       {selectedDate && (
         <div className="mt-4">
