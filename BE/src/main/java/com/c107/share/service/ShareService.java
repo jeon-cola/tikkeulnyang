@@ -7,10 +7,13 @@ import com.c107.paymenthistory.service.PaymentHistoryService;
 import com.c107.s3.repository.S3Repository;
 import com.c107.share.dto.ShareCommentDto;
 import com.c107.share.dto.ShareLedgerResponseDto;
+import com.c107.share.dto.ShareNotificationDto;
 import com.c107.share.dto.SharePartnerDto;
 import com.c107.share.entity.ShareEntity;
 import com.c107.share.entity.ShareInteractionEntity;
+import com.c107.share.entity.ShareNotificationEntity;
 import com.c107.share.repository.ShareInteractionRepository;
+import com.c107.share.repository.ShareNotificationRepository;
 import com.c107.share.repository.ShareRepository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
@@ -39,6 +42,7 @@ public class ShareService {
     private final ShareRepository shareRepository;
     private final S3Repository s3Repository;
     private final ShareInteractionRepository shareInteractionRepository;
+    private final ShareNotificationRepository shareNotificationRepository;
 
     @Value("${app.base.url}")
     private String url;
@@ -351,17 +355,15 @@ public class ShareService {
 
 
     // 특정 날짜에 달린 댓글과 이모지 조회
-
     @Transactional(readOnly = true)
     public ShareCommentDto.DailyCommentsResponse getDailyComments(String dateStr, String email) {
         // 요청자 정보 조회
         User requester = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // 날짜 형식 검증
         LocalDate date;
         try {
-            date = LocalDate.parse(dateStr); // YYYY-MM-DD 형식 검증
+            date = LocalDate.parse(dateStr);
         } catch (Exception e) {
             throw new IllegalArgumentException("잘못된 날짜 형식입니다. YYYY-MM-DD 형식이어야 합니다.");
         }
@@ -429,7 +431,6 @@ public class ShareService {
     // 타인의 가계부에 댓글 및 이모지 등록
     @Transactional
     public ShareCommentDto.CommentResponse addComment(Long targetUserId, String dateStr, ShareCommentDto.CommentRequest request, String email) {
-        // 요청자 정보 조회
         User requester = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("요청자 정보를 찾을 수 없습니다."));
 
@@ -441,10 +442,9 @@ public class ShareService {
         ShareEntity shared = shareRepository.findActiveShareByUsers(requester.getUserId(), targetUserId.intValue())
                 .orElseThrow(() -> new IllegalArgumentException("공유 중인 관계가 없습니다."));
 
-        // 날짜 형식 검증
         LocalDate date;
         try {
-            date = LocalDate.parse(dateStr); // YYYY-MM-DD 형식 검증
+            date = LocalDate.parse(dateStr);
         } catch (Exception e) {
             throw new IllegalArgumentException("잘못된 날짜 형식입니다. YYYY-MM-DD 형식이어야 합니다.");
         }
@@ -464,6 +464,16 @@ public class ShareService {
 
         // 댓글 및 이모지 저장
         LocalDateTime now = LocalDateTime.now();
+//        ShareInteractionEntity interaction = ShareInteractionEntity.builder()
+//                .shareId(shared.getShareId())
+//                .userId(requester.getUserId())
+//                .targetDate(date)
+//                .commentContent(request.getComment())
+//                .emoji(request.getEmoji())
+//                .createdAt(now)
+//                .updatedAt(now)
+//                .build();
+        // 댓글 및 이모지 저장
         ShareInteractionEntity interaction = ShareInteractionEntity.builder()
                 .shareId(shared.getShareId())
                 .userId(requester.getUserId())
@@ -476,10 +486,16 @@ public class ShareService {
 
         ShareInteractionEntity savedInteraction = shareInteractionRepository.save(interaction);
 
+        // 알림 생성 (대상 사용자에게)
+        createNotification(
+                shared.getShareId(),
+                targetUser.getUserId(),
+                savedInteraction.getInteractionId(),
+                date);
+
         // 프로필 이미지 URL 가져오기
         String profileImageUrl = getProfileImageForUser(requester.getUserId());
 
-        // 응답 생성
         return ShareCommentDto.CommentResponse.builder()
                 .commentId(savedInteraction.getInteractionId().longValue())
                 .userId(requester.getUserId())
@@ -489,6 +505,68 @@ public class ShareService {
                 .emoji(savedInteraction.getEmoji())
                 .createdAt(savedInteraction.getCreatedAt())
                 .build();
+
+    }
+
+    // 알림이 있는 날짜 목록 월별 조회(빨간 점)
+    @Transactional(readOnly = true)
+    public ShareNotificationDto.NotificationDatesResponse getNotificationDates(String email, Integer year, Integer month) {
+
+        User requester = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        LocalDate now = LocalDate.now();
+        int targetYear = (year != null) ? year : now.getYear();
+        int targetMonth = (month != null) ? month : now.getMonthValue();
+
+        List<String> notificationDates = shareNotificationRepository
+                .findDistinctNotificationDatesByUserIdAndYearAndMonth(
+                        requester.getUserId(), targetYear, targetMonth);
+
+        return ShareNotificationDto.NotificationDatesResponse.builder()
+                .dates(notificationDates)
+                .build();
+    }
+
+    // 특정 날짜의 모든 알림 읽음 처리
+
+    @Transactional
+    public void markNotificationsAsReadByDate(String dateStr, String email) {
+
+        User requester = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        LocalDate date;
+        try {
+            date = LocalDate.parse(dateStr);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("잘못된 날짜 형식입니다. YYYY-MM-DD 형식이어야 합니다.");
+        }
+
+        // 해당 날짜의 모든 알림 읽음 처리
+        int updatedCount = shareNotificationRepository.markAllNotificationsAsReadByDate(
+                requester.getUserId(), date);
+
+        log.info("사용자 {}의 {} 날짜 알림 {} 개가 읽음 처리되었습니다.", requester.getUserId(), dateStr, updatedCount);
+    }
+
+
+    // 상호작용 발생 시 알림 생성
+    private void createNotification(Integer shareId, Integer targetUserId, Integer interactionId, LocalDate targetDate) {
+
+        LocalDateTime now = LocalDateTime.now();
+
+        ShareNotificationEntity notification = ShareNotificationEntity.builder()
+                .shareId(shareId)
+                .userId(targetUserId)
+                .interactionId(interactionId)
+                .targetDate(targetDate)
+                .isRead(0)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        shareNotificationRepository.save(notification);
     }
 
 }

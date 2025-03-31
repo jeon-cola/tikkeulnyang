@@ -1,10 +1,7 @@
 package com.c107.share.controller;
 
 import com.c107.common.util.ResponseUtil;
-import com.c107.share.dto.InviteRequestDto;
-import com.c107.share.dto.ShareCommentDto;
-import com.c107.share.dto.ShareLedgerResponseDto;
-import com.c107.share.dto.SharePartnerDto;
+import com.c107.share.dto.*;
 import com.c107.share.service.ShareService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -130,4 +127,26 @@ public class ShareController {
         return ResponseUtil.success("댓글 및 이모지 등록 성공", comment);
     }
 
+
+    // 이벤트 날짜 조회 (빨간 점)
+    @GetMapping("/notification/dates")
+    public ResponseEntity<?> getNotificationDates(
+            @AuthenticationPrincipal String myEmail,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month
+    ) {
+        ShareNotificationDto.NotificationDatesResponse response =
+                shareService.getNotificationDates(myEmail, year, month);
+        return ResponseUtil.success("알림이 있는 날짜 조회 성공", response);
+    }
+
+    // 특정 날짜의 모든 알림 읽음 처리
+    @PostMapping("/notification/date/read/{date}")
+    public ResponseEntity<?> markNotificationsByDateAsRead(
+            @PathVariable String date,
+            @AuthenticationPrincipal String myEmail
+    ) {
+        shareService.markNotificationsAsReadByDate(date, myEmail);
+        return ResponseUtil.success("해당 날짜의 알림이 모두 읽음 처리되었습니다.", null);
+    }
 }
