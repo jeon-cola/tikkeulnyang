@@ -27,61 +27,164 @@ const categories = [
   { id: 9, name: "결제", Icon: SpenseIcon },
 ];
 
+const getDaysLeftInMonth = (date) => {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const today = date.getDate();
+  const lastDay = new Date(year, month, 0).getDate();
+  return lastDay - today + 1;
+};
+
 export default function BudgetMain() {
   const [activeDate, setActiveDate] = useState(new Date());
   const [budgetData, setBudgetData] = useState(null);
 
+  const year = activeDate.getFullYear();
+  const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const year = activeDate.getFullYear();
-        const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
-        const reponse = await Api.get(
+        const response = await Api.get(
           `api/budget/plan?year=${year}&month=${month}`
         );
-        console.log("예산 데이터 조회", reponse.data.data);
-        setBudgetData(reponse.data.data);
+        console.log("예산 데이터 조회", response.data.data);
+        setBudgetData(response.data.data);
       } catch (error) {
         console.log(error);
       }
     };
     fetchData();
-  }, [activeDate]);
+  }, [year, month]);
+
+  const total = budgetData?.totals?.total_amount || 0;
+  const remaining = budgetData?.totals?.total_remaining_amount || 0;
+  const isExceed = budgetData?.totals?.total_is_exceed || false;
+
+  const daysLeft = getDaysLeftInMonth(activeDate);
+  const dailyAvailable = daysLeft > 0 ? Math.floor(remaining / daysLeft) : 0;
+
+  const percent = Math.min((remaining / total) * 100, 100);
+  const exceedPercent = Math.abs((remaining / total) * 100);
 
   return (
-    <>
-      <Container>
-        <MonthBar
-          activeDate={activeDate}
-          setActiveDate={setActiveDate}
-          onYearMonthChange={({ year, month }) => {
-            console.log("선택된 연/월:", year, month);
-          }}
-        />
-        <div className="relative w-full h-auto bg-white rounded-md shadow-sm px-[10px]">
-          <BudgetBar />
-          <div className="text-left mt-4 mb-8">
-            <p className="text-sm">남은 예산(월별)</p>
-            <p className="text-sm">
-              {budgetData?.totals?.total_remaining_amount.toLocaleString()}원
+    <Container>
+      <MonthBar
+        activeDate={activeDate}
+        setActiveDate={setActiveDate}
+        onYearMonthChange={({ year, month }) => {
+          console.log("선택된 연/월:", year, month);
+        }}
+      />
+
+      {/* 예산 정보 */}
+      <div className="relative w-full h-auto bg-white rounded-md shadow-sm px-[10px] py-2">
+        <BudgetBar />
+        <div className="flex justify-between items-center mt-4 mb-4">
+          {/* 좌) 남은 예산 */}
+          <div className="text-left mb-2">
+            <p className="text-xs text-gray-500">남은 예산(월별)</p>
+            <p className="text-xl font-semibold text-black">
+              {remaining.toLocaleString()}원
             </p>
           </div>
-          <div className="text-left mb-4">
-            <p className="text-sm">예산(월별)</p>
-            <p className="text-sm">
-              {budgetData?.totals?.total_amount.toLocaleString()}원
+          {/* 우) 남은 일일예산 */}
+          <div className="text-right">
+            <p className="text-xs text-gray-500">남은 일일 예산</p>
+            <p className="text-base font-semibold text-black">
+              {dailyAvailable.toLocaleString()}원 /일
             </p>
-            {/* 프로그레스 바 배경 */}
-            <div className="absolute left-0 bottom-0 w-full h-[24px] bg-[#F1EFEF] border border-[#DFDFDF] rounded-[70px]">
-              {/* 프로그레스 바 채움 */}
-              {/* <div
-                className="h-full bg-[#FF957A] rounded-[70px]"
-                style={{ width: `${currentProgress}%` }}
-              ></div> */}
-            </div>
           </div>
         </div>
-      </Container>
-    </>
+
+        <div className="flex items-center gap-3">
+          <div className="text-left min-w-[100px]">
+            <p className="text-xs text-gray-500">예산(월별)</p>
+            <p className="text-xl font-semibold text-black">
+              {total.toLocaleString()}원
+            </p>
+          </div>
+
+          <div className="relative w-full h-[24px] bg-[#F1EFEF] border border-[#DFDFDF] rounded-[70px] mt-2 overflow-hidden">
+            {isExceed ? (
+              <div
+                className="h-full bg-[#FF6B6B] rounded-[70px] text-white text-[12px] text-center"
+                style={{ width: `${Math.min(exceedPercent, 100)}%` }}
+              >
+                {exceedPercent.toFixed(0)}%
+              </div>
+            ) : (
+              <div
+                className="h-full bg-[#6ECBFF] rounded-[70px] text-white text-[12px] text-center"
+                style={{ width: `${percent}%` }}
+              >
+                {percent.toFixed(0)}%
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 카테고리별 막대 차트 */}
+      <div className="relative w-full h-auto bg-white rounded-md shadow-sm">
+        <div className="mt-6 space-y-4">
+          {budgetData?.budgets?.map((item) => {
+            const category = categories.find((c) => c.id === item.categoryId);
+            const used = item.used_amount || 0;
+            const budget = item.amount || 0;
+            const remaining = Math.max(budget - used, 0);
+            const exceed = used > budget;
+            const percent = Math.min((used / budget) * 100, 100);
+
+            return (
+              <div
+                key={item.name}
+                className="flex items-center gap-3 px-3 py-2"
+              >
+                <div className="flex items-center gap-2">
+                  {category?.Icon && (
+                    <img
+                      src={category.Icon}
+                      alt={item.name}
+                      className="w-12 h-auto object-contain"
+                    />
+                  )}
+                  <div>
+                    <p>{category?.name || "기타"}</p>
+                    <p>{budget.toLocaleString()}원</p>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex justify-between text-sm font-medium mb-1">
+                    <span>{item.name}</span>
+                  </div>
+
+                  <div className="relative w-full h-[25px] bg-[#ECECEC] rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${
+                        exceed ? "bg-[#FF6B6B]" : "bg-[#6ECBFF]"
+                      } rounded-full`}
+                      style={{ width: `${percent}%` }}
+                    >
+                      {" "}
+                      <span className="text-right!">{percent.toFixed(0)}%</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-right text-[12px] text-gray-500 mt-1">
+                      {used.toLocaleString()}
+                    </span>
+                    <span className="text-right text-[12px] text-gray-500 mt-1">
+                      {remaining.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </Container>
   );
 }
