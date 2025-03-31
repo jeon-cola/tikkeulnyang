@@ -1,8 +1,9 @@
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import { useEffect } from "react";
 
-export default function Homewidget({ title, content, children }) {
+export default function Homewidget({ title, content }) {
   const settings = {
     arrows: false,
     dots: true,
@@ -24,24 +25,29 @@ export default function Homewidget({ title, content, children }) {
     dotsClass: "slick-dots custom-dots",
   };
 
+  useEffect(() => {
+    console.log("HomeWidget", content);
+  }, [content]);
+
   return (
     <>
       <div className="flex flex-col items-start p-[18px] gap-[4px] w-[176px] h-[177px] bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px]">
         <div className="slider-container relative w-full h-full">
-          <Slider {...settings} className="h-full">
+          <h3 className="absolute top-0 left-0 text-left font-['Pretendard'] font-normal text-[20px] leading-[30px] text-black">
+            {title}
+          </h3>
+          <Slider {...settings} className="h-[140px]">
             {/* 위젯 내용 */}
             {/* 타이틀 */}
-            <div className="h-[140px]">
-              <h3 className="text-left font-['Pretendard'] font-normal text-[20px] leading-[30px] text-black">
-                {title}
-              </h3>
-
-              <p className="text-left font-['Pretendard'] font-normal text-[24px] leading-[36px] text-black mt-[1px]">
-                {content}
-              </p>
-            </div>
-            {/* {children} */}
-            <div>2</div>
+            <div className="h-[140px]"></div>
+            {content.map((item, index) => (
+              <div
+                key={index}
+                className="mt-[50px] text-left font-['Pretendard'] font-normal text-[24px] leading-[36px] text-black mt-[1px]"
+              >
+                {item}
+              </div>
+            ))}
           </Slider>
         </div>
       </div>
