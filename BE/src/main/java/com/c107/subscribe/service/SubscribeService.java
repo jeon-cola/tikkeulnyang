@@ -44,8 +44,10 @@ public class SubscribeService {
         return subscribeRepository.save(subscribeEntity);
     }
     @Transactional(readOnly = true)
-    public List<SubscribeEntity> getUserSubscribes(String email) {
-        return subscribeRepository.findByEmail(email);
+    public List<SubscribeResponseDto> getUserSubscribes(String email) {
+        return subscribeRepository.findByEmail(email).stream()
+                .map(SubscribeResponseDto::fromEntity)
+                .collect(Collectors.toList());
     }
 
 
