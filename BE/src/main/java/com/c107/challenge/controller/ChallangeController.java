@@ -47,6 +47,13 @@ public class ChallangeController {
         return ResponseEntity.ok("챌린지가 삭제되었습니다.");
     }
 
+    // 추천 챌린지 조회 엔드포인트 (소비 내역 기반 추천)
+    @GetMapping("/recommend")
+    public ResponseEntity<List<ChallengeResponseDto>> recommendChallenges() {
+        List<ChallengeResponseDto> recommendations = challengeService.recommendChallengesForUser();
+        return ResponseEntity.ok(recommendations);
+    }
+
     // 챌린지 수정 (항상 예외 발생)
     @PutMapping("/{challengeId}")
     public ResponseEntity<ChallengeResponseDto> updateChallenge(
