@@ -5,76 +5,21 @@ import { useState, useRef, useEffect } from "react";
 import { HomeService } from "@/features/home/services/HomeService";
 
 export default function RenderHome() {
-  const [remainingBudget, setRemainingBudget] = useState(0);
-  const [upcomingSubscriptions, setUpcomingSubscriptions] = useState([]);
-  const [currentConsumptionAmount, setCurrentConsumptionAmount] = useState(0);
-  const [buckets, setBuckets] = useState([]);
-
   const [widgets, setWidgets] = useState([
-    { id: "widget-1", title: "남은예산", content: "0원" },
-    { id: "widget-2", title: "결제예정", content: "" },
-    { id: "widget-3", title: "저번달통계", content: "" },
-    { id: "widget-4", title: "현재 소비 금액", content: "0원" },
-    { id: "widget-5", title: "남은 카드 실적", content: "50,000원" },
-    { id: "widget-6", title: "버킷리스트", content: "" },
+    { id: "widget-1", title: "남은예산", content: ["0원"] },
+    { id: "widget-2", title: "결제예정", content: [] },
+    { id: "widget-3", title: "저번달통계", content: [] },
+    { id: "widget-4", title: "현재 소비 금액", content: ["0원"] },
+    { id: "widget-5", title: "남은 카드 실적", content: ["50,000원"] },
+    { id: "widget-6", title: "버킷리스트", content: [] },
   ]);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchMain();
   }, []);
-
-  // 데이터가 변경될 때마다 위젯 내용 업데이트
-  useEffect(() => {
-    updateWidgets();
-  }, [
-    remainingBudget,
-    upcomingSubscriptions,
-    currentConsumptionAmount,
-    buckets,
-  ]);
-
-  // 위젯 내용 업데이트 함수
-  const updateWidgets = () => {
-    const updatedWidgets = [...widgets];
-
-    // 남은 예산 업데이트
-    const budgetWidget = updatedWidgets.find(
-      (widget) => widget.id === "widget-1"
-    );
-    if (budgetWidget) {
-      budgetWidget.content = `${remainingBudget.toLocaleString()}원`;
-    }
-
-    // 결제 예정 업데이트
-    const subscriptionWidget = updatedWidgets.find(
-      (widget) => widget.id === "widget-2"
-    );
-    if (subscriptionWidget && upcomingSubscriptions.length > 0) {
-      subscriptionWidget.content = `${
-        upcomingSubscriptions[0].subscribeName
-      }: ${upcomingSubscriptions[0].subscribePrice.toLocaleString()}원`;
-    }
-
-    // 현재 소비 금액 업데이트
-    const consumptionWidget = updatedWidgets.find(
-      (widget) => widget.id === "widget-4"
-    );
-    if (consumptionWidget) {
-      consumptionWidget.content = `${currentConsumptionAmount.toLocaleString()}원`;
-    }
-
-    // 버킷리스트 업데이트
-    const bucketWidget = updatedWidgets.find(
-      (widget) => widget.id === "widget-6"
-    );
-    if (bucketWidget && buckets.length > 0) {
-      bucketWidget.content = `${buckets[0].title}`;
-    }
-
-    setWidgets(updatedWidgets);
-  };
 
   // 드래그 중인 상태를 추적하기 위한 ref
   const isDraggingRef = useRef(false);
@@ -124,6 +69,7 @@ export default function RenderHome() {
     }
   };
 
+  // 위젯 드래그 앤 드롭 위한 함수들
   const onDragStart = () => {
     isDraggingRef.current = true;
   };
@@ -162,33 +108,70 @@ export default function RenderHome() {
     });
   };
 
+  // 메인 화면에 뿌릴 데이터 조회(처음 시작하자마자 실행)
   const fetchMain = async () => {
     try {
       const response = await HomeService.getMain();
-      console.log(response);
+      //console.log(response);
 
       if (response && response.data && response.data.data) {
         const data = response.data.data;
 
-        // 남은 예산 데이터 추출
-        if (data.remaining_budget) {
-          setRemainingBudget(data.remaining_budget.amount);
-        }
+        console.log(data.remaining_budget.amount);
+        console.log(
+          data.upcoming_subscriptions.map((item) => {
+            return {
+              subscribeName: item.subscribeName,
+              subscribePrice: item.subscribePrice,
+            };
+          })
+        );
 
-        // 결제 예정 데이터 추출
-        if (data.upcoming_subscriptions) {
-          setUpcomingSubscriptions(data.upcoming_subscriptions);
-        }
+        console.log(data.current_consumption_amount);
+        console.log(
+          data.buckets.map((item) => {
+            return {
+              bucketsTitle: item.title,
+              bucketsPrice: item.target_amount,
+            };
+          })
+        );
 
-        // 현재 소비 금액 데이터 추출
-        if (data.current_consumption_amount !== undefined) {
-          setCurrentConsumptionAmount(data.current_consumption_amount);
-        }
+        // 받아온 response를 위젯에 넣어준다.
+        setWidgets((prevWidgets) => {
+          return prevWidgets.map((widget) => {
+            switch (widget.id) {
+              case "widget-1": // 남은예산
+                return {
+                  ...widget,
+                  content: [`${data.remaining_budget.amount}원`],
+                };
+              case "widget-2": // 결제예정
+                return {
+                  ...widget,
+                  content: data.upcoming_subscriptions.map(
+                    (item) => `${item.subscribeName}: ${item.subscribePrice}원`
+                  ),
+                };
+              case "widget-4": // 현재 소비 금액
+                return {
+                  ...widget,
+                  content: [`${data.current_consumption_amount}원`],
+                };
+              case "widget-6": // 버킷리스트
+                return {
+                  ...widget,
+                  content: data.buckets.map(
+                    (item) => `${item.title}: ${item.target_amount}원`
+                  ),
+                };
+              default:
+                return widget;
+            }
+          });
+        });
 
-        // 버킷리스트 데이터 추출
-        if (data.buckets) {
-          setBuckets(data.buckets);
-        }
+        setIsLoading(false);
       }
     } catch (error) {
       console.error(error);
@@ -197,124 +180,130 @@ export default function RenderHome() {
 
   return (
     <>
-      <CustomHeader title="홈" />
-      <div className="flex flex-col items-start p-[30px_10px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
-        <div className="flex flex-col p-[12px_11px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
-          <p className="w-auto h-[12px] font-['Pretendard'] text-left font-semibold text-[10px] leading-[12px] tracking-[0.07em] text-[#D0D0D0]">
-            이번달 카드 추천
-          </p>
+      {isLoading ? (
+        <></>
+      ) : (
+        <>
+          <CustomHeader title="홈" />
+          <div className="flex flex-col items-start p-[30px_10px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
+            <div className="flex flex-col p-[12px_11px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
+              <p className="w-auto h-[12px] font-['Pretendard'] text-left font-semibold text-[10px] leading-[12px] tracking-[0.07em] text-[#D0D0D0]">
+                이번달 카드 추천
+              </p>
 
-          <p className="w-auto h-[14px] font-['Pretendard'] text-left font-semibold text-[12px] leading-[14px] tracking-[0.07em] text-black">
-            혜택이 많은 카드를 골라
-          </p>
+              <p className="w-auto h-[14px] font-['Pretendard'] text-left font-semibold text-[12px] leading-[14px] tracking-[0.07em] text-black">
+                혜택이 많은 카드를 골라
+              </p>
 
-          <p className="w-auto h-[13px] font-['Pretendard'] text-left font-semibold text-[11px] leading-[13px] tracking-[0.07em] text-black">
-            카드 혜택으로 절약해보아요
-          </p>
+              <p className="w-auto h-[13px] font-['Pretendard'] text-left font-semibold text-[11px] leading-[13px] tracking-[0.07em] text-black">
+                카드 혜택으로 절약해보아요
+              </p>
 
-          <div className="absolute flex flex-row justify-center items-center p-[3px_5px] gap-[10px] w-[37px] h-[12px] right-[16px] bottom-[5px] bg-[rgba(8,8,8,0.46)] rounded-[30px]">
-            <span className="w-[25px] h-[6px] font-['Pretendard'] font-semibold text-[5px] leading-[6px] tracking-[0.07em] text-white">
-              자세히 보기
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-col p-[12px_20px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
-          <h2 className="pt-[18px] font-['Pretendard'] font-semibold text-[14px] text-left leading-[17px] tracking-[0.01em] text-[#FF957A] mb-[6px]">
-            안녕하세요 유저님
-          </h2>
-
-          <p className="font-['Pretendard'] font-semibold text-[12px] text-left leading-[22px] tracking-[0.01em] text-black">
-            주 5회 무지출 챌린지에 도전 중이시군요
-            <br />
-            곧 마감일이 다가오고 있어요
-            <br />
-            끝까지 힘내요
-          </p>
-
-          <div className="pt-[99px] w-full justify-center flex flex-row">
-            <button className=" text-white longButton">
-              챌린지 자세히보기
-            </button>
-          </div>
-        </div>
-
-        <div className="flex flex-col p-[12px_20px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
-          <div className="flex flex-col items-start mt-[20px]">
-            <h2 className=" font-['Pretendard'] text-left font-semibold text-[14px] leading-[17px] tracking-[0.07em] text-black mb-[7px]">
-              가계부로 이동
-            </h2>
-
-            <p className="mb-[24px] text-left font-['Pretendard'] font-semibold text-[12px] leading-[14px] tracking-[0.07em] text-black">
-              오늘의 지출 확인하기
-            </p>
-          </div>
-        </div>
-
-        <div className="flex justify-between w-full h-auto mt-[1px]">
-          <h2 className="ml-[20px] font-['Pretendard'] font-semibold text-[14px] leading-[17px] tracking-[0.01em] text-black">
-            위젯으로 모아보는 티끌냥
-          </h2>
-
-          <div
-            className="flex justify-center items-center px-[5px] py-[3px] w-[52px] h-[23px] bg-white shadow-[1px_1px_4px_rgba(0,0,0,0.1)] rounded-[30px] cursor-pointer"
-            onClick={() => handleClick()} // 편집 버튼 클릭 시 ID 없이 호출
-          >
-            <span className="font-['Pretendard'] font-normal text-[12px] leading-[14px] tracking-[0.07em] text-[#303030]">
-              {isEditing ? "완료" : "편집"}
-            </span>
-          </div>
-        </div>
-
-        <DragDropContext
-          onDragStart={onDragStart}
-          onDragUpdate={onDragUpdate}
-          onDragEnd={onDragEnd}
-        >
-          <Droppable droppableId="widgets">
-            {(provided) => (
-              <div
-                className="flex flex-wrap w-full"
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-              >
-                {widgets.map((widget, index) => (
-                  <Draggable
-                    key={widget.id}
-                    draggableId={widget.id}
-                    index={index}
-                    isDragDisabled={!isEditing}
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...(isEditing ? provided.dragHandleProps : {})}
-                        className={`w-[calc(50%-8px)] m-1 `}
-                        style={{
-                          ...provided.draggableProps.style,
-                          // 스냅샷을 이용해 드래그 중일 때의 스타일을 제어
-                          transition: snapshot.isDragging
-                            ? "transform 0.01s"
-                            : provided.draggableProps.style?.transition,
-                        }}
-                        onClick={() => !isEditing && handleClick(widget.id)} // 편집 모드가 아닐 때만 클릭 이벤트 처리
-                      >
-                        <HomeWidget
-                          title={widget.title}
-                          content={widget.content}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-                {/* 드래그 중 원래 위치를 유지하기 위한 공간을 확보 */}
+              <div className="absolute flex flex-row justify-center items-center p-[3px_5px] gap-[10px] w-[37px] h-[12px] right-[16px] bottom-[5px] bg-[rgba(8,8,8,0.46)] rounded-[30px]">
+                <span className="w-[25px] h-[6px] font-['Pretendard'] font-semibold text-[5px] leading-[6px] tracking-[0.07em] text-white">
+                  자세히 보기
+                </span>
               </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-      </div>
+            </div>
+
+            <div className="flex flex-col p-[12px_20px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
+              <h2 className="pt-[18px] font-['Pretendard'] font-semibold text-[14px] text-left leading-[17px] tracking-[0.01em] text-[#FF957A] mb-[6px]">
+                안녕하세요 유저님
+              </h2>
+
+              <p className="font-['Pretendard'] font-semibold text-[12px] text-left leading-[22px] tracking-[0.01em] text-black">
+                주 5회 무지출 챌린지에 도전 중이시군요
+                <br />
+                곧 마감일이 다가오고 있어요
+                <br />
+                끝까지 힘내요
+              </p>
+
+              <div className="pt-[99px] w-full justify-center flex flex-row">
+                <button className=" text-white longButton">
+                  챌린지 자세히보기
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col p-[12px_20px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
+              <div className="flex flex-col items-start mt-[20px]">
+                <h2 className=" font-['Pretendard'] text-left font-semibold text-[14px] leading-[17px] tracking-[0.07em] text-black mb-[7px]">
+                  가계부로 이동
+                </h2>
+
+                <p className="mb-[24px] text-left font-['Pretendard'] font-semibold text-[12px] leading-[14px] tracking-[0.07em] text-black">
+                  오늘의 지출 확인하기
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-between w-full h-auto mt-[1px]">
+              <h2 className="ml-[20px] font-['Pretendard'] font-semibold text-[14px] leading-[17px] tracking-[0.01em] text-black">
+                위젯으로 모아보는 티끌냥
+              </h2>
+
+              <div
+                className="flex justify-center items-center px-[5px] py-[3px] w-[52px] h-[23px] bg-white shadow-[1px_1px_4px_rgba(0,0,0,0.1)] rounded-[30px] cursor-pointer"
+                onClick={() => handleClick()} // 편집 버튼 클릭 시 ID 없이 호출
+              >
+                <span className="font-['Pretendard'] font-normal text-[12px] leading-[14px] tracking-[0.07em] text-[#303030]">
+                  {isEditing ? "완료" : "편집"}
+                </span>
+              </div>
+            </div>
+
+            <DragDropContext
+              onDragStart={onDragStart}
+              onDragUpdate={onDragUpdate}
+              onDragEnd={onDragEnd}
+            >
+              <Droppable droppableId="widgets">
+                {(provided) => (
+                  <div
+                    className="flex flex-wrap w-full"
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                  >
+                    {widgets.map((widget, index) => (
+                      <Draggable
+                        key={widget.id}
+                        draggableId={widget.id}
+                        index={index}
+                        isDragDisabled={!isEditing}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...(isEditing ? provided.dragHandleProps : {})}
+                            className={`w-[calc(50%-8px)] m-1`}
+                            style={{
+                              ...provided.draggableProps.style,
+                              // 스냅샷을 이용해 드래그 중일 때의 스타일을 제어
+                              transition: snapshot.isDragging
+                                ? "transform 0.01s"
+                                : provided.draggableProps.style?.transition,
+                            }}
+                            onClick={() => !isEditing && handleClick(widget.id)} // 편집 모드가 아닐 때만 클릭 이벤트 처리
+                          >
+                            <HomeWidget
+                              title={widget.title}
+                              content={widget.content}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                    {/* 드래그 중 원래 위치를 유지하기 위한 공간을 확보 */}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </div>
+        </>
+      )}
     </>
   );
 }
