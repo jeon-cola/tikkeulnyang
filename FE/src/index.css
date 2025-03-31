@@ -60,26 +60,6 @@ p {
   font-family: "Pretendard-medium";
 }
 
-/* 일반 버튼 */
-/* button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 23px;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #ff957a;
-  color: white;
-  cursor: pointer;
-  transition: all 0.25s;
-  height: 43px;
-  width: 125px;
-  white-space: nowrap;
-} */
-
 .customButton {
   display: flex;
   justify-content: center;
@@ -119,9 +99,9 @@ p {
 /* 작은 버튼 */
 .blackButton {
   display: flex;
-  flex-direction: row;
+  justify-content: center;
   align-items: center;
-  text-align: center;
+  /* text-align: center; */
   color: white;
   background: #3d3d3d;
   border: none;
@@ -151,7 +131,6 @@ p {
   padding: 2px 15px;
 }
 
-
 .smallWhiteButton {
   display: flex;
   flex-direction: row;
@@ -170,7 +149,6 @@ p {
   box-shadow: 1px 1px 2px 0px rgba(0, 0, 0, 15%);
   transition: background-color 0.2s ease;
 }
-
 
 /* 작은 버튼 */
 .whiteButton {
