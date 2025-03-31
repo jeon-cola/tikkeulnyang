@@ -13,8 +13,12 @@ import com.c107.challenge.repository.ChallengeRepository;
 import com.c107.challenge.repository.UserChallengeRepository;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
+import com.c107.paymenthistory.entity.CategoryEntity;
+import com.c107.paymenthistory.repository.CategoryRepository;
 import com.c107.s3.entity.S3Entity;
 import com.c107.s3.repository.S3Repository;
+import com.c107.transactions.entity.Transaction;
+import com.c107.transactions.repository.TransactionRepository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
@@ -23,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,7 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,6 +54,8 @@ public class ChallengeService {
     // AccountService 주입 (서비스 계좌 ID를 가져오기 위해)
     private final AccountService accountService;
     private final S3Repository s3Repository;
+    private final TransactionRepository transactionRepository;
+    private final CategoryRepository categoryRepository;
 
     // 챌린지 생성 (로그인한 유저 정보 자동 등록)
     @Transactional
@@ -463,6 +470,57 @@ public class ChallengeService {
             accountTransactionRepository.save(refundTx);
             logger.info("환불 거래내역 기록됨: {}", refundTx);
         }
+    }
+
+    // 사용자 소비 내역을 기반으로 챌린지 카테고리 점수를 계산하는 메서드
+    // 거래 내역의 category_id로 category 테이블을 조회하여, 각 거래가 속한 챌린지 카테고리(문자열)를 가져온 후 금액을 누적
+    public Map<String, Integer> calculateChallengeCategoryScores(User user) {
+        List<Transaction> transactions = transactionRepository.findByUserId(user.getUserId());
+        Map<String, Integer> categoryScores = new HashMap<>();
+
+        for (Transaction tx : transactions) {
+            if ("WITHDRAW".equals(tx.getTransactionType()) && tx.getCategoryId() != null) {
+                Optional<CategoryEntity> optCategory = categoryRepository.findById(tx.getCategoryId());
+                if (optCategory.isPresent() && optCategory.get().getChallengeCategoryId() != null) {
+                    String challengeCategory = String.valueOf(optCategory.get().getChallengeCategoryId());
+                    categoryScores.merge(challengeCategory, tx.getAmount(), Integer::sum);
+                }
+            }
+        }
+        return categoryScores;
+    }
+
+    /**
+     * 추천 챌린지 조회
+     * 모든 챌린지를 대상으로, 사용자의 소비 내역을 통해 계산한 챌린지 카테고리 점수와 챌린지의 challengeCategory를 매칭하여
+     * 높은 점수 순으로 상위 5개 챌린지를 추천합니다.
+     */
+    @Transactional
+    public List<ChallengeResponseDto> recommendChallengesForUser() {
+        String email = getAuthenticatedUserEmail();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자 정보를 찾을 수 없습니다."));
+
+        // 사용자의 소비 내역 기반 챌린지 카테고리 점수 계산 (예: { "주유"=50000, "쇼핑"=30000, ... })
+        Map<String, Integer> challengeCategoryScores = calculateChallengeCategoryScores(user);
+        logger.info("사용자 소비 기반 챌린지 카테고리 점수: {}", challengeCategoryScores);
+
+        // 모든 챌린지 조회 (삭제되지 않은 모든 챌린지)
+        List<ChallengeEntity> allChallenges = challengeRepository.findAll();
+
+        // 각 챌린지의 챌린지 카테고리와 사용자의 소비 점수를 비교하여 정렬
+        List<ChallengeEntity> sortedChallenges = allChallenges.stream()
+                .sorted((c1, c2) -> {
+                    int score1 = challengeCategoryScores.getOrDefault(c1.getChallengeCategory(), 0);
+                    int score2 = challengeCategoryScores.getOrDefault(c2.getChallengeCategory(), 0);
+                    return Integer.compare(score2, score1); // 높은 점수가 먼저 오도록
+                })
+                .limit(12)
+                .collect(Collectors.toList());
+
+        return sortedChallenges.stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 
 

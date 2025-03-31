@@ -14,4 +14,6 @@ public interface ChallengeRepository extends JpaRepository<ChallengeEntity, Inte
     Optional<ChallengeEntity> findByChallengeIdAndDeletedFalse(Integer challengeId);
     // ✅ 시작 날짜가 오늘 이전이면서 activeFlag가 false인 챌린지 찾기
     List<ChallengeEntity> findByStartDateBeforeAndActiveFlagFalse(LocalDate today);
+    Page<ChallengeEntity> findByDeletedFalse(Pageable pageable);
+
 }
