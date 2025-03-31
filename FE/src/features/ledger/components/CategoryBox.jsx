@@ -16,51 +16,13 @@ import ShoppingIcon from "../assets/category/shopping_icon.png";
 import ShoppingIconInactive from "../assets/category/shopping_icon_inactive.png";
 import TransportationIcon from "../assets/category/transportation_icon.png";
 import TransportationIconInactive from "../assets/category/transportation_icon_inactive.png";
+import EducationIcon from "../assets/category/education_icon.png";
+import EducationIconInactive from "../assets/category/education_icon_inactive.png";
 import IncomeIcon from "../assets/category/income_icon.png";
 import IncomeIconInactive from "../assets/category/Income_icon_inactive.png";
 import SpenseIcon from "../assets/category/spense_icon.png";
 import SpenseIconInactive from "../assets/category/spense_icon_inactive.png";
 
-const categories = [
-  { id: "all", activeIcon: AllIcon, inactiveIcon: AllIconInactive },
-  { id: "food", activeIcon: FoodIcon, inactiveIcon: FoodIconInactive },
-  { id: "housing", activeIcon: HousingIcon, inactiveIcon: HousingIconInactive },
-  {
-    id: "entertainment",
-    activeIcon: EntertainmentIcon,
-    inactiveIcon: EntertainmentIconInactive,
-  },
-
-  {
-    id: "goods",
-    activeIcon: GoodsIcon,
-    inactiveIcon: GoodsIconInactive,
-  },
-
-  { id: "medical", activeIcon: MedicalIcon, inactiveIcon: MedicalIconInactive },
-  {
-    id: "shopping",
-    activeIcon: ShoppingIcon,
-    inactiveIcon: ShoppingIconInactive,
-  },
-  {
-    id: "transportation",
-    activeIcon: TransportationIcon,
-    inactiveIcon: TransportationIconInactive,
-  },
-  {
-    id: "income",
-    activeIcon: IncomeIcon,
-    inactiveIcon: IncomeIconInactive,
-  },
-  {
-    id: "spense",
-    activeIcon: SpenseIcon,
-    inactiveIcon: SpenseIconInactive,
-  },
-];
-
-// CategoryBox.jsx
 export default function CategoryBox({ activeCategory, setActiveCategory }) {
   const categories = [
     { id: "all", activeIcon: AllIcon, inactiveIcon: AllIconInactive },
@@ -90,6 +52,11 @@ export default function CategoryBox({ activeCategory, setActiveCategory }) {
       id: "transportation",
       activeIcon: TransportationIcon,
       inactiveIcon: TransportationIconInactive,
+    },
+    {
+      id: "education",
+      activeIcon: EducationIcon,
+      inactiveIcon: EducationIconInactive,
     },
     { id: "income", activeIcon: IncomeIcon, inactiveIcon: IncomeIconInactive },
     { id: "spense", activeIcon: SpenseIcon, inactiveIcon: SpenseIconInactive },

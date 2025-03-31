@@ -20,8 +20,8 @@ export default function LedgerRouter() {
 
         {/* budget 중첩 라우팅 */}
         <Route path="budget" element={<BudgetMain />}>
-          <Route path="make" element={<BudgetMake />} />
-          <Route path="report" element={<BudgetReport />} />
+          <Route path="budgetmake" element={<BudgetMake />} />
+          <Route path="budgetreport" element={<BudgetReport />} />
         </Route>
       </Route>
     </Routes>
