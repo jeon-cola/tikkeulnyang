@@ -3,14 +3,16 @@ import Step from "../assets/Step"
 import step3Image from "../assets/step3.png"
 import { useNavigate } from "react-router-dom";
 import Api from "../../../services/Api";
+import AlertModal from "../../../components/AlertModal";
 export default function BucketListStep3() {
   const [stepCheck, setStepCheck] = useState({
     day:"",
     amount:""
   });
   const [dayList, setDayList] = useState([])
-
+  const [isModal, setIsModal] = useState(false)
   const nav = useNavigate();
+
 
   // 입력 데이터 변경 로직직
   function inputHandler(e) {
@@ -29,6 +31,12 @@ export default function BucketListStep3() {
 
   const isChecked = isNumber(stepCheck.amount) && stepCheck.day;
 
+  // 모달창 닫기기
+  function isCloseModal() {
+    setIsModal(false)
+    nav("/bucketlist/list");
+  }
+
   // 버킷리스트 생성 
   function creationHandler() {
     const fetchData = async() => {
@@ -39,8 +47,7 @@ export default function BucketListStep3() {
         })
         console.log(response.data)
         if (response.data.status === "success") {
-          window.alert("버킷리스트 생성이 완료 되었습니다")
-          nav("/bucketlist/list");
+          setIsModal(true)
         }
       } catch (error) {
         console.log(error)
@@ -96,6 +103,11 @@ export default function BucketListStep3() {
             onClick={creationHandler}
           >시작하기</button>
         </div>
+        <AlertModal title="버킷리스트 생성" isClose={isCloseModal} isOpen={isModal} height={170}>
+          <div>
+            <p>버킷리스트 생성이 완료 되었습니다</p>
+          </div>
+        </AlertModal>
     </div>
   )
 }
