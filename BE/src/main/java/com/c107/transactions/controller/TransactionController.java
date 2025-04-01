@@ -1,11 +1,14 @@
 package com.c107.transactions.controller;
 
 import com.c107.common.exception.CustomException;
+import com.c107.common.util.ResponseUtil;
+import com.c107.transactions.dto.TransactionCreateRequest;
 import com.c107.transactions.dto.TransactionUpdateRequest;
 import com.c107.transactions.entity.Transaction;
 import com.c107.transactions.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,6 +17,16 @@ import org.springframework.web.bind.annotation.*;
 public class TransactionController {
 
     private final TransactionService transactionService;
+
+    @PostMapping
+    public ResponseEntity<?> createTransaction(
+            @AuthenticationPrincipal String email,
+            @RequestBody TransactionCreateRequest request) {
+
+        Transaction createdTransaction = transactionService.createTransaction(email, request);
+        return ResponseUtil.success("거래 내역이 성공적으로 생성되었습니다.", createdTransaction);
+    }
+
 
     /**
      * 거래 수정 엔드포인트
