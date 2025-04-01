@@ -40,7 +40,6 @@ export default function SharedLedger() {
         <LedgerHeader />
         <div className="relative">
           <div className="flex">
-            <img className="w-[20%]" src={AddUser} alt="사용자 추가" />
             <img
               className="absolute -top-1 right-3 z-10 w-[20%] h-auto"
               src={BlackCat}
