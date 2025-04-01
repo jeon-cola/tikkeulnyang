@@ -2,8 +2,11 @@ package com.c107.transactions.service;
 
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
+import com.c107.paymenthistory.entity.BudgetCategoryEntity;
+import com.c107.paymenthistory.entity.CategoryEntity;
 import com.c107.paymenthistory.repository.BudgetCategoryRepository;
 import com.c107.paymenthistory.repository.CardRepository;
+import com.c107.paymenthistory.repository.CategoryRepository;
 import com.c107.transactions.dto.TransactionCreateRequest;
 import com.c107.transactions.dto.TransactionUpdateRequest;
 import com.c107.transactions.entity.Transaction;
@@ -17,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,38 +33,27 @@ public class TransactionService {
     private final UserRepository userRepository;
     private final CardRepository cardRepository;
     private final BudgetCategoryRepository budgetCategoryRepository;
+    private final CategoryRepository categoryRepository;
 
     @Transactional
     public Transaction createTransaction(String email, TransactionCreateRequest request) {
-
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        Integer userId = user.getUserId();
-        Integer cardId = request.getCardId();
-
-        // 카드가 사용자의 카드가 아니면 0으로 처리
-        if (cardId != null) {
-            boolean isUserCard = cardRepository.findById(cardId)
-                    .map(card -> userId.equals(card.getUserId()))
-                    .orElse(false);
-
-            // 사용자의 카드가 아니면 0으로 설정
-            if (!isUserCard) {
-                cardId = 0;
-                logger.info("유효하지 않은 카드, 기타 카드(0)로 변경: 사용자 = {}", userId);
-            }
+        // 카테고리 검증
+        Integer categoryId = request.getCategoryId();
+        if (categoryId != null) {
+            budgetCategoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 예산 카테고리입니다."));
         }
 
-        // 카드 ID가 null이면 0으로 설정
-        if (cardId == null) {
-            cardId = 0;
+        // 카테고리 ID가 null이면 기본 카테고리 사용
+        if (categoryId == null) {
+            Optional<BudgetCategoryEntity> defaultCategory = budgetCategoryRepository.findByCategoryName("기타");
+            categoryId = defaultCategory.map(BudgetCategoryEntity::getBudgetCategoryId).orElse(null);
         }
 
-        // 거래 유형 변환 (1: 수입, 2: 지출)
-        Integer transactionType = request.getTransactionType();
-
-        // 날짜 생성 (시간은 현재 시간 사용)
+        // 날짜 생성
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime transactionDate = LocalDateTime.of(
                 request.getYear(),
@@ -70,36 +64,21 @@ public class TransactionService {
                 now.getSecond()
         );
 
-        // 카테고리 ID 유효성 검증
-        Integer categoryId = request.getCategoryId();
-        if (categoryId != null) {
-            // 해당 카테고리가 존재하는지 확인
-            boolean categoryExists = budgetCategoryRepository.existsById(categoryId);
-            if (!categoryExists) {
-                throw new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 카테고리입니다.");
-            }
-        }
-
         // 새 거래 내역 생성
         Transaction newTransaction = new Transaction();
-        newTransaction.setUserId(userId);
-        newTransaction.setCardId(cardId);
-        newTransaction.setTransactionType(transactionType);
+        newTransaction.setUserId(user.getUserId());
+        newTransaction.setCardId(0); // 기타 카드로 처리
+        newTransaction.setTransactionType(request.getTransactionType());
         newTransaction.setAmount(request.getAmount());
         newTransaction.setTransactionDate(transactionDate);
         newTransaction.setCategoryId(categoryId);
         newTransaction.setMerchantName(request.getMerchantName());
-        newTransaction.setIsWaste(0); // 기본값은 낭비 아님
-        newTransaction.setDeleted(0); // 기본값은 미삭제
+        newTransaction.setIsWaste(0);
+        newTransaction.setDeleted(0);
         newTransaction.setCreatedAt(now);
         newTransaction.setUpdatedAt(now);
 
-        Transaction savedTransaction = transactionRepository.save(newTransaction);
-        logger.info("새 거래 내역 생성 완료: ID = {}, 사용자 = {}, 날짜 = {}-{}-{}",
-                savedTransaction.getTransactionId(), userId,
-                request.getYear(), request.getMonth(), request.getDay());
-
-        return savedTransaction;
+        return transactionRepository.save(newTransaction);
     }
 
     /**
