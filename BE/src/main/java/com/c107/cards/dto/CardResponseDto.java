@@ -4,6 +4,7 @@ import com.c107.cards.entity.CardInfoEntity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -25,6 +26,7 @@ public class CardResponseDto {
         @JsonProperty("card_id")
         private Integer cardId;
 
+
         @JsonProperty("card_name")
         private String cardName;
 
@@ -37,6 +39,9 @@ public class CardResponseDto {
         @JsonProperty("created_at")
         private String createdAt;
 
+        private String imagePath; // 추가
+        private List<String> benefits; // 추가
+
         public static CardInfo fromEntity(CardInfoEntity entity) {
             return CardInfo.builder()
                     .cardId(entity.getCardId())
@@ -44,6 +49,8 @@ public class CardResponseDto {
                     .cardNo(entity.getCardNo())
                     .cardType(entity.getCardType())
                     .createdAt(entity.getCreatedAt().toString())
+                    .imagePath(null) // 초기값 null
+                    .benefits(new ArrayList<>()) // 초기값 빈 리스트
                     .build();
         }
     }
