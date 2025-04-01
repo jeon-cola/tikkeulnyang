@@ -80,6 +80,26 @@ p {
   white-space: nowrap;
 }
 
+.customWhiteButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border-radius: 100px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 23px;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #F3F4F6;
+  color: #4E5966;
+  cursor: pointer;
+  transition: all 0.25s;
+  height: 43px;
+  width: 125px;
+  white-space: nowrap;
+}
+
 /* 긴 버튼 */
 .longButton {
   box-sizing: border-box;
@@ -181,8 +201,8 @@ p {
 button:hover {
   border-color: #646cff;
 }
-button:not(.blackButton):not(.whiteButton):focus,
-button:not(.blackButton):not(.whiteButton):focus-visible {
+button:not(.blackButton):not(.whiteButton):not(.customWhiteButton):focus,
+button:not(.blackButton):not(.whiteButton):not(.customWhiteButton):focus-visible {
   background-color: #e87c62;
   outline: 4px auto;
 }
