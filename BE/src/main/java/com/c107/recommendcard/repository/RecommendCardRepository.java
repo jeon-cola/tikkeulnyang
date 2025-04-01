@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface RecommendCardRepository extends JpaRepository<RecommendCard, Integer> {
     @Query("SELECT DISTINCT rc FROM RecommendCard rc, CheckCardBenefit cb, CheckBenefit b " +
@@ -38,4 +39,7 @@ public interface RecommendCardRepository extends JpaRepository<RecommendCard, In
             "AND cb.creditBenefitsId IN :creditBenefitIds " +
             "AND rc.cardType = '신용카드'")
     List<RecommendCard> findByCreditBenefitIds(@Param("creditBenefitIds") List<Integer> creditBenefitIds);
+
+    @Query("SELECT rc FROM RecommendCard rc WHERE rc.recoCardName = :cardName")
+    Optional<RecommendCard> findByRecoCardName(@Param("cardName") String cardName);
 }
