@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import CustomBackHeader from "../../../components/CustomBackHeader"
 import bankImage from "../assets/bank.png"
-import axios from "axios";
 import Api from "../../../services/Api";
 export default function Card() {
     const [isOpen, setIsOpen] = useState(false);
@@ -9,8 +8,17 @@ export default function Card() {
     const [list, setList] = useState([])
     const [card, setCard] = useState({
         cardNo:"",
-        CardName:"",
+        cardName:"",
     });
+
+    function handleCardSelect(card) {
+        console.log(card)
+        setCard({
+            cardNo:card.card_no,
+            cardName: card.card_name
+        });
+        setIsOpen(false);
+    }
 
     // 카드 리스트 조회
     useEffect(() => {
@@ -42,12 +50,12 @@ export default function Card() {
                             className="w-full p-2 border rounded flex items-center justify-between cursor-pointer"
                             onClick={() => setIsOpen(!isOpen)}
                         >
-                            {card.bank ? (
+                            {card.cardName ? (
                                 <div className="flex items-center justify-center w-full">
-                                    <span>{card.cardNo}</span>
+                                    <span>{card.cardName}</span>
                                 </div>
                             ) : (
-                                <span className="text-gray-400">대표 계좌를 선택해 주세요</span>
+                                <span className="text-gray-400">카드를 선택해 주세요</span>
                             )}
                             <span className="ml-2">▼</span>
                         </div>
@@ -58,7 +66,7 @@ export default function Card() {
                                     <div 
                                         key={card.card_name}
                                         className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                                        onClick={() => handleBankSelect(card)}
+                                        onClick={() => handleCardSelect(card)}
                                     >
                                         <span>{card.card_name}</span>
                                     </div>
