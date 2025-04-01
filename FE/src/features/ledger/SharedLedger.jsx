@@ -13,6 +13,7 @@ export default function SharedLedger() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [value, setValue] = useState(new Date());
   const [calendarData, setCalendarData] = useState([]);
+  const [viewingNickname, setViewingNickname] = useState(""); // 🔥 현재 보고 있는 사람 닉네임
 
   const emojiMap = {
     0: "🙂",
@@ -30,6 +31,7 @@ export default function SharedLedger() {
       );
       const fetchedData = res.data.data.data;
       setCalendarData(fetchedData);
+      setViewingNickname(""); // 🔄 내 가계부일 땐 초기화
     } catch (err) {
       console.error("공유 가계부 캘린더 이모지 로딩 실패:", err);
     }
@@ -45,6 +47,7 @@ export default function SharedLedger() {
       );
       const fetchedData = res.data.data.data;
       setCalendarData(fetchedData);
+      setViewingNickname(res.data.data.ownerNickname); // 🔥 현재 보고 있는 사람 이름 표시
     } catch (err) {
       console.error("상대방 가계부 로딩 실패:", err);
     }
@@ -70,6 +73,20 @@ export default function SharedLedger() {
             />
             <img className="w-[20%] h-auto" src={BlackCat} alt="캣 이미지" />
           </div>
+
+          {/* ✅ 보고 있는 사용자 표시 */}
+          {viewingNickname && (
+            <div className="text-center text-sm text-gray-600 mt-1">
+              <span className="font-semibold">{viewingNickname}</span>님의
+              가계부를 보고 있어요
+              <button
+                onClick={fetchMyLedger}
+                className="ml-2 px-2 py-1 text-xs border rounded hover:bg-gray-100"
+              >
+                내 가계부로
+              </button>
+            </div>
+          )}
 
           {/* ✅ 공유된 사용자 프로필 리스트 */}
           <div className="px-2 py-3">
