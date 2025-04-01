@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import CustomCalendar from "@/components/CustomCalendar";
 import { ChallengeService } from "@/features/challenge/services/ChallengeService";
 import { useState, useEffect } from "react";
+import ChallengeCalendar from "@/features/challenge/components/ChallengeCalendar";
 
 export default function ChallengeMake() {
   const navigate = useNavigate();
@@ -25,10 +26,11 @@ export default function ChallengeMake() {
   const [challengeId, setChallengeId] = useState(0);
 
   useEffect(() => {
-    uploadThumbnail();
+    //uploadThumbnail(challengeId);
+    console.log("thumbnail", thumbnail);
   }, [thumbnail]);
 
-  const uploadThumbnail = async (challengeId) => {
+  const uploadThumbnail = async () => {
     try {
       if (thumbnail) {
         const response = await ChallengeService.postChallengeThumbnail(
@@ -42,6 +44,7 @@ export default function ChallengeMake() {
     }
   };
 
+  // 요청값 입력 함수
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setChallengeData((prev) => ({
@@ -50,11 +53,58 @@ export default function ChallengeMake() {
     }));
   };
 
+  // ChallengeCalendar에서 선택된 날짜 범위 처리 함수
+  const handleDateRangeChange = (dateRange) => {
+    if (dateRange[0]) {
+      setChallengeData((prev) => ({
+        ...prev,
+        startDate: dateRange[0],
+      }));
+    }
+
+    if (dateRange[1]) {
+      setChallengeData((prev) => ({
+        ...prev,
+        endDate: dateRange[1],
+      }));
+    }
+  };
+
   /**
    * 챌린지 방을 생성한뒤, 응답으로 받은 challengeId 값을 바탕으로 썸네일을 S3에 생성
    */
   const handleSubmit = async () => {
     try {
+      // 구조분해할당으로 필드 추출 및 빈 값 확인
+      const fieldsToCheck = [
+        { value: challengeData.challengeName, name: "챌린지 제목" },
+        { value: challengeData.description, name: "챌린지 소개" },
+        { value: challengeData.targetAmount, name: "목표 금액" },
+        { value: challengeData.startDate, name: "시작일" },
+        { value: challengeData.endDate, name: "종료일" },
+        { value: challengeData.limitAmount, name: "예치금 최소 금액" },
+        { value: challengeData.challengeCategory, name: "챌린지 카테고리" },
+        { value: challengeData.maxParticipants, name: "참가 최대 인원" },
+      ];
+
+      // 빈 필드 확인
+      const emptyFields = fieldsToCheck
+        .filter((field) => !field.value)
+        .map((field) => field.name);
+
+      // 빈 필드가 있는 경우
+      if (emptyFields.length > 0) {
+        alert(`다음 항목을 입력해주세요:\n${emptyFields.join("\n")}`);
+        return;
+      }
+
+      // 썸네일이 선택되지 않은 경우 확인
+      if (!thumbnail) {
+        alert("썸네일 이미지를 업로드해주세요.");
+        return;
+      }
+
+      console.log("challengeData", challengeData);
       const response = await ChallengeService.postChallengeCreate(
         challengeData
       );
@@ -188,36 +238,67 @@ export default function ChallengeMake() {
             {/* 챌린지 목록 */}
             <div className="w-full overflow-hidden flex flex-row overflow-x-auto whitespace-nowrap items-center p-0 gap-[10px] relative w-[543px] h-auto">
               <CategoryItem text="주유" />
-              <CategoryItem text="세차" />
-              <CategoryItem text="이커머스" />
-              <CategoryItem text="백화점" />
-              <CategoryItem text="마트" />
+              <CategoryItem text="쇼핑" />
               <CategoryItem text="버스" />
               <CategoryItem text="지하철" />
               <CategoryItem text="택시" />
-              <CategoryItem text="도서" />
-              <CategoryItem text="문구" />
-              <CategoryItem text="전시/박람회" />
-              <CategoryItem text="아동 장난감" />
+              <CategoryItem text="학원" />
               <CategoryItem text="통신" />
-              <CategoryItem text="OTT 구독" />
-              <CategoryItem text="게임 과금" />
-              <CategoryItem text="음원" />
-              <CategoryItem text="전자기기" />
-              <CategoryItem text="직구" />
-              <CategoryItem text="면세점" />
-              <CategoryItem text="여행" />
+              <CategoryItem text="해외" />
               <CategoryItem text="카페" />
               <CategoryItem text="편의점" />
               <CategoryItem text="음식점" />
-              <CategoryItem text="외식" />
-              <CategoryItem text="영화" />
-              <CategoryItem text="공연" />
-              <CategoryItem text="미용/뷰티" />
-              <CategoryItem text="레저" />
-              <CategoryItem text="명품" />
-              <CategoryItem text="주류" />
-              <CategoryItem text="의약품" />
+              <CategoryItem text="병원" />
+              <CategoryItem text="배달" />
+              <CategoryItem text="결제" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center p-[12px_20px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+          <div className="flex flex-col items-start p-0 w-[347px] h-[70px]">
+            <div className="w-full h-[32px] order-none flex-none">
+              <div className=" w-full h-[32px] left-0 top-0">
+                <h2 className="text-left w-[154.03px] h-[32px] left-0 top-0 font-pretendard font-semibold text-[15px] leading-[18px] text-black">
+                  참가 최대 인원 설정
+                </h2>
+              </div>
+            </div>
+
+            {/* 최대인원 설정 */}
+            <div className="box-border w-full h-[38px] bg-white border border-[#DFDFDF] shadow-[0px_0.5px_2px_rgba(0,0,0,0.25)] rounded-[6px] order-1 flex-none">
+              <input
+                type="number"
+                name="maxParticipants"
+                value={challengeData.maxParticipants}
+                onChange={handleInputChange}
+                placeholder="참가 최대인원 입력"
+                className="w-full h-full px-[5px] pt-[5px] font-pretendard font-thin text-[20px] leading-[24px] placeholder-[#DFDFDF] text-black focus:outline-none bg-transparent"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center p-[12px_20px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+          <div className="flex flex-col items-start p-0 w-[347px] h-[70px]">
+            <div className="w-full h-[32px] order-none flex-none">
+              <div className=" w-full h-[32px] left-0 top-0">
+                <h2 className="text-left w-[154.03px] h-[32px] left-0 top-0 font-pretendard font-semibold text-[15px] leading-[18px] text-black">
+                  목표 금액 설정
+                </h2>
+              </div>
+            </div>
+
+            {/* 목표 금액 설정 */}
+            <div className="box-border w-full h-[38px] bg-white border border-[#DFDFDF] shadow-[0px_0.5px_2px_rgba(0,0,0,0.25)] rounded-[6px] order-1 flex-none">
+              <input
+                type="number"
+                name="targetAmount"
+                value={challengeData.targetAmount}
+                onChange={handleInputChange}
+                placeholder="기간내 목표 금액 설정"
+                className="w-full h-full px-[5px] pt-[5px] font-pretendard font-thin text-[20px] leading-[24px] placeholder-[#DFDFDF] text-black focus:outline-none bg-transparent"
+              />
             </div>
           </div>
         </div>
@@ -241,13 +322,13 @@ export default function ChallengeMake() {
         </div>
 
         <div className="flex flex-col items-center p-[12px_20px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
-          <CustomCalendar />
+          <ChallengeCalendar onDateRangeChange={handleDateRangeChange} />
           {/* 캘린더 선택이벤트 추가 후 날짜 뽑아내기*/}
         </div>
 
         {/* 결제 버튼 */}
         <div className="w-full justify-center flex flex-row">
-          <button className="longButton" onClick={handleSubmit}>
+          <button className="longButton text-white" onClick={handleSubmit}>
             챌린지 생성
           </button>
         </div>
