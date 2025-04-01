@@ -13,6 +13,8 @@ import com.c107.paymenthistory.entity.PaymentHistoryEntity;
 import com.c107.paymenthistory.repository.BudgetCategoryRepository;
 import com.c107.paymenthistory.repository.CategoryRepository;
 import com.c107.paymenthistory.repository.PaymentHistoryRepository;
+import com.c107.recommendcard.entity.RecommendCard;
+import com.c107.recommendcard.repository.*;
 import com.c107.transactions.entity.Transaction;
 import com.c107.transactions.repository.TransactionRepository;
 import com.c107.user.entity.User;
@@ -25,6 +27,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import com.c107.recommendcard.entity.CreditCardBenefit;
+import com.c107.recommendcard.entity.CheckCardBenefit;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -47,6 +51,9 @@ public class CardService {
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final RestTemplate restTemplate = new RestTemplate();
     private final TransactionRepository transactionRepository;
+    private final RecommendCardRepository recommendCardRepository;
+    private final CreditCardBenefitRepository creditCardBenefitRepository;
+    private final CheckCardBenefitRepository checkCardBenefitRepository;
 
     /**
      * Open API를 호출하여 사용자의 모든 카드 정보를 DB에 등록 또는 업데이트
@@ -154,8 +161,39 @@ public class CardService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         List<CardInfoEntity> userCards = cardInfoRepository.findByUserId(user.getUserId());
+
         List<CardResponseDto.CardInfo> cardInfos = userCards.stream()
-                .map(CardResponseDto.CardInfo::fromEntity)
+                .map(card -> {
+                    // 카드 이름으로 추천 카드 검색
+                    Optional<RecommendCard> recommendCard = recommendCardRepository
+                            .findByRecoCardName(card.getCardName());
+
+                    CardResponseDto.CardInfo cardInfo = CardResponseDto.CardInfo.fromEntity(card);
+
+                    // 추천 카드 정보 추가
+                    recommendCard.ifPresent(rc -> {
+                        cardInfo.setImagePath(rc.getImagePath());
+
+                        // 카드 타입에 따라 혜택 가져오기
+                        List<String> benefits = new ArrayList<>();
+                        if ("신용카드".equals(rc.getCardType())) {
+                            benefits = creditCardBenefitRepository
+                                    .findBySourceCardId(rc.getSourceCardId())
+                                    .stream()
+                                    .map(CreditCardBenefit::getDescription)
+                                    .collect(Collectors.toList());
+                        } else if ("체크카드".equals(rc.getCardType())) {
+                            benefits = checkCardBenefitRepository
+                                    .findBySourceCardId(rc.getSourceCardId())
+                                    .stream()
+                                    .map(CheckCardBenefit::getDescription)
+                                    .collect(Collectors.toList());
+                        }
+                        cardInfo.setBenefits(benefits);
+                    });
+
+                    return cardInfo;
+                })
                 .collect(Collectors.toList());
 
         return CardResponseDto.builder()
