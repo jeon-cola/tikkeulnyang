@@ -5,6 +5,8 @@ import CustomModal from "../../../components/CustomModal"
 import { useSelector } from "react-redux"
 import IconFunction from "./IconFunction"
 import {motion} from "framer-motion"
+import ChooseAlertModal from "../../../components/ChooseAlertModal"
+import AlertModal from "../../../components/AlertModal"
 
 export default function SubScribe() {
     const {nickName} = useSelector(state=> state.user)
@@ -12,6 +14,10 @@ export default function SubScribe() {
     const [subScribeCost, setSubScribeCost] = useState(null)
     const [subScribeList, setSubScribeList] = useState([])
     const [isModal, setIsModal ] =useState(false)
+    const [deleteSubscribeId, setDeteleSubscribeId] = useState("")
+    const [subscribeModal, setSubScribeModal] = useState(false)
+    const [checkModal, setCheckmodal] = useState(false)
+    const [deleteModal, setDeteleModal] = useState(false)
     const [swipedItems, setSwipedItems] = useState({});
     const [isSelectOption, setIsSelectOption] = useState({
         "subscribeName":"",
@@ -39,13 +45,24 @@ export default function SubScribe() {
         })
     }
 
+    // 삭제 모달 열기기
+    function deleteModalOpenHandler(id) {
+        setDeteleSubscribeId(id)
+        setDeteleModal(true)
+    }
+
+    // 삭제 모달 닫기
+    function deleteModalCloseHandler() {
+        setDeteleModal(false)
+    }
+
     // 삭제 구현
     function deleteHandler(id) {
         const fetchData = async () => {
             try {
                 const response = await Api.delete(`api/subscribe/${id}`)
                 if (response.data.status === "success") {
-                    window.alert("삭제에 성공하셨습니다")
+                    setCheckmodal(true)
                     const updateList = subScribeList.filter(item => item.subscribeId !== id)
                     setSubScribeList(updateList)
                     const newTotalCost = updateList.reduce((sum,item)=> {
@@ -63,6 +80,11 @@ export default function SubScribe() {
         fetchData()
     }
 
+    //확인 모달 닫기
+    function checkModalCloseHandler() {
+        setCheckmodal(false)
+    }
+
     //모달 열기
     function onOpenModal() {
         setIsModal(true)
@@ -71,6 +93,11 @@ export default function SubScribe() {
     //모달 닫기
     function onCloseModal() {
         setIsModal(false)
+    }
+
+    // 구독 모달 닫기
+    function subscribeModalClose() {
+        setSubScribeModal(false)
     }
 
     // 구독 등록 
@@ -83,7 +110,8 @@ export default function SubScribe() {
                     "paymentDate": isSelectOption.paymentDate
                 })
                 if (response.data.status === "success"){
-                    window.alert("구독 등록에 성공하셨습니다") 
+                    setIsModal(false)
+                    setSubScribeModal(true)
                     setSubScribeList([
                         ...subScribeList,
                         {
@@ -252,7 +280,7 @@ export default function SubScribe() {
                 :(!!buttonChange) ? Array.isArray(subScribeList) && subScribeList.map((item, index)=> (
                     <div className="relative overflow-hidden" key={index}>
                     {/* 뒤에 위치할 삭제 아이콘 영역 */}
-                    <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 z-0 rounded-[6px] bg-white" onClick={()=> deleteHandler(item.subscribeId)}>
+                    <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 z-0 rounded-[6px] bg-white" onClick={()=>deleteModalOpenHandler(item.subscribeId)}>
                     <svg 
                         xmlns="http://www.w3.org/2000/svg" 
                         width="24" 
@@ -296,7 +324,7 @@ export default function SubScribe() {
                         <img 
                           src={IconFunction(item.subscribeName)} 
                           alt={`${item.subscribeName} 구독 이미지`} 
-                          style={{ maxWidth: '50px', maxHeight: '50px' }} 
+                          className="max-w-[50px] max-h-[50px] rounded-lg shadow-[5px_5px_15px_rgba(0,0,0,0.3)]"
                           />
                       </div>
                     </div>
@@ -306,7 +334,7 @@ export default function SubScribe() {
                 : Array.isArray(subScribeList) && subScribeList.map((item, index)=> (
                     <div className="relative overflow-hidden" key={index}>
                         {/* 뒤에 위치할 삭제 아이콘 영역 - z-index 낮게 설정 */}
-                        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 rounded-[6px] bg-white" style={{ zIndex: 1 }} onClick={()=> deleteHandler(item.subscribeId)}>
+                        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 rounded-[6px] bg-white" style={{ zIndex: 1 }} onClick={()=>deleteModalOpenHandler(item.subscribeId)}>
                             <svg 
                             xmlns="http://www.w3.org/2000/svg" 
                             width="24" 
@@ -351,7 +379,7 @@ export default function SubScribe() {
                         <img 
                           src={IconFunction(item.subscribeName)} 
                           alt={`${item.subscribeName} 구독 이미지`} 
-                          style={{ maxWidth: '50px', maxHeight: '50px' }} 
+                          className="max-w-[50px] max-h-[50px] rounded-lg shadow-[5px_5px_15px_rgba(0,0,0,0.3)]"
                           />
                       </div>
                     </div>
@@ -361,6 +389,27 @@ export default function SubScribe() {
             }
             </div>
 
+            {/* 삭제 모달 */}
+            <ChooseAlertModal title="삭제하기" isOpen={deleteModal} isClose={deleteModalCloseHandler} isFunctionHandler={()=>deleteHandler(deleteSubscribeId)}>
+                <div>
+                    <p>해당 구독을 정말 삭제하시겠습니까?</p>
+                </div>
+            </ChooseAlertModal>
+
+            {/* 삭제 확인 모달 */}
+            <AlertModal title="삭제 완료" isOpen={checkModal} isClose={checkModalCloseHandler}>
+                <div>
+                    <p>삭제가 완료되었습니다</p>
+                </div>
+            </AlertModal>
+
+            {/* 등록 모달 */}
+            <AlertModal title="등록 완료" isClose={subscribeModalClose} isOpen={subscribeModal}>
+                <div>
+                    <p>등록이 완료되었습니다</p>
+                </div>
+            </AlertModal>
+            
         </div>
     )
 }
