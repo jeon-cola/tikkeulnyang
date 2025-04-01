@@ -15,6 +15,8 @@ import { useDispatch, useSelector } from "react-redux";
 import Api from "../../../services/Api.jsx";
 import MoreIcon from "../assets/MoreIcon.jsx";
 import CustomModal from "../../../components/CustomModal.jsx";
+import ChooseAlertModal from "../../../components/ChooseAlertModal.jsx";
+import AlertModal from "../../../components/AlertModal.jsx";
 
 export default function MyPageMenu() {
   const dispatch = useDispatch();
@@ -25,8 +27,11 @@ export default function MyPageMenu() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [buttonChange, setButtonChange]=useState(false)
   const [inputChange, setInputChange] =useState("")
+  const [isChooseModal, setIsChooseModal] =useState(false)
+  const [isShowModal, setIsShowModal] = useState(false)
   const nav = useNavigate();
 
+  
   // 예치금 환불
   function refundHandler() {
     const fetchData = async ()=> {
@@ -51,7 +56,7 @@ export default function MyPageMenu() {
     }
     fetchData()
   }
-
+  
   // 예치금 충전 
   function chargeHandler( ) {
     const fetchData = async () => {
@@ -76,24 +81,24 @@ export default function MyPageMenu() {
     }
     fetchData()
   }
-
+  
   // 입력값 변환환
   function inputHandler(e) {
     const value = e.target.value
     setInputChange(value)
   }
-
+  
   // 모달 열기기
   function modalHandler () {
     setIsModalOpen(true)
   }
-
+  
   // 모달 닫기기
   function onCloseModal() {
     setIsModalOpen(false)
   }
-
-
+  
+  
   // 챌린지 참여 이력
   useEffect(() => {
     const fetchChallengeHistory  = async() => {
@@ -106,7 +111,7 @@ export default function MyPageMenu() {
     }
     fetchChallengeHistory ();
   },[]);
-
+  
   // 진행 중인 챌린지 
   useEffect(()=> {
     const fetchActiveChallenge = async () => {
@@ -120,15 +125,29 @@ export default function MyPageMenu() {
     fetchActiveChallenge()
   })
 
+  // 로그아웃 모달 열기
+  function isChooseModaOpenlHandler() {
+    setIsChooseModal(true)
+  }
+
+  // 로그아웃 모달 닫기기
+  function isChooseModalCloseHandler() {
+    setIsChooseModal(false)
+  }
+
+  // 로그인 확인
+  function closeIsShowModalHandler() {
+    setIsShowModal(false)
+    nav("/home")
+  }
+  
   // 로그아웃 핸들러
-  async function logoutHandler(e) {
-    e.preventDefault();
-      try {
-        const response = await Api.post("api/auth/logout")
+  async function logoutHandler() {
+    try {
+      const response = await Api.post("api/auth/logout")
         if (response.data.status === "success") {
           dispatch(resetUser())
-          window.alert("로그아웃 성공")
-          nav("/home")
+          setIsShowModal(true)
         }
       } catch (error) {
         console.log(error)
@@ -329,7 +348,7 @@ export default function MyPageMenu() {
           </Link> */}
 
           {/* 로그아웃 */}
-          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 flex items-center p-4" onClick={logoutHandler}>
+          <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 flex items-center p-4" onClick={isChooseModaOpenlHandler}>
               <div className="mr-4">
                 <LogoutIcon/>
               </div>
@@ -337,7 +356,20 @@ export default function MyPageMenu() {
                 <p className="font-regular">로그아웃</p>
               </div>
             </div>
+
+          {/* 로그아웃 모달 */}
+          <ChooseAlertModal title="로그아웃" height={200} isClose={isChooseModalCloseHandler} isOpen={isChooseModal} isFunctionHandler={logoutHandler} >
+            <div>
+              <p>로그아웃 하시겠습니까?</p>
+            </div>
+          </ChooseAlertModal>
           
+          {/* 로그아웃 확인 */}
+            <AlertModal title="로그아웃" height={170} isClose={closeIsShowModalHandler} isOpen={isShowModal}>
+              <div>
+                <p className="text-xl">로그아웃 되었습니다</p>
+              </div>
+            </AlertModal>
 
         </div>
 
