@@ -3,10 +3,13 @@ import Container from "@/components/Container";
 import CustomCalendar from "@/components/CustomCalendar";
 import LedgerHeader from "./components/LedgerHeader";
 import AddUser from "./assets/add_user.png";
+import Modal from "@/components/Modal";
 import BlackCat from "./assets/ledger_cat.png";
 import Api from "@/services/Api";
+import InviteLinkSection from "./components/budget/InviteLinkSection";
 
 export default function SharedLedger() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [value, setValue] = useState(new Date());
   const [calendarData, setCalendarData] = useState([]);
 
@@ -41,6 +44,12 @@ export default function SharedLedger() {
         <div className="relative">
           <div className="flex">
             <img
+              className="w-[20%] cursor-pointer"
+              src={AddUser}
+              alt="사용자 추가"
+              onClick={() => setIsModalOpen(true)} // 모달 열기
+            />
+            <img
               className="absolute -top-1 right-3 z-10 w-[20%] h-auto"
               src={BlackCat}
               alt="캣 이미지"
@@ -65,6 +74,17 @@ export default function SharedLedger() {
               return null;
             }}
           />
+          {/* 모달 컴포넌트 렌더링 */}
+          {isModalOpen && (
+            <Modal
+              title="사용자 초대"
+              description="초대 링크를 복사하여 친구에게 보내세요."
+              onClose={() => setIsModalOpen(false)}
+            >
+              {/* 👇 이 부분은 children으로 들어가는 영역 */}
+              <InviteLinkSection />
+            </Modal>
+          )}
         </div>
       </Container>
     </div>
