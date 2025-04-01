@@ -6,6 +6,7 @@ import AddUser from "./assets/add_user.png";
 import Modal from "@/components/Modal";
 import BlackCat from "./assets/ledger_cat.png";
 import Api from "@/services/Api";
+import InviteLinkSection from "./components/budget/InviteLinkSection";
 
 export default function SharedLedger() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -76,10 +77,13 @@ export default function SharedLedger() {
           {/* 모달 컴포넌트 렌더링 */}
           {isModalOpen && (
             <Modal
-              title="사용자 추가"
-              description="함께 가계부를 작성할 사용자를 추가하세요."
-              onClose={() => setIsModalOpen(false)} // 모달 닫기
-            />
+              title="사용자 초대"
+              description="초대 링크를 복사하여 친구에게 보내세요."
+              onClose={() => setIsModalOpen(false)}
+            >
+              {/* 👇 이 부분은 children으로 들어가는 영역 */}
+              <InviteLinkSection />
+            </Modal>
           )}
         </div>
       </Container>
