@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import InviteLinkSection from "../features/ledger/components/budget/InviteLinkSection";
 
-export default function Modal({ title, description, onClose }) {
+export default function Modal({ title, description, onClose, children }) {
   const modalRef = useRef(null);
   const [animationClass, setAnimationClass] = useState("translate-y-full");
 
@@ -36,11 +37,14 @@ export default function Modal({ title, description, onClose }) {
           onClick={handleClose}
         />
 
-        {/* 콘텐츠 중앙 정렬 */}
+        {/* 타이틀과 설명 */}
         <div className="flex flex-col items-center justify-center mt-5 text-center">
           <div className="text-xl font-bold">{title}</div>
           <p className="mt-4 text-gray-700">{description}</p>
         </div>
+
+        {/* children은 아래쪽에 따로 */}
+        <div className="mt-6 w-full">{children}</div>
       </div>
     </div>
   );
