@@ -460,26 +460,21 @@ public class PaymentHistoryService {
                     Integer categoryId = transaction.getCategoryId();
                     String budgetCategoryName = "기타"; // 기본값
 
+                    log.info("거래 내역 로그:");
+                    log.info("거래 ID: {}", transaction.getTransactionId());
+                    log.info("카테고리 ID: {}", categoryId);
+                    log.info("가맹점명: {}", transaction.getMerchantName());
+                    log.info("금액: {}", amount);
+
                     // 카테고리 매핑 시도
                     if (categoryId != null) {
-                        // 카테고리 ID로 예산 카테고리 조회
-                        CategoryEntity category = categoryRepository.findById(categoryId).orElse(null);
-                        if (category != null && category.getBudgetCategory() != null) {
-                            Integer budgetCategoryId = category.getBudgetCategory();
-                            String mappedName = budgetCategoryMap.get(budgetCategoryId);
-                            if (mappedName != null) {
-                                budgetCategoryName = mappedName;
-                            }
-                        }
-                    } else if (transaction.getMerchantName() != null) {
-                        // 가맹점 이름으로 카테고리 조회
-                        List<CategoryEntity> matchingCategories = categoryRepository.findByMerchantName(transaction.getMerchantName());
-                        if (!matchingCategories.isEmpty() && matchingCategories.get(0).getBudgetCategory() != null) {
-                            Integer budgetCategoryId = matchingCategories.get(0).getBudgetCategory();
-                            String mappedName = budgetCategoryMap.get(budgetCategoryId);
-                            if (mappedName != null) {
-                                budgetCategoryName = mappedName;
-                            }
+                        // 직접 budget_category_name을 찾아 매핑
+                        Optional<BudgetCategoryEntity> budgetCategory = budgetCategoryRepository.findById(categoryId);
+
+                        log.info("BudgetCategory 조회 결과:");
+                        if (budgetCategory.isPresent()) {
+                            budgetCategoryName = budgetCategory.get().getCategoryName();
+                            log.info("매핑된 예산 카테고리명: {}", budgetCategoryName);
                         }
                     }
 
