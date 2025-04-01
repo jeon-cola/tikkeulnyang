@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react"
 import CustomBackHeader from "../../../components/CustomBackHeader"
-import bankImage from "../assets/bank.png"
 import Api from "../../../services/Api";
 export default function Card() {
     const [list, setList] = useState([])
+    const [isClick, setIsClick] = useState(false)
     const [card, setCard] = useState({
         cardNo:"",
         cardName:"",
@@ -46,7 +46,7 @@ export default function Card() {
                         <div 
                             key={card.card_name} 
                             onClick={() => handleCardSelect(card)} 
-                            className="w-full flex justify-center my-4 relative"
+                            className={(isClick)?"w-full flex justify-center my-4 relative":"absolute top-5"}
                             style={{ aspectRatio: '1/1' }}
                         >   
                             <img 
