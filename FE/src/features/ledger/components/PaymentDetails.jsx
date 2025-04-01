@@ -23,9 +23,9 @@ const categories = [
 ];
 
 const formatKoreanDate = (dateStr) => {
-  const date = new Date(dateStr);
-  const day = date.getDate(); // 날짜 (11)
-  const weekday = date.toLocaleDateString("ko-KR", { weekday: "long" }); // 화요일
+  const date = new Date(dateStr + "T00:00:00+09:00"); // 타임존 보정
+  const day = date.getDate(); // 날짜
+  const weekday = date.toLocaleDateString("ko-KR", { weekday: "long" });
   return `${day}일 ${weekday}`;
 };
 console.log("PaymentDetails에서 시간조회:", new Date());

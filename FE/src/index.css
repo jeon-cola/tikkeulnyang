@@ -91,8 +91,8 @@ p {
   font-size: 23px;
   font-weight: 500;
   font-family: inherit;
-  background-color: #F3F4F6;
-  color: #4E5966;
+  background-color: #f3f4f6;
+  color: #4e5966;
   cursor: pointer;
   transition: all 0.25s;
   height: 43px;
@@ -137,7 +137,6 @@ p {
 .blackButton:active {
   background-color: #242424;
 }
-
 
 .smallButton {
   display: flex;
@@ -201,11 +200,14 @@ p {
 button:hover {
   border-color: #646cff;
 }
-button:not(.blackButton):not(.whiteButton):not(.customWhiteButton):focus,
-button:not(.blackButton):not(.whiteButton):not(.customWhiteButton):focus-visible {
+/* 이 기능이 있으면 달력에서 네모가 생깁니다.. 없앨 수 있을까요? */
+/* button:not(.blackButton):not(.whiteButton):not(.customWhiteButton):focus,
+button:not(.blackButton):not(.whiteButton):not(
+    .customWhiteButton
+  ):focus-visible {
   background-color: #e87c62;
   outline: 4px auto;
-}
+} */
 
 @media (prefers-color-scheme: light) {
   :root {
