@@ -1,8 +1,13 @@
 import Education from "../../assets/Education.png"
 
-export default function EducationPage ({title, current_savings, target_amount,color}) {
+export default function EducationPage ({title, current_savings, target_amount,color, onSaving, bucketListId}) {
     const currentProgress = current_savings > 0 && target_amount > 0 ? Math.min((current_savings / target_amount) * 100, 100) : 0
-    console.log(current_savings)
+    
+    // 저축 콜백
+    function onButtonHandler(bucketListId) {
+        onSaving(bucketListId)
+    }
+
     return(
         <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 flex flex-col gap-3">
             <div className="w-full flex flex-row">
@@ -13,7 +18,7 @@ export default function EducationPage ({title, current_savings, target_amount,co
                 <img src={Education} alt="교육비 이미지" />
             </div>
             <div className="w-full">
-                <button className="customButton" style={{backgroundColor:color}}>저축하기</button>
+                <button className="customButton" style={{backgroundColor:color}} onClick={()=>onButtonHandler(bucketListId)} >저축하기</button>
             </div>
             <div className="flex flex-row justify-between w-full">
                 <div>
