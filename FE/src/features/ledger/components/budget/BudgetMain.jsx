@@ -16,13 +16,13 @@ import EducationIcon from "../../assets/category/education_icon.png";
 // import WasteBlack from "../../assets/waste_black.png";
 
 const categories = [
-  { id: 1, name: "교통/차량", Icon: TransportationIcon },
-  { id: 2, name: "쇼핑/미용", Icon: ShoppingIcon },
-  { id: 3, name: "교육/육아", Icon: EducationIcon },
-  { id: 4, name: "주거/통신", Icon: HousingIcon },
-  { id: 5, name: "문화/여가", Icon: EntertainmentIcon },
+  { id: 1, name: "주거/통신", Icon: HousingIcon },
+  { id: 2, name: "식비", Icon: FoodIcon },
+  { id: 3, name: "교통/차량", Icon: TransportationIcon },
+  { id: 4, name: "교육/육아", Icon: EducationIcon },
+  { id: 5, name: "쇼핑/미용", Icon: ShoppingIcon },
   { id: 6, name: "병원/약국", Icon: MedicalIcon },
-  { id: 7, name: "식비", Icon: FoodIcon },
+  { id: 7, name: "문화/여가", Icon: EntertainmentIcon },
   { id: 8, name: "잡화", Icon: GoodsIcon },
   { id: 9, name: "결제", Icon: SpenseIcon },
 ];
@@ -46,7 +46,7 @@ export default function BudgetMain() {
     const fetchData = async () => {
       try {
         const response = await Api.get(
-          `api/budget/plan?year=${year}&month=${month}`
+          `api/budget/categories?year=${year}&month=${month}`
         );
         console.log("예산 데이터 조회", response.data.data);
         setBudgetData(response.data.data);
@@ -59,8 +59,8 @@ export default function BudgetMain() {
 
   const total = budgetData?.totals?.total_amount || 0;
   const remaining = budgetData?.totals?.total_remaining_amount || 0;
+  const spending = budgetData?.totals?.total_spending_amount || 0;
   const isExceed = budgetData?.totals?.total_is_exceed || false;
-
   const daysLeft = getDaysLeftInMonth(activeDate);
   const dailyAvailable = daysLeft > 0 ? Math.floor(remaining / daysLeft) : 0;
 
@@ -108,14 +108,14 @@ export default function BudgetMain() {
           <div className="relative w-full h-[24px] bg-[#F1EFEF] border border-[#DFDFDF] rounded-[70px] mt-2 overflow-hidden">
             {isExceed ? (
               <div
-                className="h-full bg-[#FF6B6B] rounded-[70px] text-white text-[12px] text-center"
+                className="h-full bg-[#FF957A] rounded-[70px] text-white text-[12px] text-center"
                 style={{ width: `${Math.min(exceedPercent, 100)}%` }}
               >
                 {exceedPercent.toFixed(0)}%
               </div>
             ) : (
               <div
-                className="h-full bg-[#6ECBFF] rounded-[70px] text-white text-[12px] text-center"
+                className="h-full bg-[#AAE1FE] rounded-[70px] text-white text-[12px] text-center"
                 style={{ width: `${percent}%` }}
               >
                 {percent.toFixed(0)}%
@@ -126,26 +126,27 @@ export default function BudgetMain() {
       </div>
 
       {/* 카테고리별 막대 차트 */}
-      <div className="relative w-full h-auto bg-white rounded-md shadow-sm">
+      <div className="relative w-full h-auto bg-white rounded-md shadow-sm min-h-screen">
         <div className="mt-6 space-y-4">
-          {budgetData?.budgets?.map((item) => {
+          {budgetData?.categories?.map((item) => {
             const category = categories.find((c) => c.id === item.categoryId);
-            const used = item.used_amount || 0;
+            const used = item.spendingAmount || 0;
             const budget = item.amount || 0;
-            const remaining = Math.max(budget - used, 0);
-            const exceed = used > budget;
-            const percent = Math.min((used / budget) * 100, 100);
+            const remaining = item.remainingAmount;
+            const exceed = item.isExceed === 1;
+            const percent =
+              budget > 0 ? Math.min((used / budget) * 100, 100) : 0;
 
             return (
               <div
-                key={item.name}
+                key={item.categoryId}
                 className="flex items-center gap-3 px-3 py-2"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2  min-w-[140px]">
                   {category?.Icon && (
                     <img
                       src={category.Icon}
-                      alt={item.name}
+                      alt={item.categoryName}
                       className="w-12 h-auto object-contain"
                     />
                   )}
@@ -162,7 +163,7 @@ export default function BudgetMain() {
                   <div className="relative w-full h-[25px] bg-[#ECECEC] rounded-full overflow-hidden">
                     <div
                       className={`h-full ${
-                        exceed ? "bg-[#FF6B6B]" : "bg-[#6ECBFF]"
+                        exceed ? "bg-[#FF957A]" : "bg-[#AAE1FE]"
                       } rounded-full`}
                       style={{ width: `${percent}%` }}
                     >
