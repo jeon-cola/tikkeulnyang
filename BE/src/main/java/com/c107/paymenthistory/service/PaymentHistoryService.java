@@ -429,7 +429,7 @@ public class PaymentHistoryService {
                     }
 
                     // 2. 카테고리 ID로 조회 (가맹점으로 찾지 못한 경우)
-                    if (budgetCategoryName.equals("기타") && categoryId != null) {
+                    if (budgetCategoryName.equals("결제") && categoryId != null) {
                         CategoryEntity category = categoryRepository.findById(categoryId).orElse(null);
                         if (category != null && category.getBudgetCategory() != null) {
                             Integer budgetCategoryId = category.getBudgetCategory();
@@ -458,7 +458,7 @@ public class PaymentHistoryService {
                 if (transaction.getTransactionType() != 1) { // 출금(지출)만 처리
                     int amount = transaction.getAmount();
                     Integer categoryId = transaction.getCategoryId();
-                    String budgetCategoryName = "기타"; // 기본값
+                    String budgetCategoryName = "결제"; // 기본값을 "결제"로 변경
 
                     log.info("거래 내역 로그:");
                     log.info("거래 ID: {}", transaction.getTransactionId());
