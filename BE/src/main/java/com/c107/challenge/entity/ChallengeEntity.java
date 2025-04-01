@@ -66,4 +66,5 @@ public class ChallengeEntity {
 
     @Column(name = "limit_amount")
     private Integer limitAmount;
+
 }
