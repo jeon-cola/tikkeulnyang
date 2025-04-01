@@ -8,6 +8,7 @@ export default function CustomCalendar({
   onChange,
   tileContent,
   tileClassName: customTileClassName,
+  data,
 }) {
   return (
     <div>
