@@ -44,7 +44,9 @@ export default function ChooseAlertModal({title, isOpen, isClose, children, heig
                     transition: 'opacity 0.25s ease'
                 }}
             >
+                {/* 타이틀 */}
                 <h2 className="text-2xl font-semibold">{title}</h2>
+                {/* 내용 */}
                 <div className="mt-3 flex-1">
                     {children}
                 </div>

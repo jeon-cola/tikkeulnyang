@@ -30,7 +30,9 @@ export default function AlertModal({title,isOpen, isClose,children, height}) {
     className={`relative bg-white w-full m-[20px] rounded-3xl transform transition-transform duration-300 flex flex-col ${animationClass} gap-3 p-2`}
     style={{ height: height ? `${height}px` : 'auto' }}
   >
+    {/* 타이틀 */}
     <h2 className="text-2xl font-semibold">{title}</h2>
+    {/* 내용 */}
     <div className="flex-1 flex flex-col items-center justify-center mb-10">
       {children}
     </div>
