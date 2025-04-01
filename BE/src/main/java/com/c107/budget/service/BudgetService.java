@@ -90,17 +90,116 @@ public class BudgetService {
     }
 
     /**
-     * 특정 연/월에 대한 예산 계획 조회
+     * 이전 달의 예산을 현재 달로 복사
+     */
+    @Transactional
+    public void copyPreviousMonthBudget(String email, int year, int month) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 현재 달의 시작일과 종료일
+        LocalDate currentStartDate = LocalDate.of(year, month, 1);
+        LocalDate currentEndDate = currentStartDate.withDayOfMonth(currentStartDate.lengthOfMonth());
+
+        // 현재 달의 예산 확인
+        List<BudgetEntity> currentBudgets = budgetRepository.findByEmailAndStartDateAndEndDate(
+                email, currentStartDate, currentEndDate);
+
+        // 현재 달에 예산이 이미 있으면 복사하지 않음
+        if (!currentBudgets.isEmpty()) {
+            return;
+        }
+
+        // 이전 달의 시작일과 종료일
+        LocalDate previousMonth = currentStartDate.minusMonths(1);
+        LocalDate previousStartDate = LocalDate.of(previousMonth.getYear(), previousMonth.getMonthValue(), 1);
+        LocalDate previousEndDate = previousStartDate.withDayOfMonth(previousStartDate.lengthOfMonth());
+
+        // 이전 달의 예산 조회
+        List<BudgetEntity> previousBudgets = budgetRepository.findByEmailAndStartDateAndEndDate(
+                email, previousStartDate, previousEndDate);
+
+        // 이전 달 예산이 없으면 종료
+        if (previousBudgets.isEmpty()) {
+            return;
+        }
+
+        // 이전 달 예산을 현재 달로 복사
+        List<BudgetEntity> newBudgets = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+
+        for (BudgetEntity previousBudget : previousBudgets) {
+            BudgetEntity newBudget = BudgetEntity.builder()
+                    .userId(user.getUserId())
+                    .email(email)
+                    .categoryId(previousBudget.getCategoryId())
+                    .amount(previousBudget.getAmount())
+                    .spendingAmount(0)  // 새 달이므로 지출액은 0으로 초기화
+                    .remainingAmount(previousBudget.getAmount())  // 남은 금액은 전체 예산으로 설정
+                    .isExceed(false)    // 초과 여부는 false로 초기화
+                    .startDate(currentStartDate)
+                    .endDate(currentEndDate)
+                    .createdAt(now)
+                    .updatedAt(now)
+                    .build();
+
+            newBudgets.add(newBudget);
+        }
+
+        // 새 예산을 데이터베이스에 저장
+        budgetRepository.saveAll(newBudgets);
+    }
+
+    /**
+     * 특정 연/월에 대한 예산 계획 조회 (예산이 없으면 이전 달 예산 복사)
      */
     public BudgetResponseDto getBudgetPlan(String email, int year, int month) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
+        // 현재 달의 예산 존재 여부 확인 없이 이전 달 예산 복사
+        copyPreviousMonthBudget(email, year, month);
+
+        // 현재 달의 시작일과 종료일
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
+        // 복사 후 현재 달의 예산 조회
         List<BudgetEntity> budgetEntities = budgetRepository.findByEmailAndStartDateAndEndDate(
                 email, startDate, endDate);
+
+        // 실제 지출 내역 조회
+        List<Integer> userCardIds = cardRepository.findByUserId(user.getUserId())
+                .stream()
+                .map(CardEntity::getCardId)
+                .collect(Collectors.toList());
+
+        List<PaymentHistoryEntity> payments = paymentHistoryRepository
+                .findByCardIdInAndTransactionDateBetween(userCardIds, startDate, endDate);
+
+        // 카테고리별 지출 금액 계산
+        Map<Integer, Integer> categorySpending = new HashMap<>();
+        for (PaymentHistoryEntity payment : payments) {
+            try {
+                String categoryIdStr = payment.getCategoryId();
+                if (categoryIdStr == null || categoryIdStr.isEmpty()) continue;
+
+                Integer categoryId;
+                try {
+                    categoryId = Integer.parseInt(categoryIdStr);
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+
+                int amount = Math.abs(Integer.parseInt(payment.getTransactionBalance().trim().replace(",", "")));
+                categorySpending.put(
+                        categoryId,
+                        categorySpending.getOrDefault(categoryId, 0) + amount
+                );
+            } catch (Exception e) {
+                // 오류 발생 시 로깅하고 계속 진행
+            }
+        }
 
         int totalAmount = 0;
         int totalSpendingAmount = 0;
@@ -110,20 +209,25 @@ public class BudgetService {
         List<BudgetResponseDto.Budget> budgetDtos = new ArrayList<>();
 
         for (BudgetEntity budget : budgetEntities) {
-            totalAmount += budget.getAmount() != null ? budget.getAmount() : 0;
-            totalSpendingAmount += budget.getSpendingAmount() != null ? budget.getSpendingAmount() : 0;
-            totalRemainingAmount += budget.getRemainingAmount() != null ? budget.getRemainingAmount() : 0;
+            int amount = budget.getAmount() != null ? budget.getAmount() : 0;
+            int spendingAmount = categorySpending.getOrDefault(budget.getCategoryId(), 0); // 실제 지출 금액
+            int remainingAmount = amount - spendingAmount;
+            boolean isExceed = spendingAmount > amount && amount > 0;
 
-            if (budget.getIsExceed() != null && budget.getIsExceed()) {
+            totalAmount += amount;
+            totalSpendingAmount += spendingAmount;
+            totalRemainingAmount += remainingAmount;
+
+            if (isExceed) {
                 totalIsExceed = true;
             }
 
             BudgetResponseDto.Budget budgetDto = BudgetResponseDto.Budget.builder()
                     .categoryId(budget.getCategoryId())
-                    .amount(budget.getAmount())
-                    .spendingAmount(budget.getSpendingAmount())
-                    .remainingAmount(budget.getRemainingAmount())
-                    .isExceed(budget.getIsExceed() != null && budget.getIsExceed() ? 1 : 0)
+                    .amount(amount)
+                    .spendingAmount(spendingAmount)
+                    .remainingAmount(remainingAmount)
+                    .isExceed(isExceed ? 1 : 0)
                     .startDate(budget.getStartDate().toString())
                     .endDate(budget.getEndDate().toString())
                     .createdAt(budget.getCreatedAt().toString())
@@ -147,7 +251,6 @@ public class BudgetService {
     }
 
     public BudgetRemainResponseDto getBudgetRemain(String email) {
-
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
@@ -158,12 +261,47 @@ public class BudgetService {
         List<BudgetEntity> budgetEntities = budgetRepository.findByEmailAndStartDateAndEndDate(
                 email, startDate, endDate);
 
-        int totalRemainingAmount = 0;
+        // 실제 지출 내역 조회
+        List<Integer> userCardIds = cardRepository.findByUserId(user.getUserId())
+                .stream()
+                .map(CardEntity::getCardId)
+                .collect(Collectors.toList());
 
+        List<PaymentHistoryEntity> payments = paymentHistoryRepository
+                .findByCardIdInAndTransactionDateBetween(userCardIds, startDate, endDate);
+
+        // 카테고리별 지출 금액 계산
+        Map<Integer, Integer> categorySpending = new HashMap<>();
+        for (PaymentHistoryEntity payment : payments) {
+            try {
+                String categoryIdStr = payment.getCategoryId();
+                if (categoryIdStr == null || categoryIdStr.isEmpty()) continue;
+
+                Integer categoryId;
+                try {
+                    categoryId = Integer.parseInt(categoryIdStr);
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+
+                int amount = Math.abs(Integer.parseInt(payment.getTransactionBalance().trim().replace(",", "")));
+                categorySpending.put(
+                        categoryId,
+                        categorySpending.getOrDefault(categoryId, 0) + amount
+                );
+            } catch (Exception e) {
+                // 오류 발생 시 로깅하고 계속 진행
+            }
+        }
+
+        int totalRemainingAmount = 0;
         List<BudgetRemainResponseDto.Budget> budgetDtos = new ArrayList<>();
 
         for (BudgetEntity budget : budgetEntities) {
-            int remainingAmount = budget.getRemainingAmount() != null ? budget.getRemainingAmount() : 0;
+            int amount = budget.getAmount() != null ? budget.getAmount() : 0;
+            int spendingAmount = categorySpending.getOrDefault(budget.getCategoryId(), 0);
+            int remainingAmount = amount - spendingAmount;
+
             totalRemainingAmount += remainingAmount;
 
             BudgetRemainResponseDto.Budget budgetDto = BudgetRemainResponseDto.Budget.builder()
