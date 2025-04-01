@@ -7,11 +7,13 @@ import MyPageRouter from "./MyPageRouter";
 import HomeMain from "../features/home/HomeMain";
 import CardRouter from "./CardRouter";
 import UserRouter from "./UserRouter";
+import AcceptInvite from "@/features/ledger/AcceptInvite";
 
 export default function Router() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/:token" element={<AcceptInvite />} />
         <Route path="/home/*" element={<HomeMain />} />
         <Route path="/bucketlist/*" element={<BucketListRouter />} />
         <Route path="/challenge/*" element={<ChallengeMainRouter />} />
