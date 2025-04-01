@@ -73,6 +73,7 @@ export default function SubScribe() {
         setIsModal(false)
     }
 
+    // 구독 등록 
     function spend() {
         const fetchData = async () => {
             try {
@@ -92,7 +93,6 @@ export default function SubScribe() {
                         }
                     ])
                     const currentCost = parseInt(subScribeCost,10) + parseInt(isSelectOption.subscribePrice,10)
-                    console.log(currentCost)
                     setSubScribeCost(currentCost)
                 }
             } catch (error) {
