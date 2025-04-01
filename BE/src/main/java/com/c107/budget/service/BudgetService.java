@@ -171,36 +171,31 @@ public class BudgetService {
         List<BudgetEntity> budgetEntities = budgetRepository.findByEmailAndStartDateAndEndDate(
                 email, startDate, endDate);
 
-        // 실제 지출 내역 조회
-        List<Integer> userCardIds = cardRepository.findByUserId(user.getUserId())
-                .stream()
-                .map(CardEntity::getCardId)
-                .collect(Collectors.toList());
-
-        List<PaymentHistoryEntity> payments = paymentHistoryRepository
-                .findByCardIdInAndTransactionDateBetween(userCardIds, startDate, endDate);
+        // Transactions 테이블에서 실제 지출 내역 조회
+        List<Transaction> transactions = transactionRepository.findByUserIdAndTransactionDateBetween(
+                user.getUserId(),
+                startDate.atStartOfDay(),
+                endDate.atTime(23, 59, 59)
+        );
 
         // 카테고리별 지출 금액 계산
         Map<Integer, Integer> categorySpending = new HashMap<>();
-        for (PaymentHistoryEntity payment : payments) {
+        for (Transaction transaction : transactions) {
             try {
-                String categoryIdStr = payment.getCategoryId();
-                if (categoryIdStr == null || categoryIdStr.isEmpty()) continue;
+                // 입금 제외
+                if (transaction.getTransactionType() != 1) {
+                    Integer categoryId = transaction.getCategoryId();
+                    int amount = transaction.getAmount();
 
-                Integer categoryId;
-                try {
-                    categoryId = Integer.parseInt(categoryIdStr);
-                } catch (NumberFormatException e) {
-                    continue;
+                    if (categoryId != null) {
+                        categorySpending.put(
+                                categoryId,
+                                categorySpending.getOrDefault(categoryId, 0) + amount
+                        );
+                    }
                 }
-
-                int amount = Math.abs(Integer.parseInt(payment.getTransactionBalance().trim().replace(",", "")));
-                categorySpending.put(
-                        categoryId,
-                        categorySpending.getOrDefault(categoryId, 0) + amount
-                );
             } catch (Exception e) {
-                // 오류 발생 시 로깅하고 계속 진행
+                // 오류 발생 시 로깅
             }
         }
 
@@ -213,7 +208,7 @@ public class BudgetService {
 
         for (BudgetEntity budget : budgetEntities) {
             int amount = budget.getAmount() != null ? budget.getAmount() : 0;
-            int spendingAmount = categorySpending.getOrDefault(budget.getCategoryId(), 0); // 실제 지출 금액
+            int spendingAmount = categorySpending.getOrDefault(budget.getCategoryId(), 0);
             int remainingAmount = amount - spendingAmount;
             boolean isExceed = spendingAmount > amount && amount > 0;
 
@@ -264,36 +259,31 @@ public class BudgetService {
         List<BudgetEntity> budgetEntities = budgetRepository.findByEmailAndStartDateAndEndDate(
                 email, startDate, endDate);
 
-        // 실제 지출 내역 조회
-        List<Integer> userCardIds = cardRepository.findByUserId(user.getUserId())
-                .stream()
-                .map(CardEntity::getCardId)
-                .collect(Collectors.toList());
-
-        List<PaymentHistoryEntity> payments = paymentHistoryRepository
-                .findByCardIdInAndTransactionDateBetween(userCardIds, startDate, endDate);
+        // Transactions 테이블에서 실제 지출 내역 조회
+        List<Transaction> transactions = transactionRepository.findByUserIdAndTransactionDateBetween(
+                user.getUserId(),
+                startDate.atStartOfDay(),
+                endDate.atTime(23, 59, 59)
+        );
 
         // 카테고리별 지출 금액 계산
         Map<Integer, Integer> categorySpending = new HashMap<>();
-        for (PaymentHistoryEntity payment : payments) {
+        for (Transaction transaction : transactions) {
             try {
-                String categoryIdStr = payment.getCategoryId();
-                if (categoryIdStr == null || categoryIdStr.isEmpty()) continue;
+                // 입금 제외
+                if (transaction.getTransactionType() != 1) {
+                    Integer categoryId = transaction.getCategoryId();
+                    int amount = transaction.getAmount();
 
-                Integer categoryId;
-                try {
-                    categoryId = Integer.parseInt(categoryIdStr);
-                } catch (NumberFormatException e) {
-                    continue;
+                    if (categoryId != null) {
+                        categorySpending.put(
+                                categoryId,
+                                categorySpending.getOrDefault(categoryId, 0) + amount
+                        );
+                    }
                 }
-
-                int amount = Math.abs(Integer.parseInt(payment.getTransactionBalance().trim().replace(",", "")));
-                categorySpending.put(
-                        categoryId,
-                        categorySpending.getOrDefault(categoryId, 0) + amount
-                );
             } catch (Exception e) {
-                // 오류 발생 시 로깅하고 계속 진행
+                // 오류 발생 시 로깅
             }
         }
 
