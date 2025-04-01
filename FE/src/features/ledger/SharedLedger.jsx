@@ -3,10 +3,11 @@ import Container from "@/components/Container";
 import CustomCalendar from "@/components/CustomCalendar";
 import LedgerHeader from "./components/LedgerHeader";
 import AddUser from "./assets/add_user.png";
-import Modal from "@/components/Modal";
 import BlackCat from "./assets/ledger_cat.png";
+import Modal from "@/components/Modal";
 import Api from "@/services/Api";
 import InviteLinkSection from "./components/budget/InviteLinkSection";
+import ProfileImageList from "./components/budget/ProfileImageList";
 
 export default function SharedLedger() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -14,26 +15,42 @@ export default function SharedLedger() {
   const [calendarData, setCalendarData] = useState([]);
 
   const emojiMap = {
-    0: "🙂", // 평범
-    1: "😄", // 만족
-    2: "😓", // 낭비
+    0: "🙂",
+    1: "😄",
+    2: "😓",
+  };
+
+  // ✅ 기본 내 가계부 조회
+  const fetchMyLedger = async () => {
+    const year = value.getFullYear();
+    const month = value.getMonth() + 1;
+    try {
+      const res = await Api.get(
+        `api/share/myledger?year=${year}&month=${month}`
+      );
+      const fetchedData = res.data.data.data;
+      setCalendarData(fetchedData);
+    } catch (err) {
+      console.error("공유 가계부 캘린더 이모지 로딩 실패:", err);
+    }
+  };
+
+  // ✅ 친구 가계부 조회
+  const fetchUserLedger = async (userId) => {
+    const year = value.getFullYear();
+    const month = value.getMonth() + 1;
+    try {
+      const res = await Api.get(
+        `/api/share/ledger/user/${userId}?year=${year}&month=${month}`
+      );
+      const fetchedData = res.data.data.data;
+      setCalendarData(fetchedData);
+    } catch (err) {
+      console.error("상대방 가계부 로딩 실패:", err);
+    }
   };
 
   useEffect(() => {
-    const fetchMyLedger = async () => {
-      const year = value.getFullYear();
-      const month = value.getMonth() + 1;
-      try {
-        const res = await Api.get(
-          `api/share/myledger?year=${year}&month=${month}`
-        );
-        const fetchedData = res.data.data.data; // 날짜별 이모지 리스트
-        setCalendarData(fetchedData);
-      } catch (err) {
-        console.error("공유 가계부 캘린더 이모지 로딩 실패:", err);
-      }
-    };
-
     fetchMyLedger();
   }, [value]);
 
@@ -41,27 +58,32 @@ export default function SharedLedger() {
     <div className="w-full">
       <Container>
         <LedgerHeader />
+
         <div className="relative">
-          <div className="flex">
+          {/* 상단 버튼 영역 */}
+          <div className="flex items-center justify-between px-2">
             <img
               className="w-[20%] cursor-pointer"
               src={AddUser}
               alt="사용자 추가"
-              onClick={() => setIsModalOpen(true)} // 모달 열기
+              onClick={() => setIsModalOpen(true)}
             />
-            <img
-              className="absolute -top-1 right-3 z-10 w-[20%] h-auto"
-              src={BlackCat}
-              alt="캣 이미지"
-            />
+            <img className="w-[20%] h-auto" src={BlackCat} alt="캣 이미지" />
           </div>
+
+          {/* ✅ 공유된 사용자 프로필 리스트 */}
+          <div className="px-2 py-3">
+            <ProfileImageList onClick={fetchUserLedger} />
+          </div>
+
+          {/* 🗓️ 캘린더 */}
           <CustomCalendar
             className="z-0"
             value={value}
             onChange={(date) => setValue(date)}
             tileContent={({ date, view }) => {
               if (view === "month") {
-                const formatted = date.toLocaleDateString("en-CA"); // "2025-03-01"
+                const formatted = date.toLocaleDateString("en-CA");
                 const entry = calendarData.find(
                   (item) => item.date === formatted
                 );
@@ -74,14 +96,14 @@ export default function SharedLedger() {
               return null;
             }}
           />
-          {/* 모달 컴포넌트 렌더링 */}
+
+          {/* 🔗 초대 링크 모달 */}
           {isModalOpen && (
             <Modal
               title="사용자 초대"
               description="초대 링크를 복사하여 친구에게 보내세요."
               onClose={() => setIsModalOpen(false)}
             >
-              {/* 👇 이 부분은 children으로 들어가는 영역 */}
               <InviteLinkSection />
             </Modal>
           )}
