@@ -5,6 +5,8 @@ import MapCategory from "./category/MapCategory";
 
 export default function List() {
   const [userData, setUserData] = useState([]);
+
+  // 버킷리스트 리스트 가져오기
   useEffect(()=> {
     const fetchData = async() => {
     try {
@@ -19,10 +21,25 @@ export default function List() {
     }
     fetchData();
   },[])
+
+  function saveHandler(bucketListId) {
+    const fetchData = async () => {
+      try {
+        console.log("bucketlistId:",bucketListId)
+        const response = await Api.post("api/bucket/saving",{bucketListId})
+        console.log(response.data)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    fetchData()
+  }
+
+
   return (
     <div className="flex flex-col gap-4 mb-4">
       {userData.map((data,index)=>(
-        <MapCategory key={index} list={data} />
+        <MapCategory key={index} list={data} onSaving={saveHandler}/>
       ))}
     </div>
   )
