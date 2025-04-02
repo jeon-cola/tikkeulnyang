@@ -39,8 +39,9 @@ export default function SharedLedger() {
         `api/share/myledger?year=${year}&month=${month}`
       );
       const fetchedData = res.data.data.data;
+      setSelectedUserId(null)
       setCalendarData(fetchedData);
-      setViewingNickname(""); // 🔄 내 가계부일 땐 초기화
+      setViewingNickname(null)
     } catch (err) {
       console.error("공유 가계부 캘린더 이모지 로딩 실패:", err);
     }
@@ -50,6 +51,8 @@ export default function SharedLedger() {
   const fetchUserLedger = async (userId) => {
     const year = value.getFullYear();
     const month = value.getMonth() + 1;
+    console.log(value)
+    console.log(year,month,userId)
     try {
       const res = await Api.get(
         `/api/share/ledger/user/${userId}?year=${year}&month=${month}`
@@ -64,17 +67,22 @@ export default function SharedLedger() {
     }
   };
 
-  // 누군가의 가계부 세부 조회
+  // 공유 중 달이 바꼈을때 업데이트
   useEffect(() => {
-    const fetchLedgerDetails = async (userId) => {
-      if (!selectedDate) return;
+    const fetchLedgerDetails = async () => {
+      if (!selectedDate) return
+      if (!selectedUserId) return fetchMyLedger()
       try {
+        const year = selectedDate.getFullYear()
+        const month = selectedDate.getMonth()+1
         const res = await Api.get(
-          `api/share/ledger/user/${selectedUserId}/daily/${selectedDate}`
-        ); //date는 yyyy-mm-dd 형태
-        // 여기서 userId가 로그인한 사용자라면 사용자의 세부내역
-        // 친구 초대된 친구의 가계부 갔다면 그 친구의 세부내역을 페이먼트로 띄우고 싶습니다다
-        setPaymentData("user의 세부내역", res.data.data);
+          `/api/share/ledger/user/${selectedUserId}?year=${year}&month=${month}`
+        );
+        if (res.data.status === "success") {
+          const fetchedData = res.data.data
+          setCalendarData(fetchedData.data)
+          setViewingNickname(fetchedData.ownerNickname)
+        }
       } catch (err) {
         console.error("paymentDetails 조회 실패:", err);
       }
@@ -84,11 +92,11 @@ export default function SharedLedger() {
 
   useEffect(() => {
     fetchMyLedger();
-  }, [value]);
+  }, []);
 
   return (
-    <div className="w-full">
-      <Container>
+    <div className="w-full mb-[30px]">
+      <Container >
         <LedgerHeader />
 
         <div className="relative">
@@ -109,13 +117,18 @@ export default function SharedLedger() {
           {/* 달력 및 BlackCat 이미지 */}
           <div className="relative">
             <CustomCalendar
+              onActiveStartDateChange={({activeStartDate,view})=>{
+                if (view === "month") {
+                  setValue(activeStartDate)
+                  setSelectedDate(activeStartDate);
+                }
+              }}
               className="z-0"
               value={value}
               onChange={(date) => {
                 setValue(date);
                 const formatted = formatDate(date);
                 setSelectedDate((prev) => (prev === formatted ? null : formatted));
-            
               }}
               tileContent={({ date, view }) => {
                 if (view === "month") {
@@ -169,8 +182,6 @@ export default function SharedLedger() {
           )}
         </div>
           <PaymentDetails type="share" date={selectedDate} userId={selectedUserId}/>
-
-      
       </Container>
     </div>
   );
