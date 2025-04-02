@@ -262,15 +262,20 @@ public class ChallengeService {
 
     private void activatePendingChallenges() {
         LocalDate today = LocalDate.now();
-        List<ChallengeEntity> challenges = challengeRepository.findByStartDateBeforeAndActiveFlagFalse(today);
+        // startDate가 오늘보다 이후면 아직 시작 안한 것으로 간주: !startDate.isAfter(today)
+        List<ChallengeEntity> challenges = challengeRepository.findByStartDateBeforeAndActiveFlagFalse(today.plusDays(1));
         for (ChallengeEntity challenge : challenges) {
-            if (!challenge.getDeleted()) { // 소프트딜리트된 건 제외
-                challenge.setActiveFlag(true);
-                challengeRepository.save(challenge);
-                logger.debug("챌린지 활성화됨: ID = {}, Name = {}", challenge.getChallengeId(), challenge.getChallengeName());
+            if (!challenge.getDeleted()) { // soft delete된 건 제외
+                // 오늘이 시작일과 같거나 지난 경우 활성화
+                if (!challenge.getStartDate().isAfter(today)) {
+                    challenge.setActiveFlag(true);
+                    challengeRepository.save(challenge);
+                    logger.debug("챌린지 활성화됨: ID = {}, Name = {}", challenge.getChallengeId(), challenge.getChallengeName());
+                }
             }
         }
     }
+
 
     private ChallengeResponseDto mapToDto(ChallengeEntity entity) {
         String thumbnailUrl = s3Repository
