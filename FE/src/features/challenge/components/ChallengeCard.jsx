@@ -27,33 +27,59 @@ export default function ChallengeCard({
   return (
     <div
       onClick={handleClick} // 클릭시 상세 페이지로 넘어간다.
-      className="relative w-[168px] h-[207px] bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] overflow-hidden"
+      className="relative w-[168px] h-[207px] bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.27)] rounded-[20px] overflow-hidden"
     >
+      {/**
+       *
+       * Version 1
+       *
+       * */}
       {/* 이미지 영역 */}
-      <div
+      {/* <div
         className="absolute w-[168px] h-[129px] left-0 top-0"
+        style={{
+          backgroundImage: `url(${thumbnailUrl})`,
+          backgroundSize: "cover",
+        }}
+      ></div> */}
+
+      {/* 챌린지 타입*/}
+      {/* <div className="absolute w-[48px] h-[13px] left-[7px] top-[134px] font-['Pretendard'] font-normal text-[11px] leading-[13px] text-black">
+        {type}
+      </div> */}
+
+      {/* 카페 방문 줄이기 제목 */}
+      {/* <div className="absolute w-[86px] h-[16px] left-[7px] top-[156px] font-['Pretendard'] font-normal text-[13px] leading-[16px] text-black">
+        {title}
+      </div> */}
+
+      {/* 날짜 표시*/}
+      {/* <div className="absolute w-[67px] h-[11px] left-[94px] top-[188px] bg-[#DFDFDF] shadow-[0px_1px_1.5px_rgba(0,0,0,0.25)] rounded-[6px] flex items-center justify-center">
+        <span className="font-['Pretendard'] font-normal text-[7px] leading-[8px] text-black">
+          {startDate} ~ {endDate}
+        </span>
+      </div> */}
+
+      {/**
+       *
+       * Version 2
+       *
+       * */}
+      <div
+        className="absolute w-[168px] h-[60%] left-0 top-0"
         style={{
           backgroundImage: `url(${thumbnailUrl})`,
           backgroundSize: "cover",
         }}
       ></div>
 
-      {/* 챌린지 타입*/}
-      <div className="absolute w-[48px] h-[13px] left-[7px] top-[134px] font-['Pretendard'] font-normal text-[11px] leading-[13px] text-black">
-        {type}
-      </div>
-
-      {/* 카페 방문 줄이기 제목 */}
-      <div className="absolute w-[86px] h-[16px] left-[7px] top-[156px] font-['Pretendard'] font-normal text-[13px] leading-[16px] text-black">
+      <h2 className="absolute left-[7px] top-[139px] font-['Pretendard'] font-semibold leading-[16px] text-black">
         {title}
-      </div>
+      </h2>
 
-      {/* 날짜 표시*/}
-      <div className="absolute w-[67px] h-[11px] left-[94px] top-[188px] bg-[#DFDFDF] shadow-[0px_1px_1.5px_rgba(0,0,0,0.25)] rounded-[6px] flex items-center justify-center">
-        <span className="font-['Pretendard'] font-normal text-[7px] leading-[8px] text-black">
-          {startDate} ~ {endDate}
-        </span>
-      </div>
+      <p class="absolute left-[7px] top-[160px] font-['Pretendard'] text-sm text-gray-600 ">
+        {startDate} ~ {endDate}
+      </p>
     </div>
   );
 }
