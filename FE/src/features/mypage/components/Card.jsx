@@ -1,86 +1,108 @@
-import { useEffect, useRef, useState } from "react"
-import CustomBackHeader from "../../../components/CustomBackHeader"
-import bankImage from "../assets/bank.png"
+import { useEffect, useState } from "react";
+import CustomBackHeader from "../../../components/CustomBackHeader";
 import Api from "../../../services/Api";
+import { div } from "framer-motion/client";
+
 export default function Card() {
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef(null);
-    const [list, setList] = useState([])
-    const [card, setCard] = useState({
-        cardNo:"",
-        cardName:"",
-    });
+  const [list, setList] = useState([]);
+  const [selectedCardNo, setSelectedCardNo] = useState(null);
+  const [card, setCard] = useState({
+    cardNo: "",
+    cardName: "",
+    cardImage: "",
+    benefits:[]
+  });
 
-    function handleCardSelect(card) {
-        console.log(card)
-        setCard({
-            cardNo:card.card_no,
-            cardName: card.card_name
-        });
-        setIsOpen(false);
+  function handleCardSelect(card) {
+    console.log(card);
+    // 이미 선택된 카드를 다시 클릭하면 선택 해제
+    if (selectedCardNo === card.card_no) {
+      setSelectedCardNo(null);
+    } else {
+      setSelectedCardNo(card.card_no);
     }
+    
+    setCard({
+      cardNo: card.card_no,
+      cardName: card.card_name,
+      cardImage: card.imagePath,
+      benefits:card.benefits
+    });
+  }
 
-    // 카드 리스트 조회
-    useEffect(() => {
-        const fetchData = async() => {
-            try {
-                const response = await Api.get("api/card/refresh")
-                const cardData = response.data.data.cards
-                console.log(cardData)
-                if (response.data.status === "success") {
-                    setList(cardData)
-                }               
-            } catch (error) {
-                console.log(error)
-            }
-        }
-        fetchData();
-    },[]);
+  // 카드 리스트 조회
+  useEffect(() => {
+    const fetchData = async() => {
+      try {
+        const response = await Api.get("api/card");
+        const cardData = response.data.data.cards;
+        console.log(cardData);
+        if (response.data.status === "success") {
+          setList(cardData);
+        }               
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchData();
+  }, []);
 
-
-    return(
-            <div className="flex flex-col justify-center gap-5 min-w-[345px]">
-                <CustomBackHeader title="카드 조회"/>
-                <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 flex flex-col gap-2">
-                    <p className="text-left font-regular text-lg">카드 선택</p>
-                    
-                    {/* 드롭다운 */}
-                    <div className="relative w-full" ref={dropdownRef}>
-                        <div 
-                            className="w-full p-2 border rounded flex items-center justify-between cursor-pointer"
-                            onClick={() => setIsOpen(!isOpen)}
-                        >
-                            {card.cardName ? (
-                                <div className="flex items-center justify-center w-full">
-                                    <span>{card.cardName}</span>
-                                </div>
-                            ) : (
-                                <span className="text-gray-400">카드를 선택해 주세요</span>
-                            )}
-                            <span className="ml-2">▼</span>
-                        </div>
-                        
-                        {isOpen && (
-                            <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-60 overflow-auto">
-                                {list.map((card) => (
-                                    <div 
-                                        key={card.card_name}
-                                        className="p-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                                        onClick={() => handleCardSelect(card)}
-                                    >
-                                        <span>{card.card_name}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+  return(
+    <div className="flex flex-col justify-center items-center">
+      <CustomBackHeader title="카드 조회"/>
+      
+      <div className="w-full relative h-[60vh] overflow-hidden">
+        <div className="card-stack-container w-full h-full flex items-center justify-center">
+          {list.map((cardItem, index) => (
+            <div 
+              key={cardItem.card_name} 
+              onClick={() => handleCardSelect(cardItem)} 
+              className={`card-item absolute w-13/14 transform transition-all duration-300 ease-in-out`}
+              style={{ 
+                zIndex: selectedCardNo === cardItem.card_no ? 100 : list.length - index,
+                top: selectedCardNo === cardItem.card_no ? '25%' : `${27 + (index * 5)}%`,
+                left: '50%',
+                transform: `translateX(-50%) translateY(-50%) ${
+                  selectedCardNo === cardItem.card_no ? 'scale(1.05)' : `rotate(${-5 + (index * 2)}deg)`
+                }`,
+                boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                cursor: 'pointer'
+              }}
+            >   
+              <img 
+                src={`/${cardItem.imagePath}`} 
+                alt={`${cardItem.card_name} 이미지`} 
+                className="w-full"
+                style={{
+                  transition: 'transform 0.3s ease'
+                }}
+              />
+              
+              {/* 선택된 카드에만 표시되는 정보 */}
+              {selectedCardNo === cardItem.card_no && (
+                <div className="absolute bottom-5 left-0 right-0 bg-opacity-50 bg-opacity-70 text-white p-3 text-center rounded-[10px]">
+                  <h3 className="text-lg font-semibold">{cardItem.card_name}</h3>
+                  <p className="text-sm opacity-80">카드번호: {cardItem.card_no}</p>
                 </div>
-                
-                {/* 은행 이미지 */}
-                <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4">
-                    <img src={bankImage} alt="은행 이미지" />
-                </div>
-            
+              )}
             </div>
-        )
+          ))}
+        </div>
+      </div>
+      
+      {/* 선택된 카드 정보 표시 영역 */}
+      {selectedCardNo && (
+        <div className="mt-6 p-4 bg-gray-100 rounded-lg w-4/5 max-w-sm">
+          <h3 className="font-semibold text-lg">{card.cardName}</h3>
+          {card.benefits && card.benefits.length > 0 ?
+            card.benefits.map((benefit)=>(
+                <div>
+                    <p>{benefit}</p>
+                </div>
+            )):<p>혜택정보를 가져오지 못했습니다...</p>  
+        }
+        </div>
+      )}
+    </div>
+  );
 }
