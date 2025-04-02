@@ -16,8 +16,6 @@ import TransportationIcon from "../../assets/category/transportation_icon.png";
 import SpenseIcon from "../../assets/category/spense_icon.png";
 import EducationIcon from "../../assets/category/education_icon.png";
 
-Chart.register(ChartDataLabels);
-
 const categories = [
   { id: 1, name: "주거/통신", Icon: HousingIcon },
   { id: 2, name: "식비", Icon: FoodIcon },
@@ -27,13 +25,50 @@ const categories = [
   { id: 6, name: "병원/약국", Icon: MedicalIcon },
   { id: 7, name: "문화/여가", Icon: EntertainmentIcon },
   { id: 8, name: "잡화", Icon: GoodsIcon },
-  { id: 9, name: "결제", Icon: SpenseIcon },
+  // { id: 9, name: "결제", Icon: SpenseIcon },
 ];
+
+const connectLinePlugin = {
+  id: "connectLinePlugin",
+  afterDatasetDraw(chart, args, pluginOptions) {
+    const { ctx } = chart;
+    const datasetMeta = chart.getDatasetMeta(0);
+
+    datasetMeta.data.forEach((arc) => {
+      const { x: centerX, y: centerY } = arc.getProps(["x", "y"], true);
+      const { startAngle, endAngle, outerRadius } = arc.getProps(
+        ["startAngle", "endAngle", "outerRadius"],
+        true
+      );
+
+      // 중심각 계산
+      const angle = (startAngle + endAngle) / 2;
+      const labelX = centerX + Math.cos(angle) * (outerRadius + 10); // 라벨 위치 계산
+      const labelY = centerY + Math.sin(angle) * (outerRadius + 10);
+
+      // 선 그리기
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(
+        centerX + Math.cos(angle) * outerRadius,
+        centerY + Math.sin(angle) * outerRadius
+      ); // 파이조각 외곽점
+      ctx.lineTo(labelX, labelY); // 라벨 포인트
+      ctx.strokeStyle = arc.options.backgroundColor;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    });
+  },
+};
+
+Chart.register(ChartDataLabels, connectLinePlugin);
 
 export default function BudgetReport() {
   const [activeDate, setActiveDate] = useState(new Date());
   const [chartData, setChartData] = useState([]);
   const chartRef = useRef(null);
+
   const year = activeDate.getFullYear();
   const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
 
@@ -56,9 +91,12 @@ export default function BudgetReport() {
         const response = await Api.get(
           `api/payment/statistics/category/${year}/${month}`
         );
-        const categoriesData = response.data.data.categories;
-        console.log("예산통계 데이터:", categoriesData);
-        setChartData(categoriesData);
+        console.log("테스트:", response.data);
+        if (response.data.status === "success") {
+          const categoriesData = response.data.data.categories;
+          console.log("예산통계 데이터:", categoriesData);
+          setChartData(categoriesData);
+        }
       } catch (error) {
         console.error("요청 실패:", error);
       }
@@ -70,6 +108,7 @@ export default function BudgetReport() {
     if (!chartData.length) return;
     const ctx = chartRef.current.getContext("2d");
 
+    // 기존 차트 제거
     if (window.budgetChart) {
       window.budgetChart.destroy();
     }
@@ -91,19 +130,27 @@ export default function BudgetReport() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: {
+            top: 70,
+            bottom: 70,
+            left: 70,
+            right: 70,
+          },
+        },
         plugins: {
           legend: {
-            display: false, // 기본 범례 제거
+            display: false,
           },
           datalabels: {
             color: "#000",
             font: {
               weight: "bold",
-              size: 14,
+              size: 12,
             },
             anchor: "end", // 원 밖으로 위치
             align: "end", // 선 밖 끝에 정렬
-            offset: 20, // 떨어지는 거리
+            offset: 5, // 떨어지는 거리
             formatter: (value, context) => {
               const label = context.chart.data.labels[context.dataIndex];
               const total = context.chart.data.datasets[0].data.reduce(
@@ -115,7 +162,7 @@ export default function BudgetReport() {
             },
             // 아래 스타일은 선택 사항
             backgroundColor: "#ffffff",
-            borderColor: "#cccccc",
+            // borderColor: "#cccccc",
             borderWidth: 1,
             borderRadius: 4,
             padding: 6,
