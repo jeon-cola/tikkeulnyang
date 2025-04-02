@@ -11,30 +11,10 @@ import InviteModal from "./components/InviteModal";
 import Api from "@/services/Api";
 import InviteLinkSection from "./components/InviteLinkSection";
 import ProfileImageList from "./components/ProfileImageList";
+import PaymentDetails from "./components/PaymentDetails";
 
-import EntertainmentIcon from "./assets/category/entertainment_icon.png";
-import FoodIcon from "./assets/category/food_icon.png";
-import GoodsIcon from "./assets/category/goods_icon.png";
-import HousingIcon from "./assets/category/housing_icon.png";
-import MedicalIcon from "./assets/category/medical_icon.png";
-import ShoppingIcon from "./assets/category/shopping_icon.png";
-import TransportationIcon from "./assets/category/transportation_icon.png";
-import IncomeIcon from "./assets/category/income_icon.png";
-import SpenseIcon from "./assets/category/spense_icon.png";
-import EducationIcon from "./assets/category/education_icon.png";
-
-const categories = [
-  { id: 1, name: "주거/통신", Icon: HousingIcon },
-  { id: 2, name: "식비", Icon: FoodIcon },
-  { id: 3, name: "교통/차량", Icon: TransportationIcon },
-  { id: 4, name: "교육/육아", Icon: EducationIcon },
-  { id: 5, name: "쇼핑/미용", Icon: ShoppingIcon },
-  { id: 6, name: "병원/약국", Icon: MedicalIcon },
-  { id: 7, name: "문화/여가", Icon: EntertainmentIcon },
-  { id: 8, name: "잡화", Icon: GoodsIcon },
-  { id: 9, name: "결제", Icon: SpenseIcon },
-  { name: "수입", Icon: IncomeIcon },
-];
+  const formatDate = (date) =>
+    date.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
 
 export default function SharedLedger() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,11 +23,10 @@ export default function SharedLedger() {
   const [viewingNickname, setViewingNickname] = useState(""); // 🔥 현재 보고 있는 사람 닉네임
   const [selectedDate, setSelectedDate] = useState(null); // 날짜 선택 상태
   const [selectedUserId, setSelectedUserId] = useState(null); // 내 or 친구 ID
-  const [paymentData, setPaymentData] = useState(null);
 
   const emojiMap = {
-    0: <img src={GoldFish} alt="GoldFish" className="w-5 mx-auto" />,
-    1: <img src={BlueFish} alt="BlueFish" className="w-5 mx-auto" />,
+    0: <img src={BlueFish} alt="BlueFish" className="w-5 mx-auto" />,
+    1: <img src={GoldFish} alt="GoldFish" className="w-5 mx-auto" />,
     2: <img src={BlackFish} alt="BlackFish" className="w-5 mx-auto" />,
   };
 
@@ -76,6 +55,8 @@ export default function SharedLedger() {
         `/api/share/ledger/user/${userId}?year=${year}&month=${month}`
       );
       const fetchedData = res.data.data.data;
+      const user = userId
+      setSelectedUserId(user)
       setCalendarData(fetchedData);
       setViewingNickname(res.data.data.ownerNickname); // 🔥 현재 보고 있는 사람 이름 표시
     } catch (err) {
@@ -87,14 +68,13 @@ export default function SharedLedger() {
   useEffect(() => {
     const fetchLedgerDetails = async (userId) => {
       if (!selectedDate) return;
-      const targetUserId = selectedUserId || { userInfo }; // 리덕스에 올린 로그인한 유저 정보
       try {
         const res = await Api.get(
           `api/share/ledger/user/${selectedUserId}/daily/${selectedDate}`
         ); //date는 yyyy-mm-dd 형태
         // 여기서 userId가 로그인한 사용자라면 사용자의 세부내역
         // 친구 초대된 친구의 가계부 갔다면 그 친구의 세부내역을 페이먼트로 띄우고 싶습니다다
-        csetPaymentData("user의 세부내역", res.data.data);
+        setPaymentData("user의 세부내역", res.data.data);
       } catch (err) {
         console.error("paymentDetails 조회 실패:", err);
       }
@@ -133,7 +113,9 @@ export default function SharedLedger() {
               value={value}
               onChange={(date) => {
                 setValue(date);
-                setSelectedDate(date.toISOString().split("T")[0]);
+                const formatted = formatDate(date);
+                setSelectedDate((prev) => (prev === formatted ? null : formatted));
+            
               }}
               tileContent={({ date, view }) => {
                 if (view === "month") {
@@ -186,46 +168,9 @@ export default function SharedLedger() {
             </InviteModal>
           )}
         </div>
+          <PaymentDetails type="share" date={selectedDate} userId={selectedUserId}/>
 
-        {/* 페이먼트 디테일 */}
-        {paymentData && (
-          <div className="bg-white w-full p-[10px] text-black">
-            <p className="flex flex-start pb-[10px]">
-              {formatKoreanDate(paymentData.date)}
-            </p>
-
-            <ul className="space-y-2">
-              {paymentData.transactions.map((item, index) => {
-                const matchedCategory = categories.find(
-                  (cat) => cat.id === item.category
-                );
-                const Icon = matchedCategory ? matchedCategory.Icon : null;
-
-                return (
-                  <li key={index} className="flex items-center gap-2 text-sm">
-                    {Icon && (
-                      <img
-                        src={Icon}
-                        alt={item.category}
-                        className="w-8 h-auto"
-                      />
-                    )}
-                    <span className="ml-[20px]">{item.category}</span>
-                    <span className="relative left-30px">
-                      {item.matchedName}
-                    </span>
-                    <span>{item.description}</span>
-                    <span className="ml-auto">
-                      {item.amount != null
-                        ? `${item.amount.toLocaleString()}`
-                        : "금액 없음"}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
+      
       </Container>
     </div>
   );
