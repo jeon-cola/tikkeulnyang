@@ -11,6 +11,7 @@ export default function PersonalLedgerCalendar() {
   const [calendarData, setCalendarData] = useState([]);
 
 
+
   const formatDate = (date) =>
     date.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
 
@@ -112,7 +113,7 @@ export default function PersonalLedgerCalendar() {
 
       {selectedDate && (
         <div className="mt-4">
-          <PaymentDetails date={selectedDate} />
+          <PaymentDetails date={selectedDate} type="personal"/>
         </div>
       )}
     </div>
