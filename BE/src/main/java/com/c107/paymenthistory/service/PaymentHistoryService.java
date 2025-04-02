@@ -390,7 +390,7 @@ public class PaymentHistoryService {
         }
 
         // 추가로 기타 카테고리 추가
-        categoryAmounts.put("기타", 0);
+//        categoryAmounts.put("기타", 0);
 
         int totalSpent = 0;
 
