@@ -65,7 +65,7 @@ export default function DetailCard() {
 
       <div className="w-full flex flex-col">
 
-          <p className="text-left text-xl font-bold">주요혜택</p>
+          <p className="text-left text-xl font-bold mb-2">주요혜택</p>
 
         <div className="w-full flex flex-col justify-center items-center gap-4">
           {(Array.isArray(cardList.benefits) && cardList.benefits.length > 0) ? cardList.benefits.map((benefit, index) =>
