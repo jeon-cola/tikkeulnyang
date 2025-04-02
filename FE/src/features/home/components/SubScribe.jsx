@@ -206,7 +206,7 @@ export default function SubScribe() {
                     </div>
                     <div>
                         <span className="text-xl">총 금액 </span>
-                        <span className="text-xl text-[#ff957a]">{subScribeCost}</span>
+                        <span className="text-xl text-[#ff957a]">{(subScribeCost)?subScribeCost.toLocaleString():subScribeCost}</span>
                     </div>
                 </div>
 
@@ -318,7 +318,7 @@ export default function SubScribe() {
                         <div className="w-7/10 flex justify-end items-center gap-4">
                             {/* 가격 표시 */}
                             <div className="flex justify-center items-center">
-                                <p className="text-xl">{item.subscribePrice} 원</p>
+                                <p className="text-xl">{item.subscribePrice.toLocaleString()} 원</p>
                             </div>
                       <div className="flex justify-center">
                         <img 
@@ -373,7 +373,7 @@ export default function SubScribe() {
                             <div className="w-7/10 flex justify-end items-center gap-4">
                                 {/* 가격 표시 */}
                                 <div className="flex justify-center items-center">
-                                    <p className="text-xl">{item.subscribePrice} 원</p>
+                                    <p className="text-xl">{item.subscribePrice.toLocaleString()} 원</p>
                                 </div>
                       <div className="flex justify-center">
                         <img 
