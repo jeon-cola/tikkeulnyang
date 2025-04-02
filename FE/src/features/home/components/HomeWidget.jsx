@@ -1,12 +1,12 @@
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Homewidget({ title, content }) {
   const settings = {
     arrows: false,
-    dots: true,
+    dots: false,
     infinite: true,
     speed: 500,
     slidesToShow: 1,
@@ -27,15 +27,25 @@ export default function Homewidget({ title, content }) {
     dotsClass: "slick-dots custom-dots",
   };
 
+  const [widgetColor, setWidgetColor] = useState("bg-[#F7F7F7]"); // 위젯 색상
+
   useEffect(() => {
     console.log("HomeWidget", content);
   }, [content]);
 
+  // useEffect(() => {
+  //   if (title === "남은예산") {
+  //     setWidgetColor("#fff0ba");
+  //   }
+  // }, []);
+
   return (
     <>
-      <div className="flex flex-col items-start p-[18px] gap-[4px] w-[176px] h-[177px] bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px]">
+      <div
+        className={`flex flex-col items-start mt-[10px] mb-[10px] p-[18px] gap-[4px] w-[176px] h-[177px] shadow-[1px_1px_5px_rgba(0,0,0,0.05)] bg-white rounded-[20px]`}
+      >
         <div className="slider-container relative w-full h-full">
-          <h3 className="absolute top-0 left-0 text-left font-['Pretendard'] font-normal text-[20px] leading-[30px] text-black">
+          <h3 className="absolute top-0 left-0 right-0 text-center font-normal text-[20px] leading-[30px] text-black">
             {title}
           </h3>
           <Slider {...settings} className="h-[140px]">
@@ -45,7 +55,7 @@ export default function Homewidget({ title, content }) {
             {content.map((item, index) => (
               <div
                 key={index}
-                className="mt-[50px] text-left font-['Pretendard'] font-normal text-[24px] leading-[36px] text-black mt-[1px]"
+                className="mt-[50px] text-center font-['Pretendard'] font-normal text-[24px] leading-[36px] text-black mt-[1px]"
               >
                 {item}
               </div>
