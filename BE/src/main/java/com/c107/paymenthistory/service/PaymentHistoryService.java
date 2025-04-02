@@ -412,7 +412,7 @@ public class PaymentHistoryService {
                 totalSpent += amount;
 
                 // 기본값으로 "기타" 설정
-                String budgetCategoryName = "기타";
+                String budgetCategoryName = "결제";
 
                 // 카테고리 매핑 시도
                 try {
