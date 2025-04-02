@@ -1,7 +1,13 @@
 import Wedding from "../../assets/Wedding.png"
 
-export default function WeddingFundPage ({title, current_savings, target_amount,color}) {
+export default function WeddingFundPage ({title, current_savings, target_amount,color, onSaving, bucketListId}) {
     const currentProgress = current_savings > 0 && target_amount > 0 ? Math.min((current_savings / target_amount) * 100, 100) : 0
+
+    // 저축 콜백
+    function onButtonHandler(bucketListId) {
+        onSaving(bucketListId)
+    }
+
     return(
         <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 flex flex-col gap-3">
             <div className="w-full flex flex-row">
@@ -13,12 +19,12 @@ export default function WeddingFundPage ({title, current_savings, target_amount,
             </div>
 
             <div className="w-full">
-                <button className="customButton" style={{backgroundColor:color}}>저축하기</button>
+                <button className="customButton" style={{backgroundColor:color}} onClick={()=> onButtonHandler(bucketListId)}>저축하기</button>
             </div>
             
             <div className="flex flex-row justify-between w-full">
                 <div>
-                    <span style={{color:color}} className="text-left font-semibold text-xl">{current_savings}</span> / <span style={{color:"#ED4C5C"}} className="text-left font-semibold text-xl">{target_amount}</span>
+                    <span style={{color:color}} className="text-left font-semibold text-xl">{current_savings.toLocaleString()}</span> / <span style={{color:"#ED4C5C"}} className="text-left font-semibold text-xl">{target_amount.toLocaleString()}</span>
                 </div >
                 <p style={{color:color}} className="text-left font-semibold text-xl">{currentProgress.toFixed(1)}%</p>
             </div>
