@@ -16,6 +16,7 @@ export default function CardRecommend() {
     const fetchData = async () => {
       try {
         const response = await Api.get("api/recommend/cards/check")
+        console.log(response.data)
         if (response.data.status == "success") {
           setCardList(response.data.data)
         }
@@ -47,7 +48,6 @@ export default function CardRecommend() {
     const fetchData = async()=>{
       try {
         const response = await Api.get("api/recommend/cards/credit")
-        console.log(response.data)
         if (response.data.status == "success") {
           setCardList(response.data.data)
         }
@@ -91,7 +91,7 @@ export default function CardRecommend() {
                     : <div className="flex items-center justify-center">
                         <p className="text-xl">{index+1}</p>
                       </div>}
-                  <img src={card.imagePath} alt="카드 이미지" style={{width:"60px", height:"100px"}} />
+                  <img src={`/${card.imagePath}`} alt="카드 이미지" style={{width:"60px", height:"100px"}} />
                   <div className="flex flex-col">
                     <p className="text-left font-semibold text-lg">{card.recoCardName}</p>
                     <p className="text-left">{card.corpName}</p>

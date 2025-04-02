@@ -57,11 +57,10 @@ export default function Card() {
             <div 
               key={cardItem.card_name} 
               onClick={() => handleCardSelect(cardItem)} 
-              className={`card-item absolute w-5/6 max-w-sm transform transition-all duration-300 ease-in-out`}
+              className={`card-item absolute w-13/14 transform transition-all duration-300 ease-in-out`}
               style={{ 
-                aspectRatio: '9/10',
                 zIndex: selectedCardNo === cardItem.card_no ? 100 : list.length - index,
-                top: selectedCardNo === cardItem.card_no ? '20%' : `${20 + (index * 5)}%`,
+                top: selectedCardNo === cardItem.card_no ? '25%' : `${27 + (index * 5)}%`,
                 left: '50%',
                 transform: `translateX(-50%) translateY(-50%) ${
                   selectedCardNo === cardItem.card_no ? 'scale(1.05)' : `rotate(${-5 + (index * 2)}deg)`
@@ -73,7 +72,7 @@ export default function Card() {
               <img 
                 src={`/${cardItem.imagePath}`} 
                 alt={`${cardItem.card_name} 이미지`} 
-                className="w-full h-full object-contain"
+                className="w-full"
                 style={{
                   transition: 'transform 0.3s ease'
                 }}
@@ -81,7 +80,7 @@ export default function Card() {
               
               {/* 선택된 카드에만 표시되는 정보 */}
               {selectedCardNo === cardItem.card_no && (
-                <div className="absolute bottom-20 left-0 right-0 bg-opacity-50 bg-opacity-70 text-white p-3 text-center rounded-[10px]">
+                <div className="absolute bottom-5 left-0 right-0 bg-opacity-50 bg-opacity-70 text-white p-3 text-center rounded-[10px]">
                   <h3 className="text-lg font-semibold">{cardItem.card_name}</h3>
                   <p className="text-sm opacity-80">카드번호: {cardItem.card_no}</p>
                 </div>
