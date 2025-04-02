@@ -73,11 +73,11 @@ export default function ChallengeCard({
         }}
       ></div>
 
-      <h2 className="absolute left-[7px] top-[139px] font-['Pretendard'] font-semibold leading-[16px] text-black">
+      <h2 className="absolute left-[7px] top-[142px] font-['Pretendard'] font-semibold leading-[16px] text-black">
         {title}
       </h2>
 
-      <p class="absolute left-[7px] top-[160px] font-['Pretendard'] text-sm text-gray-600 ">
+      <p class="absolute left-[7px] top-[163px] font-['Pretendard'] text-sm text-gray-600 ">
         {startDate} ~ {endDate}
       </p>
     </div>
