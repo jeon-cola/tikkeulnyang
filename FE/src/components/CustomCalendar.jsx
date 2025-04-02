@@ -9,10 +9,12 @@ export default function CustomCalendar({
   tileContent,
   tileClassName: customTileClassName,
   data,
+  onActiveStartDateChange
 }) {
   return (
     <div>
       <Calendar
+        onActiveStartDateChange= {onActiveStartDateChange}
         onChange={onChange}
         value={value}
         calendarType="hebrew" // 일요일부터 시작

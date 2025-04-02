@@ -78,13 +78,6 @@ export default function Card() {
                 }}
               />
               
-              {/* 선택된 카드에만 표시되는 정보 */}
-              {selectedCardNo === cardItem.card_no && (
-                <div className="absolute bottom-5 left-0 right-0 bg-opacity-50 bg-opacity-70 text-white p-3 text-center rounded-[10px]">
-                  <h3 className="text-lg font-semibold">{cardItem.card_name}</h3>
-                  <p className="text-sm opacity-80">카드번호: {cardItem.card_no}</p>
-                </div>
-              )}
             </div>
           ))}
         </div>
