@@ -163,7 +163,7 @@ export default function RenderHome() {
       ) : (
         <>
           <CustomHeader title="홈" />
-          <div className="flex flex-col items-start p-[30px_10px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
+          <div className="flex flex-col items-start p-[30px_10px_82px] gap-6 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
             <div className="flex flex-col p-[12px_11px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
               <p className="w-auto h-[12px] font-['Pretendard'] text-left font-semibold text-[10px] leading-[12px] tracking-[0.07em] text-[#D0D0D0]">
                 이번달 카드 추천
@@ -206,20 +206,18 @@ export default function RenderHome() {
 
             <div className="flex flex-col p-[12px_20px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
               <div className="flex flex-col items-start mt-[20px]">
-                <h2 className=" font-['Pretendard'] text-left font-semibold text-[14px] leading-[17px] tracking-[0.07em] text-black mb-[7px]">
+                <h2 className=" font-['Pretendard'] text-left font-semibold text-xl leading-[17px] tracking-[0.07em] text-black mb-[7px]">
                   가계부로 이동
                 </h2>
 
-                <p className="mb-[24px] text-left font-['Pretendard'] font-semibold text-[12px] leading-[14px] tracking-[0.07em] text-black">
+                <p className="mt-[10px] mb-[24px] text-left font-['Pretendard'] font-semibold text-lg leading-[14px] tracking-[0.07em] text-black">
                   오늘의 지출 확인하기
                 </p>
               </div>
             </div>
 
             <div className="flex justify-between w-full h-auto mt-[1px]">
-              <h2 className="ml-[20px] font-['Pretendard'] font-semibold text-[14px] leading-[17px] tracking-[0.01em] text-black">
-                위젯으로 모아보는 티끌냥
-              </h2>
+              <h2 className="ml-[20px] font-['Pretendard'] font-semibold text-[14px] leading-[17px] tracking-[0.01em] text-black"></h2>
 
               <div
                 className="flex justify-center items-center px-[5px] py-[3px] w-[52px] h-[23px] bg-white shadow-[1px_1px_4px_rgba(0,0,0,0.1)] rounded-[30px] cursor-pointer"
