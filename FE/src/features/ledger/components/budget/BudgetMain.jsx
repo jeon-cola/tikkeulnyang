@@ -13,7 +13,6 @@ import ShoppingIcon from "../../assets/category/shopping_icon.png";
 import TransportationIcon from "../../assets/category/transportation_icon.png";
 import SpenseIcon from "../../assets/category/spense_icon.png";
 import EducationIcon from "../../assets/category/education_icon.png";
-// import WasteBlack from "../../assets/waste_black.png";
 
 const categories = [
   { id: 1, name: "주거/통신", Icon: HousingIcon },

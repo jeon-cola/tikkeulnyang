@@ -19,7 +19,7 @@ import TransportationIconInactive from "../assets/category/transportation_icon_i
 import EducationIcon from "../assets/category/education_icon.png";
 import EducationIconInactive from "../assets/category/education_icon_inactive.png";
 import IncomeIcon from "../assets/category/income_icon.png";
-import IncomeIconInactive from "../assets/category/Income_icon_inactive.png";
+import IncomeIconInactive from "../assets/category/income_icon_inactive.png";
 import SpenseIcon from "../assets/category/spense_icon.png";
 import SpenseIconInactive from "../assets/category/spense_icon_inactive.png";
 

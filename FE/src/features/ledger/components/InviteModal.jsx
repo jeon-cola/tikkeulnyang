@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import InviteLinkSection from "../features/ledger/components/budget/InviteLinkSection";
 
-export default function Modal({ title, description, onClose, children }) {
+export default function Modal({ title, onClose, children }) {
   const modalRef = useRef(null);
   const [animationClass, setAnimationClass] = useState("translate-y-full");
 
@@ -27,7 +26,7 @@ export default function Modal({ title, description, onClose, children }) {
       className="fixed inset-0 z-10 bg-[#525252]/40 flex items-end justify-center"
     >
       <div // 모달 하얀색 박스
-        className={`relative bg-white w-full min-h-[250px] max-w-md p-6 rounded-t-3xl transform transition-transform duration-300 flex flex-col ${animationClass}`}
+        className={`relative bg-white w-full h-[300px] max-w-md overflow-y-auto p-6 rounded-t-3xl transform transition-transform duration-300 flex flex-col ${animationClass}`}
       >
         {/* 닫기 버튼 - 우측 상단 */}
         <img
@@ -38,9 +37,8 @@ export default function Modal({ title, description, onClose, children }) {
         />
 
         {/* 타이틀과 설명 */}
-        <div className="flex flex-col items-center justify-center mt-5 text-center">
-          <div className="text-xl font-bold">{title}</div>
-          <p className="mt-4 text-gray-700">{description}</p>
+        <div className="flex flex-col  justify-center mt-5 text-center">
+          <div className="text-2xl font-bold">{title}</div>
         </div>
 
         {/* children은 아래쪽에 따로 */}

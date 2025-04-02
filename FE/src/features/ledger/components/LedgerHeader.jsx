@@ -8,8 +8,6 @@ export default function LedgerHeader() {
   const isSharePage = location.pathname.includes("share");
   const isDetailPage = location.pathname.includes("detail");
   const userInfo = useSelector((state) => state.user);
-
-  console.log(userInfo.nickName);
   return (
     <div className="w-full item-center flex flex-col gap-[10px]">
       {!isDetailPage && (
