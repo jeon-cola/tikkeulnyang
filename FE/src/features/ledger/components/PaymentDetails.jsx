@@ -30,23 +30,26 @@ const formatKoreanDate = (dateStr) => {
   const weekday = date.toLocaleDateString("ko-KR", { weekday: "long" }); // 화요일
   return `${day}일 ${weekday}`;
 };
-console.log("PaymentDetails에서 시간조회:", new Date());
+
 export default function PaymentDetails({ date, type,userId = null }) {
   const [paymentData, setPaymentData] = useState(null);
-  console.log(date, userId)
 
   useEffect(() => {
     const fetchedPaymentData = async () => {
       try {
-        if (type === "share") {
-          const response = await Api.get(`api/share/ledger/user/${userId}/daily/${date}`)
-          if (response.data.status === "success") {
-            setPaymentData(response.data.data)
-          }
-        } else if (type === "personal") {
+
+        // 상대방 아이디가 있고 공유일때만
+        if (type === "share" && userId) {
+          if (userId){
+            const response = await Api.get(`api/share/ledger/user/${userId}/daily/${date}`)
+            if (response.data.status === "success") {
+              setPaymentData(response.data.data)
+            } 
+          } 
+        } else {
           const response = await Api.get(`api/payment/consumption/daily/${date}`);
           console.log("일별 세부내역 데이터:", response.data.data);
-          setPaymentData(response.data); // 여기서 저장
+          setPaymentData(response.data); 
         }
       } catch (error) {
         console.error("일별 세부내역조회 실패", error);
@@ -59,15 +62,14 @@ export default function PaymentDetails({ date, type,userId = null }) {
   }, [date]); //data가 바뀔 때마다 다시 요청
 
   if (!paymentData) return <div>로딩 중...</div>;
-  {console.log("1",paymentData)}
   return (
     <div className="bg-white w-full p-[10px] text-black">
       <p className="flex flex-start pb-[10px]">
-        {formatKoreanDate(type === "personal" ? paymentData.data.date : paymentData.date)}
+        {formatKoreanDate(type === "personal" || !userId ? paymentData.data.date : paymentData.date)}
       </p>
 
       <ul className="space-y-2">
-        {(type === "personal")  ? paymentData.data.transactions.map((item, index) => {
+        {(type === "personal" || !userId )  ? paymentData.data.transactions.map((item, index) => {
           const matchedCategory = categories.find(
             (cat) => cat.name === item.category
           );
