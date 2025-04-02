@@ -63,9 +63,14 @@ npm install slick-carousel --save
 npm install @hello-pangea/dnd --save
 ### Framer Motion 설치
 ```
+#### framer-motion
 
+```
 npm install framer-motion
 
 ```
 
+### fontawesome
+```
+npm install @fortawesome/fontawesome-free
 ```
