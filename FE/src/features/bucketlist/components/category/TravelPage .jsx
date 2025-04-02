@@ -24,7 +24,7 @@ export default function TravelPage ({title, current_savings, target_amount,color
             
             <div className="flex flex-row justify-between w-full">
                 <div>
-                    <span style={{color:color}} className="text-left font-semibold text-xl">{current_savings}</span> / <span style={{color:"#2AB5F1"}}  className="text-left font-semibold text-xl">{target_amount}</span>
+                    <span style={{color:color}} className="text-left font-semibold text-xl">{current_savings.toLocaleString()}</span> / <span style={{color:"#2AB5F1"}}  className="text-left font-semibold text-xl">{target_amount.toLocaleString()}</span>
                 </div >
                 <p style={{color:color}} className="text-left font-semibold text-xl">{currentProgress.toFixed(1)}%</p>
             </div>
