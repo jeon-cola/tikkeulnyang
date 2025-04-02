@@ -31,15 +31,23 @@ const formatKoreanDate = (dateStr) => {
   return `${day}일 ${weekday}`;
 };
 console.log("PaymentDetails에서 시간조회:", new Date());
-export default function PaymentDetails({ date }) {
+export default function PaymentDetails({ date, type,userId = null }) {
   const [paymentData, setPaymentData] = useState(null);
+  console.log(date, userId)
 
   useEffect(() => {
     const fetchedPaymentData = async () => {
       try {
-        const response = await Api.get(`api/payment/consumption/daily/${date}`);
-        console.log("일별 세부내역 데이터:", response.data.data);
-        setPaymentData(response.data.data); // 여기서 저장
+        if (type === "share") {
+          const response = await Api.get(`api/share/ledger/user/${userId}/daily/${date}`)
+          if (response.data.status === "success") {
+            setPaymentData(response.data.data)
+          }
+        } else if (type === "personal") {
+          const response = await Api.get(`api/payment/consumption/daily/${date}`);
+          console.log("일별 세부내역 데이터:", response.data.data);
+          setPaymentData(response.data); // 여기서 저장
+        }
       } catch (error) {
         console.error("일별 세부내역조회 실패", error);
       }
@@ -51,15 +59,37 @@ export default function PaymentDetails({ date }) {
   }, [date]); //data가 바뀔 때마다 다시 요청
 
   if (!paymentData) return <div>로딩 중...</div>;
-
+  {console.log("1",paymentData)}
   return (
     <div className="bg-white w-full p-[10px] text-black">
       <p className="flex flex-start pb-[10px]">
-        {formatKoreanDate(paymentData.date)}
+        {formatKoreanDate(type === "personal" ? paymentData.data.date : paymentData.date)}
       </p>
 
       <ul className="space-y-2">
-        {paymentData.transactions.map((item, index) => {
+        {(type === "personal")  ? paymentData.data.transactions.map((item, index) => {
+          const matchedCategory = categories.find(
+            (cat) => cat.name === item.category
+          );
+          const Icon = matchedCategory ? matchedCategory.Icon : null;
+
+          return (
+            <li key={index} className="flex items-center gap-2 text-sm">
+              {Icon && (
+                <img src={Icon} alt={item.category} className="w-8 h-auto" />
+              )}
+              <span className="ml-[20px]">{item.category}</span>
+              <span className="relative left-30px">{item.matchedName}</span>
+              <span>{item.description}</span>
+              <span className="ml-auto">
+                {item.amount != null
+                  ? `${item.amount.toLocaleString()}`
+                  : "금액 없음"}
+              </span>
+            </li>
+          );
+        })
+        : paymentData.transactions.map((item, index) => {
           const matchedCategory = categories.find(
             (cat) => cat.name === item.category
           );
