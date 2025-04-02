@@ -163,7 +163,7 @@ export default function RenderHome() {
       ) : (
         <>
           <CustomHeader title="홈" />
-          <div className="flex flex-col items-start p-[30px_10px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
+          <div className="flex flex-col items-start p-[30px_10px_82px] gap-6 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
             <div className="flex flex-col p-[12px_11px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
               <p className="w-auto h-[12px] font-['Pretendard'] text-left font-semibold text-[10px] leading-[12px] tracking-[0.07em] text-[#D0D0D0]">
                 이번달 카드 추천

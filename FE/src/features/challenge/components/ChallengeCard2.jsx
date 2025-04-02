@@ -25,7 +25,7 @@ export default function ChallengeCard2({
     <>
       <div
         onClick={handleClick}
-        className="flex flex-col items-start px-3 py-5 pl-4 gap-2.5 w-full max-w-sm bg-white rounded-md"
+        className="flex flex-col items-start px-3 py-5 pl-4 gap-2.5 w-full max-w-sm ml-3 mb-1.5 mt-1.5 bg-white rounded-3xl shadow-[1px_1px_5px_rgba(0,0,0,0.25)] "
       >
         {/* 내부 컨텐츠 영역 - 상대적 위치 지정으로 레이아웃 구성 */}
         <div className="relative w-full h-[74px]">
@@ -37,25 +37,32 @@ export default function ChallengeCard2({
 
           {/* 텍스트 영역 - 제목 (택시 요금 줄이기) */}
           {/* - 텍스트 스타일, 크기, 위치 설정 */}
-          <div className="absolute left-[104px] top-4 font-normal text-base leading-5 text-black">
+          <div className="absolute left-[104px] top-4 font-semibold text-base font-['Pretendard'] leading-5 text-black">
             {challengeName}
           </div>
 
           {/* 카테고리 라벨 (공식챌린지) */}
-          <div className="absolute left-[104px] top-0 font-normal text-xs leading-tight text-black">
+          <div className="absolute left-[104px] top-11 font-medium text-xs text-gray-600 leading-tight font-['Pretendard']">
             {challengeType}
           </div>
 
           {/* 하단 정보 (예상 환급액) */}
-          <div className="absolute left-[104px] top-14 font-normal text-xs leading-tight text-black">
+          {/* <div className="absolute left-[104px] top-14 font-normal text-xs leading-tight font-['Pretendard'] text-black">
             예상 환급액 : {targetAmount}
-          </div>
+          </div> */}
 
           {/* 날짜 프레임 - 우측 하단 배치 */}
           {/* - 그림자, 배경색, 둥근 모서리 적용 */}
-          <div className="absolute right-0 bottom-0 w-[69px] h-[15px] bg-gray-200 shadow-sm rounded-md flex items-center justify-center">
+          {/* <div className="absolute right-0 bottom-0 w-[69px] h-[15px] bg-gray-200 shadow-sm rounded-md flex items-center justify-center">
             <div className="text-[8px] leading-tight text-black">
               {ChallengeUtils.formatDate(startDate)}~
+              {ChallengeUtils.formatDate(endDate)}
+            </div>
+          </div> */}
+
+          <div className="absolute right-4 bottom-0 w-fill h-[15px] leading-5 text-black flex items-center justify-center">
+            <div className=" leading-tight text-black text-xs font-['Pretendard']">
+              {ChallengeUtils.formatDate(startDate)} ~
               {ChallengeUtils.formatDate(endDate)}
             </div>
           </div>
