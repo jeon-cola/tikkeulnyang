@@ -3,6 +3,10 @@ import { useLocation } from "react-router-dom"
 import Api from "../../../services/Api";
 import CustomBackHeader from "../../../components/CustomBackHeader";
 import getIcon from "../assets/getIcon";
+import getCardIcon from "../assets/getCardIcon"
+import getCardColor from "../assets/getCardColor";
+import '@fortawesome/fontawesome-free/css/all.min.css';
+
 
 export default function DetailCard() {
   const location = useLocation();
@@ -52,7 +56,7 @@ export default function DetailCard() {
         <div className="w-full flex flex-col justify-center items-center gap-2">
           {(Array.isArray(cardList.benefits) && cardList.benefits.length > 0) ? cardList.benefits.map((benefit, index) =>
             <div className="flex gap-5 justify-center items-center w-full" key={index}>
-              <img src={getIcon(benefit.budgetCategory)} alt={`${benefit.budgetCategory} 아이콘`} style={{height:"30px", width:"30px"}}/>
+              <i className={getCardIcon(benefit.category)} style={{ fontSize: "30px", color: getCardColor(benefit.category) }}></i>
               <p className="text-left w-1/3 text-xl font-bold">{benefit.category}</p> 
             </div>
           ) : ""}
