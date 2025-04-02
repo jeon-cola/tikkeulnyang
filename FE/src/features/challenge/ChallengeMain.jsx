@@ -15,6 +15,7 @@ import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
 export default function ChallengeMain() {
   const [officialChallenges, setOfficialChallenges] = useState([]);
   const [userChallenges, setUserChallenges] = useState([]);
+  const [recommendChallenges, setRecommendChallenges] = useState([]);
 
   // 페이지 저장할 State
   const [officialPageCnt, setOfficialPageCnt] = useState(0);
@@ -52,6 +53,20 @@ export default function ChallengeMain() {
     setUserChallenges([...userChallenges, ...formattedChallenges]);
   };
 
+  const fetchRecommendChallenge = async (page, size) => {
+    const response = await ChallengeService.getRecommend(page, size);
+    console.log(response.data);
+
+    // 날짜 형식 변경
+    const formattedChallenges = response.data.map((challenge) => ({
+      ...challenge,
+      startDate: ChallengeUtils.formatDate(challenge.startDate),
+      endDate: ChallengeUtils.formatDate(challenge.endDate),
+    }));
+
+    setRecommendChallenges([...recommendChallenges, ...formattedChallenges]);
+  };
+
   // 페이지가 실행되자마자 우선 추천, 공식, 유저 챌린지를 4개씩 불러온다.
 
   useEffect(() => {
@@ -63,6 +78,10 @@ export default function ChallengeMain() {
     fetchUserChallenge(userPageCnt, 4);
     console.log(userPageCnt, userChallenges);
   }, [userPageCnt]);
+
+  useEffect(() => {
+    fetchRecommendChallenge(0, 4);
+  }, []);
 
   // 공식 챌린지 목록 렌더링
   const renderOfficialChallenge = () => {
@@ -114,6 +133,29 @@ export default function ChallengeMain() {
     return cardElements;
   };
 
+  // 추천 챌린지 조회
+  const renderRecommendChallenge = () => {
+    return (
+      <div className="flex pt-[5px] pl-[16px] overflow-x-auto gap-4 pb-4 w-full">
+        {recommendChallenges.map((challenge) => (
+          <div
+            key={challenge.challengeId}
+            className="flex-shrink-0 w-[calc(50%-8px)]"
+          >
+            <ChallengeCard
+              thumbnailUrl={challenge.thumbnailUrl}
+              type="추천챌린지"
+              title={challenge.challengeName}
+              startDate={challenge.startDate}
+              endDate={challenge.endDate}
+              challengeId={challenge.challengeId}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   // 전체 챌린지 선택시
   const renderPage = () => {
     switch (challengeType) {
@@ -124,10 +166,7 @@ export default function ChallengeMain() {
             <BasicContainer>
               <ChallengeDesc type="추천 챌린지" button="전체보기 >" />
 
-              {/* {renderOfficialChallenge()}
-              <ViewMoreButton
-                onIncrease={() => setOfficialPageCnt(officialPageCnt + 1)}
-              /> */}
+              {renderRecommendChallenge()}
             </BasicContainer>
 
             {/* 공식 챌린지 목록 4개씩 렌더링 */}

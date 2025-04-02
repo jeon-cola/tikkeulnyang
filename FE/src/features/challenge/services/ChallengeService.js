@@ -114,4 +114,19 @@ export const ChallengeService = {
       throw error;
     }
   },
+
+  // 추천 챌린지 조회
+  getRecommend: async (page, size) => {
+    try {
+      const response = await Api.get(
+        `api/challenge/recommend?page=${page}&size=${size}`
+      );
+
+      console.log("recommend", response);
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
 };
