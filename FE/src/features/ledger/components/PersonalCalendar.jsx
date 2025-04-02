@@ -10,6 +10,7 @@ export default function PersonalLedgerCalendar() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [calendarData, setCalendarData] = useState([]);
 
+
   const formatDate = (date) =>
     date.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
 
@@ -25,6 +26,7 @@ export default function PersonalLedgerCalendar() {
     }, 50);
   };
 
+  // 초기 달력 데이터 수집
   useEffect(() => {
     const fetchCalendarData = async () => {
       try {
@@ -33,16 +35,17 @@ export default function PersonalLedgerCalendar() {
         const response = await Api.get("api/payment/consumption", {
           params: { year, month },
         });
-
-        const fetchedData = response.data.data.data;
-        const formattedData = fetchedData.map((item) => ({
-          date: item.date,
-          income: item.income,
-          spending: item.expense,
-          transactions: item.transactions,
-        }));
-
-        setCalendarData(formattedData);
+        console.log(response.data)
+        if (response.data.status === "success"){
+          const fetchedData = response.data.data.data;
+          const formattedData = fetchedData.map((item) => ({
+            date: item.date,
+            income: item.income,
+            spending: item.expense,
+            transactions: item.transactions,
+          }));
+          setCalendarData(formattedData);
+        }
       } catch (error) {
         console.error("캘린더 데이터 로딩 중 에러 발생:", error);
       }
@@ -85,8 +88,17 @@ export default function PersonalLedgerCalendar() {
       <CustomCalendar
         value={value}
         onChange={(date) => {
+          console.log("값 변경")
           setValue(date);
           handleDateClick(date);
+        }}
+        onActiveStartDateChange={({ activeStartDate, view }) => {
+          console.log("달력 월 변경:", activeStartDate);
+          console.log("년도:", activeStartDate.getFullYear(), "월:", activeStartDate.getMonth() + 1);
+          // 월 변경 시 데이터 가져오기
+          if (view === 'month') {
+            setValue(activeStartDate);
+          }
         }}
         tileContent={tileContent}
       />
