@@ -1,6 +1,6 @@
 export default function Box({ text, variant, children, onClick }) {
   const baseStyles =
-    "w-full h-[40px] flex items-center justify-between rounded-md shadow-sm px-[10px]";
+    "w-full h-[50px] flex items-center justify-between rounded-md shadow-sm px-[10px]";
   const variants = {
     title: "font-bold text-black bg-white",
     highlight: "font-medium text-black bg-[#FFF0BA]",

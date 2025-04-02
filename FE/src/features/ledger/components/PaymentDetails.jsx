@@ -9,23 +9,25 @@ import ShoppingIcon from "../assets/category/shopping_icon.png";
 import TransportationIcon from "../assets/category/transportation_icon.png";
 import IncomeIcon from "../assets/category/income_icon.png";
 import SpenseIcon from "../assets/category/spense_icon.png";
+import EducationIcon from "../assets/category/education_icon.png";
 
 const categories = [
-  { id: "식비", Icon: FoodIcon },
-  { id: "주거/통신", Icon: HousingIcon },
-  { id: "잡화", Icon: GoodsIcon },
-  { id: "병원/약국", Icon: MedicalIcon },
-  { id: "쇼핑/미용", Icon: ShoppingIcon },
-  { id: "교통/차량", Icon: TransportationIcon },
-  { id: "문화/여가", Icon: EntertainmentIcon },
-  { id: "수입", Icon: IncomeIcon },
-  { id: "결제", Icon: SpenseIcon },
+  { id: 1, name: "주거/통신", Icon: HousingIcon },
+  { id: 2, name: "식비", Icon: FoodIcon },
+  { id: 3, name: "교통/차량", Icon: TransportationIcon },
+  { id: 4, name: "교육/육아", Icon: EducationIcon },
+  { id: 5, name: "쇼핑/미용", Icon: ShoppingIcon },
+  { id: 6, name: "병원/약국", Icon: MedicalIcon },
+  { id: 7, name: "문화/여가", Icon: EntertainmentIcon },
+  { id: 8, name: "잡화", Icon: GoodsIcon },
+  { id: 9, name: "결제", Icon: SpenseIcon },
+  { name: "수입", Icon: IncomeIcon },
 ];
 
 const formatKoreanDate = (dateStr) => {
-  const date = new Date(dateStr + "T00:00:00+09:00"); // 타임존 보정
-  const day = date.getDate(); // 날짜
-  const weekday = date.toLocaleDateString("ko-KR", { weekday: "long" });
+  const date = new Date(dateStr);
+  const day = date.getDate(); // 날짜 (11)
+  const weekday = date.toLocaleDateString("ko-KR", { weekday: "long" }); // 화요일
   return `${day}일 ${weekday}`;
 };
 console.log("PaymentDetails에서 시간조회:", new Date());
@@ -59,7 +61,7 @@ export default function PaymentDetails({ date }) {
       <ul className="space-y-2">
         {paymentData.transactions.map((item, index) => {
           const matchedCategory = categories.find(
-            (cat) => cat.id === item.category
+            (cat) => cat.name === item.category
           );
           const Icon = matchedCategory ? matchedCategory.Icon : null;
 
