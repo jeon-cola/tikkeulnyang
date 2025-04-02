@@ -14,20 +14,21 @@ import ShoppingIcon from "./assets/category/shopping_icon.png";
 import TransportationIcon from "./assets/category/transportation_icon.png";
 import IncomeIcon from "./assets/category/income_icon.png";
 import SpenseIcon from "./assets/category/spense_icon.png";
-
+import EducationIcon from "./assets/category/education_icon.png";
 import WasteIcon from "./assets/waste_icon.png";
 import EmptyIcon from "./assets/empty_icon.png";
 
 const categories = [
-  { id: "식비", Icon: FoodIcon },
-  { id: "주거/통신", Icon: HousingIcon },
-  { id: "잡화", Icon: GoodsIcon },
-  { id: "병원/약국", Icon: MedicalIcon },
-  { id: "쇼핑/미용", Icon: ShoppingIcon },
-  { id: "교통/차량", Icon: TransportationIcon },
-  { id: "문화/여가", Icon: EntertainmentIcon },
-  { id: "수입", Icon: IncomeIcon },
-  { id: "결제", Icon: SpenseIcon },
+  { id: 1, name: "주거/통신", Icon: HousingIcon },
+  { id: 2, name: "식비", Icon: FoodIcon },
+  { id: 3, name: "교통/차량", Icon: TransportationIcon },
+  { id: 4, name: "교육/육아", Icon: EducationIcon },
+  { id: 5, name: "쇼핑/미용", Icon: ShoppingIcon },
+  { id: 6, name: "병원/약국", Icon: MedicalIcon },
+  { id: 7, name: "문화/여가", Icon: EntertainmentIcon },
+  { id: 8, name: "잡화", Icon: GoodsIcon },
+  { id: 9, name: "결제", Icon: SpenseIcon },
+  { name: "수입", Icon: IncomeIcon },
 ];
 
 export default function LedgerDetail() {
@@ -62,6 +63,7 @@ export default function LedgerDetail() {
     fetchMonthlyData();
   }, [activeDate]);
 
+  // 교육, 수입, 지출 추가해야하는지 확인하기
   const categoryMapping = {
     food: "식비",
     housing: "주거/통신",
@@ -115,13 +117,13 @@ export default function LedgerDetail() {
             <div className="flex gap-6 text-sm">
               <div>
                 <p className="text-[#A2A2A2] text-xs">총 수입</p>
-                <p className="text-[#FF957A] font-semibold">
+                <p className="text-[#64C9F5] font-semibold">
                   {totalIncome.toLocaleString()}
                 </p>
               </div>
               <div>
                 <p className="text-[#A2A2A2] text-xs">총 지출</p>
-                <p className="text-[#64C9F5] font-semibold">
+                <p className="text-[#FF957A] font-semibold">
                   {totalSpent.toLocaleString()}
                 </p>
               </div>
@@ -132,7 +134,7 @@ export default function LedgerDetail() {
           <ul>
             {filteredTransactions.map((item, index) => {
               const matchedCategory = categories.find(
-                (cat) => cat.id === item.categoryName
+                (cat) => cat.name === item.categoryName
               );
               const Icon = matchedCategory?.Icon;
 

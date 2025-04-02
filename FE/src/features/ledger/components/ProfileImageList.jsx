@@ -23,7 +23,7 @@ export default function ProfileImageList({ onClick }) {
       {partners.map((partner) => (
         <img
           key={partner.userId}
-          className="w-12 h-12 rounded-full border-2 border-gray-300 cursor-pointer hover:border-blue-500"
+          className="w-10 h-10 rounded-full border-2 border-gray-300 cursor-pointer hover:border-blue-500"
           src={partner.profileImageUrl}
           alt={partner.nickname}
           title={partner.nickname}
