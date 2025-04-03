@@ -75,7 +75,7 @@ export default function ChallengeNav() {
        *
        */}
 
-      <div className="w-full">
+      <div className="w-full bg-white">
         {/* 탭 헤더 */}
         <div className="relative border-b border-gray-200">
           <div className="flex">
@@ -85,7 +85,7 @@ export default function ChallengeNav() {
                 ref={(el) => (tabsRef.current[index] = el)}
                 className={`w-full py-3 px-4 text-center focus:outline-none transition-colors duration-300 ${
                   challengeType === index
-                    ? "text-black font-bold"
+                    ? "text-[#FF957A] font-bold"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
                 onClick={() => handleClick(index)}
@@ -98,7 +98,7 @@ export default function ChallengeNav() {
           {/* 밑줄 인디케이터 */}
           <div
             ref={indicatorRef}
-            className="absolute bottom-0 h-0.5 bg-black transition-all duration-300 ease-in-out"
+            className="absolute bottom-0 h-0.5 bg-[#FF957A] transition-all duration-300 ease-in-out"
           />
         </div>
       </div>

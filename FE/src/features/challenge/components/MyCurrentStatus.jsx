@@ -11,7 +11,7 @@ export default function MyCurrentStatus({
   return (
     <>
       {/* 나의 현황 */}
-      <div className="flex flex-col items-center p-[25px_11px_25px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+      <div className="flex flex-col items-center pl-5 p-[25px_11px_25px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
         <div className="w-full h-[109px] relative">
           {/* 타이틀 */}
           <div className="absolute top-[6px]">
@@ -21,23 +21,25 @@ export default function MyCurrentStatus({
           </div>
 
           {/* 달성률 그룹 */}
-          <div className="absolute left-[15px] top-[38px] flex flex-col">
-            <span className="text-black text-[15px] font-normal leading-[23px] font-['Prompt']">
-              달성률
-            </span>
-            <span className="text-black text-[15px] font-normal leading-[23px] font-['Prompt']">
-              {currentProgress}%
-            </span>
-          </div>
+          <div className="relative flex flex-row justify-between">
+            <div className="absolute left-[15px] top-[38px] text-left flex flex-col">
+              <span className="text-black text-[15px] font-normal leading-[23px] font-['Prompt']">
+                달성률
+              </span>
+              <span className="text-black text-[15px] font-normal leading-[23px] font-['Prompt']">
+                {currentProgress}%
+              </span>
+            </div>
 
-          {/* 예치금 그룹 */}
-          <div className="text-black absolute right-[15px] top-[38px] flex flex-col items-end">
-            <span className="text-[15px] font-normal leading-[23px] font-['Prompt']">
-              예치금
-            </span>
-            <span className="text-[15px] font-normal leading-[23px] font-['Prompt']">
-              {deposit}원
-            </span>
+            {/* 예치금 그룹 */}
+            <div className="text-black text-right absolute right-[15px] top-[38px] flex flex-col items-end">
+              <span className="text-[15px] font-normal leading-[23px] font-['Prompt']">
+                예치금
+              </span>
+              <span className="text-[15px] font-normal leading-[23px] font-['Prompt']">
+                {deposit}원
+              </span>
+            </div>
           </div>
 
           {/* 프로그레스 바 배경 */}

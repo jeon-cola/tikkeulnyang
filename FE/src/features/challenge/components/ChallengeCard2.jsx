@@ -25,19 +25,19 @@ export default function ChallengeCard2({
     <>
       <div
         onClick={handleClick}
-        className="flex flex-col items-start px-3 py-5 pl-4 gap-2.5 w-full max-w-sm ml-3 mb-1.5 mt-1.5 bg-white rounded-3xl shadow-[1px_1px_5px_rgba(0,0,0,0.25)] "
+        className="flex flex-col items-start px-3 py-5 pl-4 gap-2.5 w-full rounded-lg shadow-md max-w-sm ml-3 mb-1.5 mt-1.5 bg-white ] "
       >
         {/* 내부 컨텐츠 영역 - 상대적 위치 지정으로 레이아웃 구성 */}
         <div className="relative w-full h-[74px]">
           {/* 이미지 영역 - 절대 위치로 배치 */}
           <div
-            className="absolute w-[95px] h-[78px] left-0 top-0 rounded-md bg-cover bg-center blur-[0.1px]"
+            className="absolute w-[95px] h-[78px] left-0 top-0 rounded-md bg-cover bg-center"
             style={{ backgroundImage: `url(${thumbnailUrl})` }}
           ></div>
 
           {/* 텍스트 영역 - 제목 (택시 요금 줄이기) */}
           {/* - 텍스트 스타일, 크기, 위치 설정 */}
-          <div className="absolute left-[104px] top-4 font-semibold text-base font-['Pretendard'] leading-5 text-black">
+          <div className="absolute left-[104px] top-3 font-semibold text-base font-['Pretendard'] leading-5 text-black">
             {challengeName}
           </div>
 
