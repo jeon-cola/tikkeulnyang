@@ -66,7 +66,7 @@ services:
     container_name: mysql-exporter
     restart: always
     environment:
-      - DATA_SOURCE_NAME=root:ksh147!!@(mysql:3306)/
+      - DATA_SOURCE_NAME=root:ksh147%21%21@(mysql:3306)/
     ports:
       - "9104:9104"
     depends_on:
