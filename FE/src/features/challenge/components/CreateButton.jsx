@@ -13,7 +13,7 @@ export default function CreateButton() {
     <>
       <div
         onClick={handleClick}
-        className="absolute right-[30px] transform scale-y-[-1]"
+        className="fixed top-[25px] right-[30px] transform scale-y-[-1] z-[51]"
       >
         <div className="absolute w-[21px] h-0 border-black border-t-[2px]"></div>
         <div className="absolute w-[21px] h-0 border-black border-t-[2px] transform rotate-90"></div>
