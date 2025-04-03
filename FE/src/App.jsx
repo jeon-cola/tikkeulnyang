@@ -2,7 +2,7 @@ import "./App.css";
 import Router from "./routes";
 import { useEffect } from "react"
 import { useDispatch } from "react-redux"
-import { setEmail, setNickName, setProfileImg, setDeposit } from "./features/user/UserSlice.js"
+import { setEmail, setNickName, setProfileImg, setDeposit, setUserId } from "./features/user/UserSlice.js"
 import axios from "axios";
 import Api from "./services/Api";
 
@@ -18,6 +18,7 @@ function App() {
                   dispatch(setNickName(userData.nickname))
                   dispatch(setProfileImg(userData.profileImage))
                   dispatch(setDeposit(userData.deposit))
+                  dispatch(setUserId(userData.id))
               }
           } catch (error) {
               console.log(error)
