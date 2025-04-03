@@ -65,6 +65,8 @@ services:
     image: prom/mysqld-exporter
     container_name: mysql-exporter
     restart: always
+    command:
+      - "--config.my-cnf=/root/.my.cnf"
     volumes:
       - ./exporter/.my.cnf:/root/.my.cnf:ro
     ports:
