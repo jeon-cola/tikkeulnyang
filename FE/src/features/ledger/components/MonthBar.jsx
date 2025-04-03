@@ -48,20 +48,20 @@ export default function MonthBar({
   const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
 
   return (
-    <div className="text-2xl w-full bg-white rounded-lg shadow-sm relative flex items-center justify-between px-10 py-2">
+    <div className="text-2xl w-full relative flex items-center justify-between px-10 py-2">
       <button onClick={() => handleMonthChange(-1)} className="bg-transparent!">
         &lt;
       </button>
-      <div className="flex items-center relative">
+      <div className="flex text-[22px] items-center relative">
         <div
           onClick={handleYearClick}
-          className="text-[20px] font-medium text-left cursor-pointer select-none"
+          className=" font-medium text-left cursor-pointer select-none"
           style={{ flexGrow: 0 }}
         >
           {activeDate.getFullYear()}
         </div>
         {/* 월 표시 */}
-        <div className="text-[20px] font-medium ml-1">.{month}</div>
+        <div className=" font-medium ml-1">.{month}</div>
         {/* 연도 드롭다운 */}
         {isYearSelectorOpen && (
           <div className="absolute top-full mt-1 left-0 bg-white border border-gray-300 rounded shadow-md z-10">

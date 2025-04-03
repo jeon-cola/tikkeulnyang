@@ -25,7 +25,7 @@ const categories = [
   { id: 6, name: "병원/약국", Icon: MedicalIcon },
   { id: 7, name: "문화/여가", Icon: EntertainmentIcon },
   { id: 8, name: "잡화", Icon: GoodsIcon },
-  // { id: 9, name: "결제", Icon: SpenseIcon },
+  { id: 9, name: "결제", Icon: SpenseIcon },
 ];
 
 const connectLinePlugin = {
@@ -43,8 +43,8 @@ const connectLinePlugin = {
 
       // 중심각 계산
       const angle = (startAngle + endAngle) / 2;
-      const labelX = centerX + Math.cos(angle) * (outerRadius + 10); // 라벨 위치 계산
-      const labelY = centerY + Math.sin(angle) * (outerRadius + 10);
+      const labelX = centerX + Math.cos(angle) * (outerRadius + 20); // 라벨 위치 계산
+      const labelY = centerY + Math.sin(angle) * (outerRadius + 20);
 
       // 선 그리기
       ctx.save();
@@ -67,6 +67,7 @@ Chart.register(ChartDataLabels, connectLinePlugin);
 export default function BudgetReport() {
   const [activeDate, setActiveDate] = useState(new Date());
   const [chartData, setChartData] = useState([]);
+  const [categoriesList, setCategoriesList] = useState([]);
   const chartRef = useRef(null);
 
   const year = activeDate.getFullYear();
@@ -95,7 +96,39 @@ export default function BudgetReport() {
         if (response.data.status === "success") {
           const categoriesData = response.data.data.categories;
           console.log("예산통계 데이터:", categoriesData);
-          setChartData(categoriesData);
+          // 퍼센트 기준 내림차순 정렬 (높은 퍼센트가 먼저 오도록)
+          const sortedData = [...categoriesData].sort((a, b) => {
+            // parseFloat을 사용해 문자열인 경우에도 올바르게 비교
+            const percentA =
+              typeof a.percentage === "string"
+                ? parseFloat(a.percentage)
+                : a.percentage;
+            const percentB =
+              typeof b.percentage === "string"
+                ? parseFloat(b.percentage)
+                : b.percentage;
+
+            return percentB - percentA; // 내림차순 정렬
+          });
+
+          setChartData(sortedData);
+          // 카테고리 목록은 ID 기준 정렬
+          // 1. 각 데이터 항목에 해당 카테고리 ID 매핑
+          const dataWithIds = categoriesData.map((item) => {
+            const matchedCategory = categories.find(
+              (c) => c.name === item.name
+            );
+            return {
+              ...item,
+              categoryId: matchedCategory ? matchedCategory.id : 999, // 매칭되지 않으면 높은 ID 부여
+            };
+          });
+
+          // 2. ID 기준으로 정렬
+          const idSortedData = [...dataWithIds].sort(
+            (a, b) => a.categoryId - b.categoryId
+          );
+          setCategoriesList(idSortedData);
         }
       } catch (error) {
         console.error("요청 실패:", error);
@@ -103,7 +136,6 @@ export default function BudgetReport() {
     };
     fetchData();
   }, [year, month]);
-
   useEffect(() => {
     if (!chartData.length) return;
     const ctx = chartRef.current.getContext("2d");
@@ -162,7 +194,6 @@ export default function BudgetReport() {
             },
             // 아래 스타일은 선택 사항
             backgroundColor: "#ffffff",
-            // borderColor: "#cccccc",
             borderWidth: 1,
             borderRadius: 4,
             padding: 6,
@@ -173,16 +204,18 @@ export default function BudgetReport() {
   }, [chartData]);
 
   return (
-    <div>
+    <div className="h-screen overflow-y-auto">
       <Container>
         <CustomBackHeader title="소비내역통계" />
-        <MonthBar
-          activeDate={activeDate}
-          setActiveDate={setActiveDate}
-          onYearMonthChange={({ year, month }) => {
-            console.log("선택된 연/월:", year, month);
-          }}
-        />
+        <div className="w-full bg-white rounded-lg shadow-sm">
+          <MonthBar
+            activeDate={activeDate}
+            setActiveDate={setActiveDate}
+            onYearMonthChange={({ year, month }) => {
+              console.log("선택된 연/월:", year, month);
+            }}
+          />
+        </div>
         {/* 파이차트 */}
         <div className="w-full h-auto bg-white rounded-md shadow-sm px-4 py-3">
           <canvas

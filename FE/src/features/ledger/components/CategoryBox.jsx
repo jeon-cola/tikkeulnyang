@@ -63,7 +63,7 @@ export default function CategoryBox({ activeCategory, setActiveCategory }) {
   ];
 
   return (
-    <div className="w-full bg-white rounded-lg shadow-sm p-4 flex items-center overflow-x-auto">
+    <div className="px-2 flex items-center overflow-x-auto">
       <div className="flex gap-3 snap-x snap-mandatory overflow-x-auto">
         {categories.map((category) => {
           // "all"인 경우 모든 아이콘을 active 상태로 표시
@@ -74,7 +74,7 @@ export default function CategoryBox({ activeCategory, setActiveCategory }) {
               key={category.id}
               src={isActive ? category.activeIcon : category.inactiveIcon}
               alt={category.id}
-              className="w-8 h-auto cursor-pointer snap-center"
+              className="w-12 h-auto cursor-pointer snap-center"
               onClick={() => setActiveCategory(category.id)}
             />
           );

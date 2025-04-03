@@ -3,7 +3,7 @@ import LedgerMain from "@/features/ledger/LedgerMain";
 import PersonalLedger from "@/features/ledger/PersonalLedger";
 import SharedLedger from "../features/ledger/SharedLedger";
 import LedgerDetail from "@/features/ledger/LedgerDetail";
-import LedgerEdit from "@/features/ledger/LedgerEdit";
+// import LedgerEdit from "@/features/ledger/LedgerEdit";
 import BudgetMain from "@/features/ledger/components/budget/BudgetMain";
 import BudgetMake from "@/features/ledger/components/budget/BudgetMake";
 import BudgetReport from "@/features/ledger/components/budget/BudgetReport";
@@ -16,7 +16,7 @@ export default function LedgerRouter() {
         <Route index element={<PersonalLedger />} />
         <Route path="share" element={<SharedLedger />} />
         <Route path="detail" element={<LedgerDetail />} />
-        <Route path="edit" element={<LedgerEdit />} />
+        {/* <Route path="edit" element={<LedgerEdit />} /> */}
 
         {/* budget 중첩 라우팅 */}
         <Route path="budget" element={<BudgetMain />} />
