@@ -104,14 +104,14 @@ public class ShareService {
 
             int dailySpent = dailySpentMap.getOrDefault(dateStr, 0);
 
-            // 이모지 결정 (0: 예산 미만, 1: 예산과 같음, 2: 예산 초과)
+            // 0: 지출이 없음, 1: 예산보다 적게 지출, 2: 예산 초과
             int emoji;
-            if (Math.abs(dailySpent - dailyBudget) < 0.01) {
-                emoji = 1; // 예산과 동일
+            if (dailySpent == 0) {
+                emoji = 0; // 지출이 없음
             } else if (dailySpent > dailyBudget) {
                 emoji = 2; // 예산 초과
             } else {
-                emoji = 0; // 예산 미만
+                emoji = 1; // 예산보다 적게 지출
             }
 
             ShareLedgerResponseDto.DailyData dailyData = ShareLedgerResponseDto.DailyData.builder()
