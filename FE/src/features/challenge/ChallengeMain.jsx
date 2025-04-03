@@ -210,11 +210,7 @@ export default function ChallengeMain() {
     <>
       {/* <CustomHeader title="챌린지" showCreateButton="true" /> */}
       <CreateButton />
-      <CustomBackHeader
-        title="챌린지"
-        showCreateButton="true"
-        challengeNav="true"
-      />
+      <CustomBackHeader title="챌린지" />
       <div className="flex flex-col items-start p-[0px_0px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
         <ChallengeNav />
         {renderPage()}
