@@ -62,17 +62,17 @@ services:
       - app_network
 
   mysql-exporter:
-  image: prom/mysqld-exporter
-  container_name: mysql-exporter
-  restart: always
-  volumes:
-    - ./exporter/.my.cnf:/root/.my.cnf:ro
-  ports:
-    - "9104:9104"
-  depends_on:
-    - mysql
-  networks:
-    - app_network
+    image: prom/mysqld-exporter
+    container_name: mysql-exporter
+    restart: always
+    volumes:
+      - ./exporter/.my.cnf:/root/.my.cnf:ro
+    ports:
+      - "9104:9104"
+    depends_on:
+      - mysql
+    networks:
+      - app_network
 
 networks:
   app_network:
