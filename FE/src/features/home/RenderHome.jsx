@@ -185,7 +185,7 @@ export default function RenderHome() {
             </div>
 
             <div className="flex flex-col p-[12px_20px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
-              <h2 className="pt-[18px] font-['Pretendard'] font-semibold text-[14px] text-left leading-[17px] tracking-[0.01em] text-[#FF957A] mb-[6px]">
+              <h2 className="pt-[18px] font-['Pretendard'] font-semibold text-[14px] text-left leading-[17px] tracking-[0.01em] text-primary-500 mb-[6px]">
                 안녕하세요 유저님
               </h2>
 

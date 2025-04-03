@@ -138,7 +138,7 @@ export default function ChallengeMain() {
   // 추천 챌린지 조회
   const renderRecommendChallenge = () => {
     return (
-      <div className="flex pt-[5px] pl-[16px] overflow-x-auto gap-4 pb-4 w-full">
+      <div className="flex pt-[5px] pl-[16px] overflow-x-auto gap-0.7 pb-4 w-full">
         {recommendChallenges.map((challenge) => (
           <div
             key={challenge.challengeId}
@@ -151,6 +151,8 @@ export default function ChallengeMain() {
               startDate={challenge.startDate}
               endDate={challenge.endDate}
               challengeId={challenge.challengeId}
+              width="150px"
+              height="185px"
             />
           </div>
         ))}
@@ -210,11 +212,7 @@ export default function ChallengeMain() {
     <>
       {/* <CustomHeader title="챌린지" showCreateButton="true" /> */}
       <CreateButton />
-      <CustomBackHeader
-        title="챌린지"
-        showCreateButton="true"
-        challengeNav="true"
-      />
+      <CustomBackHeader title="챌린지" />
       <div className="flex flex-col items-start p-[0px_0px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
         <ChallengeNav />
         {renderPage()}
