@@ -1,7 +1,13 @@
-@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css");
+@font-face {
+  font-family: "Pretendard";
+  src: url("./assets/fonts/pretendard/PretendardVariable.ttf");
+}
 
+* {
+  font-family: "Pretendard";
+}
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* font-family: system-ui, Avenir, Helvetica, Arial, sans-serif; */
   line-height: 1.5;
   font-weight: 400;
 

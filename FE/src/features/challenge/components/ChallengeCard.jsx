@@ -17,6 +17,8 @@ export default function ChallengeCard({
   startDate,
   endDate,
   challengeId,
+  width = "168px",
+  height = "207px",
 }) {
   const navigate = useNavigate();
 
@@ -27,13 +29,13 @@ export default function ChallengeCard({
   return (
     <div
       onClick={handleClick} // 클릭시 상세 페이지로 넘어간다.
-      className="relative w-[168px] h-[207px] bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.27)] rounded-[20px] overflow-hidden"
+      className={`relative bg-white shadow-md rounded-lg overflow-hidden`}
+      style={{ width, height }}
     >
       {/**
        *
        * Version 1
        *
-       * */}
       {/* 이미지 영역 */}
       {/* <div
         className="absolute w-[168px] h-[129px] left-0 top-0"
@@ -66,20 +68,19 @@ export default function ChallengeCard({
        *
        * */}
       <div
-        className="absolute w-[168px] h-[60%] left-0 top-0"
+        className="w-[168px] h-[65%]"
         style={{
           backgroundImage: `url(${thumbnailUrl})`,
           backgroundSize: "cover",
         }}
       ></div>
+      <div className="px-3 py-2 text-left flex-1 flex flex-col gap-1">
+        <div className="text-md font-semibold leading-[16px]">{title}</div>
 
-      <h2 className="absolute left-[7px] top-[142px] font-['Pretendard'] font-semibold leading-[16px] text-black">
-        {title}
-      </h2>
-
-      <p class="absolute left-[7px] top-[163px] font-['Pretendard'] text-sm text-gray-600 ">
-        {startDate} ~ {endDate}
-      </p>
+        <div class="text-xs text-gray-400 font-semibold">
+          {startDate} ~ {endDate}
+        </div>
+      </div>
     </div>
   );
 }

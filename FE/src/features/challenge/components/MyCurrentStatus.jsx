@@ -11,7 +11,7 @@ export default function MyCurrentStatus({
   return (
     <>
       {/* 나의 현황 */}
-      <div className="flex flex-col items-center p-[12px_11px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+      <div className="flex flex-col items-center p-[25px_11px_25px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
         <div className="w-full h-[109px] relative">
           {/* 타이틀 */}
           <div className="absolute top-[6px]">
