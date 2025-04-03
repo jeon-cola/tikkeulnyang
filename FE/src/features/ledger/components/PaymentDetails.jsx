@@ -35,40 +35,78 @@ const formatKoreanDate = (dateStr) => {
 export default function PaymentDetails({ date, type,userId = null }) {
   const [paymentData, setPaymentData] = useState(null);
   const [isOpen, setIsOPen] =useState(false)
+  const [ blinkList, setBlinkList ] = useState([])
+
+  // 알람 지우기
+  function cancleAlamHandler() {
+    const fetchData = async () => {
+      try {
+        const response = await Api.post(`api/share/notification/date/read/${date}`)
+        console.log(response.data)
+        if (response.data.status === "success") {
+          alamHandler()
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    fetchData()
+  }
 
   //모달 닫기
   function onCloseModalHandler() {
     setIsOPen(false)
   }
 
-  useEffect(() => {
-    const fetchedPaymentData = async () => {
-      try {
-        // 상대방 아이디가 있고 공유일때만
-        if (type === "share" && userId) {
-          if (userId){
-            const response = await Api.get(`api/share/ledger/user/${userId}/daily/${date}`)
-            if (response.data.status === "success") {
-              setPaymentData(response.data.data)
-            } 
+  // 상세 내역 조회
+  const fetchedPaymentData = async () => {
+    try {
+      // 상대방 아이디가 있고 공유일때만
+      if (type === "share" && userId) {
+        if (userId){
+          const response = await Api.get(`api/share/ledger/user/${userId}/daily/${date}`)
+          if (response.data.status === "success") {
+            setPaymentData(response.data.data)
           } 
-        } else {
-          const response = await Api.get(`api/payment/consumption/daily/${date}`);
-          console.log("일별 세부내역 데이터:", response.data.data);
-          setPaymentData(response.data); 
-        }
-      } catch (error) {
-        console.error("일별 세부내역조회 실패", error);
+        } 
+      } else {
+        const response = await Api.get(`api/payment/consumption/daily/${date}`);
+        setPaymentData(response.data); 
       }
-    };
+    } catch (error) {
+      console.error("일별 세부내역조회 실패", error);
+    }
+  };
+
+  
+    // 알림 조회
+    function alamHandler() {
+      const [year,month,day] = date.split("-")
+      const fetchData = async () => {
+        try {
+          const response = await Api.get(`api/share/notification/dates?year=${year}&month=${month}`)
+          if (response.data.status === "success") {
+            const data = response.data.data.dates
+            setBlinkList(data)
+          }
+        } catch (error) {
+          console.log(error)
+        }
+      }
+      fetchData()
+    }
+
+  useEffect(() => {
 
     if (date) {
       fetchedPaymentData();
+      alamHandler()
     }
   }, [date]); //data가 바뀔 때마다 다시 요청
 
   if (!paymentData) return <div>소비내역이 없습니다</div>;
 
+  const match = blinkList.some(item => item === date);
 
   return (
     <div className="bg-white w-full p-[10px] text-black">
@@ -77,9 +115,15 @@ export default function PaymentDetails({ date, type,userId = null }) {
           <p className="flex flex-start pb-[10px]">
             {formatKoreanDate(!userId ? paymentData?.data?.date : paymentData?.date)}
           </p>
-          <div onClick={()=> setIsOPen(true)}>
+          {match ? 
+            <div onClick={()=> {cancleAlamHandler(),setIsOPen(true)}} className="relative">
+              <span className="animate-pulse bg-red-500 absolute top-0 right-0 w-[10px] h-[10px] rounded-full"/>
+              <Comment title="댓글" isOpen={isOpen} onClose={onCloseModalHandler} userId={userId} date={!userId ? paymentData?.data?.date : paymentData?.date}/> 
+          </div>
+          :<div onClick={()=> setIsOPen(true)}>
             <Comment title="댓글" isOpen={isOpen} onClose={onCloseModalHandler} userId={userId} date={!userId ? paymentData?.data?.date : paymentData?.date}/> 
           </div>
+          }
         </div>}
       
   
