@@ -5,7 +5,6 @@ import ChallengeCard from "@/features/challenge/components/ChallengeCard";
 import ChallengeNav from "@/features/challenge/components/ChallengeNav";
 import ViewMoreButton from "@/features/challenge/components/ViewMoreButton";
 import ChallengeDesc from "@/features/challenge/components/ChallengeDesc";
-import CustomHeader from "@/components/CustomHeader";
 import CustomBackHeader from "@/components/CustomBackHeader";
 import { ChallengeService } from "@/features/challenge/services/ChallengeService";
 import { useSelector, useDispatch } from "react-redux";

@@ -42,7 +42,7 @@ export default function Homewidget({ title, content }) {
   return (
     <>
       <div
-        className={`flex flex-col items-start mt-[10px] mb-[10px] p-[18px] gap-[4px] w-[176px] h-[177px] shadow-[1px_1px_5px_rgba(0,0,0,0.05)] bg-white rounded-[20px]`}
+        className={`flex flex-col items-start mt-[10px] mb-[10px] p-[18px] gap-[4px] w-[176px] h-[177px] shadow-md rounded-lg bg-white`}
       >
         <div className="slider-container relative w-full h-full">
           <h3 className="absolute top-0 left-0 right-0 text-center font-normal text-[20px] leading-[30px] text-black">

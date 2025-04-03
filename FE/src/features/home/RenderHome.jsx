@@ -4,6 +4,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useState, useRef, useEffect } from "react";
 import { HomeService } from "@/features/home/services/HomeService";
 import { useNavigate } from "react-router-dom";
+import CustomBackHeader from "@/components/CustomBackHeader";
 
 export default function RenderHome() {
   const navigate = useNavigate();
@@ -162,45 +163,45 @@ export default function RenderHome() {
         <></>
       ) : (
         <>
-          <CustomHeader title="홈" />
+          <CustomBackHeader title="홈" />
           <div className="flex flex-col items-start p-[30px_10px_82px] gap-6 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
-            <div className="flex flex-col p-[12px_11px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
-              <p className="w-auto h-[12px] font-['Pretendard'] text-left font-semibold text-[10px] leading-[12px] tracking-[0.07em] text-[#D0D0D0]">
+            <div className="flex flex-col pt-9 pb-9 p-[12px_11px_12px] gap-2 relative w-full h-auto bg-white rounded-[6px]">
+              <div className="text-left font-semibold text-sm leading-[12px] tracking-[0.07em] text-[#D0D0D0]">
                 이번달 카드 추천
-              </p>
+              </div>
 
-              <p className="w-auto h-[14px] font-['Pretendard'] text-left font-semibold text-[12px] leading-[14px] tracking-[0.07em] text-black">
+              <div className="text-left font-semibold text-lg leading-7 tracking-[0.07em] text-black">
                 혜택이 많은 카드를 골라
-              </p>
+              </div>
 
-              <p className="w-auto h-[13px] font-['Pretendard'] text-left font-semibold text-[11px] leading-[13px] tracking-[0.07em] text-black">
+              <div className="text-left font-semibold text-lg leading-[13px] tracking-[0.07em] text-black">
                 카드 혜택으로 절약해보아요
-              </p>
+              </div>
 
-              <div className="absolute flex flex-row justify-center items-center p-[3px_5px] gap-[10px] w-[37px] h-[12px] right-[16px] bottom-[5px] bg-[rgba(8,8,8,0.46)] rounded-[30px]">
-                <span className="w-[25px] h-[6px] font-['Pretendard'] font-semibold text-[5px] leading-[6px] tracking-[0.07em] text-white">
+              <div className="absolute flex flex-row justify-center items-center pt-2 pb-2 pl-2 pr-2 gap-[10px] right-4 bottom-4 bg-[rgba(8,8,8,0.46)] rounded-[30px]">
+                <span className="font-semibold text-xs leading-[6px] tracking-[0.07em] text-white">
                   자세히 보기
                 </span>
               </div>
             </div>
 
             <div className="flex flex-col p-[12px_20px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
-              <h2 className="pt-[18px] font-['Pretendard'] font-semibold text-[14px] text-left leading-[17px] tracking-[0.01em] text-primary-500 mb-[6px]">
+              <h2 className="pt-[18px] font-semibold text-xl text-left leading-[17px] tracking-[0.01em] text-primary-500 mb-[6px]">
                 안녕하세요 유저님
               </h2>
 
-              <p className="font-['Pretendard'] font-semibold text-[12px] text-left leading-[22px] tracking-[0.01em] text-black">
+              <div className="font-light text-lg text-left leading-7 tracking-[0.01em] text-black">
                 주 5회 무지출 챌린지에 도전 중이시군요
                 <br />
                 곧 마감일이 다가오고 있어요
                 <br />
                 끝까지 힘내요
-              </p>
+              </div>
 
               <div className="pt-[99px] w-full justify-center flex flex-row">
-                <button className=" text-white longButton">
+                {/* <button className=" text-white longButton">
                   챌린지 자세히보기
-                </button>
+                </button> */}
               </div>
             </div>
 
@@ -220,12 +221,12 @@ export default function RenderHome() {
               <h2 className="ml-[20px] font-['Pretendard'] font-semibold text-[14px] leading-[17px] tracking-[0.01em] text-black"></h2>
 
               <div
-                className="flex justify-center items-center px-[5px] py-[3px] w-[52px] h-[23px] bg-white shadow-[1px_1px_4px_rgba(0,0,0,0.1)] rounded-[30px] cursor-pointer"
+                className="flex justify-center items-center px-[5px] py-[3px] bg-white shadow-[1px_1px_4px_rgba(0,0,0,0.1)] rounded-[30px] cursor-pointer"
                 onClick={() => handleClick()} // 편집 버튼 클릭 시 ID 없이 호출
               >
-                <span className="font-['Pretendard'] font-normal text-[12px] leading-[14px] tracking-[0.07em] text-[#303030]">
+                <div className="text-sm pl-2 pr-2 leading-[14px] tracking-[0.07em] text-[#303030]">
                   {isEditing ? "완료" : "편집"}
-                </span>
+                </div>
               </div>
             </div>
 
