@@ -103,7 +103,7 @@ export default function ChallengeDetail() {
     <>
       <CreateButton />
       <CustomBackHeader title="챌린지" />
-      <div className="flex flex-col items-start p-[30px_20px_82px] gap-3.5 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
+      <div className="flex flex-col items-start pb-[82px] gap-3.5 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
         {isLoading ? (
           <></>
         ) : (
@@ -128,7 +128,7 @@ export default function ChallengeDetail() {
             </div>
 
             {/* 챌린지 주의사항 */}
-            <div className="flex flex-col items-center p-[22px_11px_30px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+            <div className="flex flex-col items-center pl-5 pt-8 pb-8 gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
               <div className="whitespace-pre-line text-left w-full h-auto font-normal text-[17px] leading-[20px] text-black flex-none order-0 flex-grow-0">
                 <h2 className="text-lg font-bold mb-1">주의사항</h2>
 
