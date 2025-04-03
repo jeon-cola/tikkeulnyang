@@ -1,13 +1,16 @@
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
 import Box from "./Box";
 import PurseImg from "../assets/money_purse.png";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleEditMode } from "../editSlice";
 
 export default function LedgerHeader() {
   const navigate = useNavigate();
   const isSharePage = location.pathname.includes("share");
   const isDetailPage = location.pathname.includes("detail");
   const userInfo = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+
   return (
     <div className="w-full item-center flex flex-col gap-[10px]">
       {!isDetailPage && (
@@ -58,7 +61,7 @@ export default function LedgerHeader() {
             <div className="flex flex-row gap-[5px]">
               <button
                 className="whiteButton"
-                onClick={() => navigate("/ledger/share")}
+                onClick={() => dispatch(toggleEditMode())}
               >
                 편집
               </button>
