@@ -30,6 +30,13 @@ import java.util.stream.Collectors;
 public class AccountService {
     @Value("${finance.api.key}")
     private String financeApiKey;
+
+    @Value("service.account.number")
+    private String serviceAccount;
+
+    @Value("service.user.key")
+    private String serviceUserKey;
+
     private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
 
     private final AccountRepository accountRepository;
@@ -276,7 +283,6 @@ public class AccountService {
      */
     @Transactional
     public void depositCharge(Integer loggedInUserId, String amount) {
-        String serviceAccountNo = "0018031273647742";
         Optional<Account> repOpt = accountRepository.findByUserIdAndRepresentativeTrue(loggedInUserId);
         if (repOpt.isEmpty()) {
             throw new CustomException(ErrorCode.VALIDATION_FAILED, "대표계좌가 설정되어 있지 않습니다.");
@@ -292,7 +298,7 @@ public class AccountService {
         }
 
         // isRefund false: 충전은 userKey로 진행
-        Map<String, Object> response = transferDeposit(loggedInUserId, serviceAccountNo, representativeAccountNo, amount, false);
+        Map<String, Object> response = transferDeposit(loggedInUserId, serviceAccount, representativeAccountNo, amount, false);
         logger.info("예치금 이체 API 응답: {}", response);
 
         int newRepBalance = repBalance - depositAmt;
@@ -308,7 +314,7 @@ public class AccountService {
                 .transactionType("DEPOSIT")
                 .transactionAccountNo(representativeAccountNo)
                 .transactionBalance(depositAmt)
-                .description("예치금 충전: 대표 계좌 " + representativeAccountNo + " → 서비스 계좌 " + serviceAccountNo)
+                .description("예치금 충전: 대표 계좌 " + representativeAccountNo + " → 서비스 계좌 " + serviceAccount)
                 .transactionAfterBalance(newRepBalance)
                 .build();
         accountTransactionRepository.save(transaction);
@@ -346,9 +352,8 @@ public class AccountService {
         }
         Account representativeAccount = repOpt.get();
         String representativeAccountNo = representativeAccount.getAccountNumber();
-        String serviceAccountNo = "0018031273647742";
 
-        Map<String, Object> response = transferDeposit(loggedInUserId, representativeAccountNo, serviceAccountNo, amount, true);
+        Map<String, Object> response = transferDeposit(loggedInUserId, representativeAccountNo, serviceAccount, amount, true);
         logger.info("환불 이체 API 응답: {}", response);
 
         int repBalance = Integer.parseInt(representativeAccount.getBalance());
@@ -365,7 +370,7 @@ public class AccountService {
                 .transactionType("REFUND")
                 .transactionAccountNo(representativeAccountNo)
                 .transactionBalance(refundAmt)
-                .description("예치금 환불: 서비스 계좌 " + serviceAccountNo + " → 대표 계좌 " + representativeAccountNo)
+                .description("예치금 환불: 서비스 계좌 " + serviceAccount + " → 대표 계좌 " + representativeAccountNo)
                 .transactionAfterBalance(newRepBalance)
                 .build();
         accountTransactionRepository.save(transaction);
@@ -392,7 +397,7 @@ public class AccountService {
         User user = userRepository.findById(loggedInUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
         // 환불인 경우 지정된 userKey, 아니면 로그인한 유저의 userKey 사용
-        String userKey = isRefund ? "c2158201-76d8-4753-b517-bf14056da5e9" : user.getFinanceUserKey();
+        String userKey = isRefund ? serviceUserKey : user.getFinanceUserKey();
 
         LocalDateTime now = LocalDateTime.now();
         String transmissionDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
