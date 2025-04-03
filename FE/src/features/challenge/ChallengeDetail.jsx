@@ -52,6 +52,7 @@ export default function ChallengeDetail() {
     averageSuccessRate: 0.0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isExpired, setIsExpired] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -77,6 +78,11 @@ export default function ChallengeDetail() {
         averageSuccessRate:
           Math.round(response.data.averageSuccessRate * 100) / 100,
       };
+
+      // 종료일이 현재 날짜보다 이전인지 확인
+      const endDate = new Date(response.data.challenge.endDate);
+      const today = new Date();
+      setIsExpired(endDate < today);
 
       console.log("formatted response", formattedData);
 
@@ -153,11 +159,13 @@ export default function ChallengeDetail() {
               bucket100to85={currChallenge.bucket100to85}
             />
             {/* 참가 버튼 */}
-            <div className="w-full justify-center flex flex-row">
-              <button className="longButton text-white" onClick={handleClick}>
-                참여하기
-              </button>
-            </div>
+            {!isExpired && (
+              <div className="w-full justify-center flex flex-row">
+                <button className="longButton text-white" onClick={handleClick}>
+                  참여하기
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>
