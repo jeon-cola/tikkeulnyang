@@ -1,11 +1,21 @@
 import "/src/index.css";
 import Api from "../../../services/Api";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 export default function Login() {
+  const {isAuthenticated} = useSelector((state)=> state.user)
+  const nav = useNavigate()
   function KakaoLogin() {
     window.location.href = `${Api.defaults.baseURL}/api/auth/login`;
   }
-
+  useEffect(()=> {
+    if (isAuthenticated) {
+      nav("/home")
+    }
+  },[isAuthenticated])
+  if (isAuthenticated) return null
   return (
     <div className="w-full">
       <div className="w-full h-[326px] flex-none order-none self-stretch flex-grow-0 z-0 flex items-center justify-center">

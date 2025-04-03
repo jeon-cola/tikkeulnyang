@@ -43,6 +43,7 @@ export default function SharedLedger() {
         if (response.data.status === "success") {
           const data = response.data.data.dates
           setBlinkList(data)
+          console.log(data)
         }
       } catch (error) {
         console.log(error)
@@ -164,21 +165,23 @@ export default function SharedLedger() {
                     (item) => item.date === formatted
                   );
                   const alam = Array.isArray(blinkList) ? blinkList.find(
-                    (item) => item.dates === formatted
+                    (item) => item === formatted
                   )
                   : null
                   return entry && alam ? (
-                    <div className="mt-4 text-center text-[18px]">
-                      {emojiMap[entry.emoji] || ""}
-                      <span className="animate-pules bg-red-500 absolue"></span>
+                    <div className="relative w-full h-full z-[5]" style={{ transform: 'translateY(-50%)', position: 'absolute', top: '30px', right: '0px' }}>
+                      <div className="absolute bottom-2 right-4">
+                        {emojiMap[entry.emoji] || ""}
+                      </div>
+                      <span className="animate-pulse bg-red-500 absolute top-2 right-4 w-[10px] h-[10px] rounded-full z-[10]"></span>
                     </div>
                   ) : entry ? (
                     <div className="mt-4 text-center text-[18px]">
                       {emojiMap[entry.emoji] || ""}
                     </div>
                   ) : alam?(
-                    <div className="mt-4 text-center text-[18px]">
-                      알람
+                    <div className="relative w-full h-full z-[5]" style={{ transform: 'translateY(-50%)', position: 'absolute', top: '30px', right: '0px' }}>
+                      <span className="animate-pulse bg-red-500 absolute top-2 right-4 w-[10px] h-[10px] rounded-full z-[10]"></span>
                     </div>
                   ) : ""
                 }
