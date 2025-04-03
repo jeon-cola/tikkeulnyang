@@ -8,6 +8,8 @@ import ParticiStatics from "./components/ParticiStatics";
 import { useNavigate } from "react-router-dom";
 import { ChallengeService } from "@/features/challenge/services/ChallengeService";
 import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
+import CustomBackHeader from "@/components/CustomBackHeader";
+import CreateButton from "./components/CreateButton";
 
 /*
   추후에 axios로 채워넣을 데이터: 
@@ -50,6 +52,7 @@ export default function ChallengeDetail() {
     averageSuccessRate: 0.0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isExpired, setIsExpired] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -66,8 +69,20 @@ export default function ChallengeDetail() {
             response.data.challenge.startDate
           ),
           endDate: ChallengeUtils.formatDate(response.data.challenge.endDate),
+          limitAmount: response.data.challenge.limitAmount.toLocaleString(),
         },
+        bucket100to85: Math.round(response.data.bucket100to85 * 100) / 100,
+        bucket84to50: Math.round(response.data.bucket84to50 * 100) / 100,
+        bucket49to25: Math.round(response.data.bucket49to25 * 100) / 100,
+        bucket24to0: Math.round(response.data.bucket24to0 * 100) / 100,
+        averageSuccessRate:
+          Math.round(response.data.averageSuccessRate * 100) / 100,
       };
+
+      // 종료일이 현재 날짜보다 이전인지 확인
+      const endDate = new Date(response.data.challenge.endDate);
+      const today = new Date();
+      setIsExpired(endDate < today);
 
       console.log("formatted response", formattedData);
 
@@ -86,8 +101,9 @@ export default function ChallengeDetail() {
 
   return (
     <>
-      <CustomHeader title="챌린지 상세" showCreateButton="true" />
-      <div className="flex flex-col items-start p-[30px_20px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
+      <CreateButton />
+      <CustomBackHeader title="챌린지" />
+      <div className="flex flex-col items-start p-[30px_20px_82px] gap-3.5 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
         {isLoading ? (
           <></>
         ) : (
@@ -105,14 +121,14 @@ export default function ChallengeDetail() {
             />
 
             {/* 챌린지 상세 설명 */}
-            <div className="flex flex-col items-center p-[12px_11px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+            <div className="flex flex-col items-center p-[22px_11px_22px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
               <div className="whitespace-pre-line text-left w-full h-auto font-normal text-[17px] leading-[20px] text-black flex-none order-0 flex-grow-0">
                 <p>{currChallenge.challenge.description}</p>
               </div>
             </div>
 
             {/* 챌린지 주의사항 */}
-            <div className="flex flex-col items-center p-[12px_11px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+            <div className="flex flex-col items-center p-[22px_11px_30px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
               <div className="whitespace-pre-line text-left w-full h-auto font-normal text-[17px] leading-[20px] text-black flex-none order-0 flex-grow-0">
                 <h2 className="text-lg font-bold mb-1">주의사항</h2>
 
@@ -143,11 +159,13 @@ export default function ChallengeDetail() {
               bucket100to85={currChallenge.bucket100to85}
             />
             {/* 참가 버튼 */}
-            <div className="w-full justify-center flex flex-row">
-              <button className="longButton" onClick={handleClick}>
-                참여하기
-              </button>
-            </div>
+            {!isExpired && (
+              <div className="w-full justify-center flex flex-row">
+                <button className="longButton text-white" onClick={handleClick}>
+                  참여하기
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

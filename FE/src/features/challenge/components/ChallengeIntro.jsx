@@ -29,7 +29,7 @@ export default function ChallengeIntro({
 
   return (
     <>
-      <div className="flex flex-col items-center p-[12px_11px_12px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+      <div className="flex flex-col items-center p-[20px_11px_15px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
         <div className="w-[347px] h-[84px] flex-none order-0 flex-grow-0">
           <img
             src="/foot_print.png"

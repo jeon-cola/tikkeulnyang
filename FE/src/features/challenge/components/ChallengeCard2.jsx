@@ -31,7 +31,7 @@ export default function ChallengeCard2({
         <div className="relative w-full h-[74px]">
           {/* 이미지 영역 - 절대 위치로 배치 */}
           <div
-            className="absolute w-[90px] h-[74px] left-0 top-0 rounded-md bg-cover bg-center"
+            className="absolute w-[95px] h-[78px] left-0 top-0 rounded-md bg-cover bg-center blur-[0.1px]"
             style={{ backgroundImage: `url(${thumbnailUrl})` }}
           ></div>
 
