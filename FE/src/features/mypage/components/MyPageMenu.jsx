@@ -193,7 +193,7 @@ export default function MyPageMenu() {
             <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex items-center p-4 mt-2 relative" onClick={modalHandler}>
               <div className="flex items-center justify-center mx-auto">
                 <p className="text-xl font-semibold">총 금액 :</p>
-                <p className="text-xl font-semibold ml-2">{deposit.toLocaleString()}원</p>
+                <p className="text-xl font-semibold ml-2">{deposit?deposit.toLocaleString():0}원</p>
               </div>
               
               <div className="absolute right-4">
@@ -219,7 +219,7 @@ export default function MyPageMenu() {
                     
                     <div className="flex w-full justify-center">
                       <p className="font-semibold text-xl">예치금 잔액 :</p>
-                      <p className="font-semibold text-xl">{deposit.toLocaleString()}</p>
+                      <p className="font-semibold text-xl">{deposit? deposit.toLocaleString()  : 0} 원</p>
                     </div>
                     
                     <div className="w-full flex flex-col gap-3">
@@ -239,7 +239,7 @@ export default function MyPageMenu() {
                       </div>
                       <div className="flex w-full justify-center">
                         <p className="font-semibold text-xl">예치금 잔액 :</p>
-                        <p className="font-semibold text-xl">{deposit.toLocaleString()}</p>
+                        <p className="font-semibold text-xl">{dispatch? deposit.toLocaleString() : 0} 원</p>
                     </div>
 
                     <div className="w-full flex flex-col gap-3">
