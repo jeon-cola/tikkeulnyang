@@ -41,6 +41,7 @@ export default function BudgetMain() {
   const year = activeDate.getFullYear();
   const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
 
+  // 항목별 예산 조회
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -56,6 +57,7 @@ export default function BudgetMain() {
     fetchData();
   }, [year, month]);
 
+  // response값 가져옴
   const total = budgetData?.totals?.total_amount || 0;
   const remaining = budgetData?.totals?.total_remaining_amount || 0;
   const spending = budgetData?.totals?.total_spending_amount || 0;
@@ -68,14 +70,15 @@ export default function BudgetMain() {
 
   return (
     <Container>
-      <MonthBar
-        activeDate={activeDate}
-        setActiveDate={setActiveDate}
-        onYearMonthChange={({ year, month }) => {
-          console.log("선택된 연/월:", year, month);
-        }}
-      />
-
+      <div className="w-full bg-white rounded-lg shadow-sm">
+        <MonthBar
+          activeDate={activeDate}
+          setActiveDate={setActiveDate}
+          onYearMonthChange={({ year, month }) => {
+            console.log("선택된 연/월:", year, month);
+          }}
+        />
+      </div>
       {/* 예산 정보 */}
       <div className="relative w-full h-auto bg-white rounded-md shadow-sm px-[10px] py-2">
         <BudgetBar />
@@ -123,7 +126,6 @@ export default function BudgetMain() {
           </div>
         </div>
       </div>
-
       {/* 카테고리별 막대 차트 */}
       <div className="relative w-full h-auto bg-white rounded-md shadow-sm min-h-screen">
         <div className="mt-6 space-y-4">
