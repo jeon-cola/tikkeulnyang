@@ -8,6 +8,8 @@ import ParticiStatics from "./components/ParticiStatics";
 import { useNavigate } from "react-router-dom";
 import { ChallengeService } from "@/features/challenge/services/ChallengeService";
 import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
+import CustomBackHeader from "@/components/CustomBackHeader";
+import CreateButton from "./components/CreateButton";
 
 /*
   추후에 axios로 채워넣을 데이터: 
@@ -66,7 +68,14 @@ export default function ChallengeDetail() {
             response.data.challenge.startDate
           ),
           endDate: ChallengeUtils.formatDate(response.data.challenge.endDate),
+          limitAmount: response.data.challenge.limitAmount.toLocaleString(),
         },
+        bucket100to85: Math.round(response.data.bucket100to85 * 100) / 100,
+        bucket84to50: Math.round(response.data.bucket84to50 * 100) / 100,
+        bucket49to25: Math.round(response.data.bucket49to25 * 100) / 100,
+        bucket24to0: Math.round(response.data.bucket24to0 * 100) / 100,
+        averageSuccessRate:
+          Math.round(response.data.averageSuccessRate * 100) / 100,
       };
 
       console.log("formatted response", formattedData);
@@ -86,7 +95,8 @@ export default function ChallengeDetail() {
 
   return (
     <>
-      <CustomHeader title="챌린지 상세" showCreateButton="true" />
+      <CreateButton />
+      <CustomBackHeader title="챌린지" />
       <div className="flex flex-col items-start p-[30px_20px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
         {isLoading ? (
           <></>
@@ -144,7 +154,7 @@ export default function ChallengeDetail() {
             />
             {/* 참가 버튼 */}
             <div className="w-full justify-center flex flex-row">
-              <button className="longButton" onClick={handleClick}>
+              <button className="longButton text-white" onClick={handleClick}>
                 참여하기
               </button>
             </div>
