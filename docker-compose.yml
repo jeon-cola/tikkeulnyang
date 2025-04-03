@@ -39,6 +39,45 @@ services:
     networks:
       - app_network
 
+  # 🐘 Prometheus
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - app_network
+
+  # 📊 Grafana
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - app_network
+
+  # 🔍 MySQL Exporter
+  mysql-exporter:
+    image: prom/mysqld-exporter
+    container_name: mysql-exporter
+    restart: always
+    environment:
+      - DATA_SOURCE_NAME=root:ksh147!!@(mysql:3306)/
+    ports:
+      - "9104:9104"
+    depends_on:
+      - mysql
+    networks:
+      - app_network
+
+  # 🐙 Zookeeper
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: zookeeper
@@ -48,6 +87,7 @@ services:
     networks:
       - app_network
 
+  # 🐳 Kafka
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: kafka
@@ -71,3 +111,4 @@ networks:
 
 volumes:
   mysql_data:
+  grafana_data:
