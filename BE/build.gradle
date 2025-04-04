@@ -61,6 +61,10 @@ dependencies {
 
 	// 로그 연동
 	implementation 'org.slf4j:jul-to-slf4j:2.0.7'
+
+	// Micrometer Prometheus Registry
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {
