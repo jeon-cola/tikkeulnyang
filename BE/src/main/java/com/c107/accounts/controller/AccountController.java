@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
+import com.c107.accounts.dto.ServiceTransactionDto;
 import java.util.List;
 import java.util.Map;
 
@@ -102,4 +102,16 @@ public class AccountController {
         List<Map<String, Object>> accountList = accountService.getAccountList(userId);
         return ResponseUtil.success("계좌 목록 조회 성공", Map.of("accounts", accountList));
     }
+
+    // 내역 조회
+    @GetMapping("/service-transactions")
+    public ResponseEntity<List<ServiceTransactionDto>> getServiceTransactions(Authentication authentication) {
+        String email = getEmailFromAuthentication(authentication);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
+
+        List<ServiceTransactionDto> dtoList = accountService.getServiceTransactions(user.getUserId());
+        return ResponseEntity.ok(dtoList);
+    }
+
 }
