@@ -63,10 +63,6 @@ h1 {
   line-height: 1.1;
 }
 
-/* 프리텐다드 폰트 추가 */
-p {
-  font-family: "Pretendard-medium";
-}
 
 .customButton {
   display: flex;
