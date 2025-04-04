@@ -86,6 +86,7 @@ export default function BudgetReport() {
     "#D9D9D9",
   ];
 
+  // 카테고리 통계를 위한 api 연결
   useEffect(() => {
     const fetchData = async () => {
       try {
