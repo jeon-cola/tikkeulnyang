@@ -378,8 +378,10 @@ public class ShareService {
 
         // 각 공유 관계에 대해 상호작용 조회
         for (ShareEntity share : shares) {
-            // 요청자가 가계부 소유자인 경우에만 처리
-            if (share.getOwnerId().equals(requester.getUserId())) {
+            // 요청자가 소유자이거나 공유된 사용자인 경우 처리
+            if (share.getOwnerId().equals(requester.getUserId()) ||
+                    (share.getSharedUserId() != null && share.getSharedUserId().equals(requester.getUserId()))) {
+
                 // 해당 공유 관계의 해당 날짜 상호작용 조회
                 List<ShareInteractionEntity> interactions = shareInteractionRepository
                         .findByShareIdAndTargetDateOrderByCreatedAtDesc(share.getShareId(), date);
