@@ -1,9 +1,11 @@
 package com.c107.accounts.service;
 
+import com.c107.accounts.dto.ServiceTransactionDto;
 import com.c107.accounts.entity.Account;
 import com.c107.accounts.entity.ServiceTransaction;
 import com.c107.accounts.repository.AccountRepository;
 import com.c107.accounts.repository.AccountTransactionRepository;
+import com.c107.accounts.repository.ServiceTransactionRepository;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
 import com.c107.user.entity.User;
@@ -31,10 +33,10 @@ public class AccountService {
     @Value("${finance.api.key}")
     private String financeApiKey;
 
-    @Value("service.account.number")
+    @Value("${service.account.number}")
     private String serviceAccount;
 
-    @Value("service.user.key")
+    @Value("${service.user.key}")
     private String serviceUserKey;
 
     private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
@@ -43,6 +45,7 @@ public class AccountService {
     private final UserRepository userRepository;
     private final AccountTransactionRepository accountTransactionRepository; // 내부 거래내역 기록용
     private final TransactionRepository transactionRepository;               // 가계부 거래내역 기록용
+    private final ServiceTransactionRepository serviceTransactionRepository;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -398,6 +401,7 @@ public class AccountService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
         // 환불인 경우 지정된 userKey, 아니면 로그인한 유저의 userKey 사용
         String userKey = isRefund ? serviceUserKey : user.getFinanceUserKey();
+        logger.warn("transferDeposit userKey 사용 값: {}", userKey); // 로그 추가
 
         LocalDateTime now = LocalDateTime.now();
         String transmissionDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
@@ -489,6 +493,31 @@ public class AccountService {
                     accountMap.put("representative", account.isRepresentative());
                     return accountMap;
                 })
+                .collect(Collectors.toList());
+    }
+    
+    // 내역 조회
+    @Transactional(readOnly = true)
+    public List<ServiceTransactionDto> getServiceTransactions(Integer userId) {
+        // 관심있는 카테고리 목록
+        List<String> validCategories = Arrays.asList(
+                "DEPOSIT_CHARGE",
+                "DEPOSIT_REFUND",
+                "CHALLENGE_JOIN",
+                "CHALLENGE_DELETE_REFUND",
+                "CHALLENGE_SETTLE_REFUND"
+        );
+
+        // 사용자의 서비스 거래내역 중 관심 카테고리에 해당하는 데이터 조회
+        List<ServiceTransaction> transactions = serviceTransactionRepository.findByUserIdAndCategoryIn(userId, validCategories);
+
+        // DTO로 변환
+        return transactions.stream()
+                .map(tx -> ServiceTransactionDto.builder()
+                        .transactionDate(tx.getTransactionDate())
+                        .category(tx.getCategory())
+                        .description(tx.getDescription())
+                        .build())
                 .collect(Collectors.toList());
     }
 }
