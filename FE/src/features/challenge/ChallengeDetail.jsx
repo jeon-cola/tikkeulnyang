@@ -122,8 +122,10 @@ export default function ChallengeDetail() {
 
             {/* 챌린지 상세 설명 */}
             <div className="flex flex-col items-center p-[22px_11px_22px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
-              <div className="whitespace-pre-line text-left w-full h-auto font-normal text-[17px] leading-[20px] text-black flex-none order-0 flex-grow-0">
-                <p>{currChallenge.challenge.description}</p>
+              <div className="whitespace-pre-line text-left w-full h-auto font-normal text-[17px] leading-8 text-black flex-none order-0 flex-grow-0">
+                <div className="pl-4 pr-4">
+                  {currChallenge.challenge.description}
+                </div>
               </div>
             </div>
 
