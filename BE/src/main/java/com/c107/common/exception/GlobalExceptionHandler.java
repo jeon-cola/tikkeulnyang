@@ -37,14 +37,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleBadRequestException(Exception ex) {
         logger.error("BadRequestException 발생", ex);
         Map<String, Object> errors = new HashMap<>();
+        String message = ex.getMessage(); // 💡 핵심!
+
         if (ex instanceof MethodArgumentNotValidException) {
             BindingResult bindingResult = ((MethodArgumentNotValidException) ex).getBindingResult();
             bindingResult.getFieldErrors().forEach(error ->
                     errors.put(error.getField(), error.getDefaultMessage())
             );
+            message = "입력값이 유효하지 않습니다.";
         }
-        return ResponseUtil.badRequest("잘못된 요청입니다.", errors.isEmpty() ? null : errors);
+
+        return ResponseUtil.badRequest(message, errors.isEmpty() ? null : errors);
     }
+
 
     // CustomException 처리
     @ExceptionHandler(CustomException.class)
