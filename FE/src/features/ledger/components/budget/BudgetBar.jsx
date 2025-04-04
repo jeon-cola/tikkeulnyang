@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 export default function BudgetBar() {
   const navigate = useNavigate();
   return (
-    <div className="flex justify-between items-center w-full pt-[15px] gap-3">
-      <button
+    <div className="flex justify-between items-center w-full mt-[30px] pt-[15px] gap-3">
+      {/* <button
         className="blackButton flex-1! h-full! text-base!"
         onClick={() => navigate("/ledger/budget")}
       >
         예산 보기
-      </button>
+      </button> */}
       <button
         className="blackButton flex-1! h-full! text-base!"
         onClick={() => navigate("/ledger/budget/make")}
@@ -20,7 +20,7 @@ export default function BudgetBar() {
         className="blackButton flex-1! h-full! text-base!"
         onClick={() => navigate("/ledger/budget/report")}
       >
-        예산 리포트
+        소비 리포트
       </button>
     </div>
   );
