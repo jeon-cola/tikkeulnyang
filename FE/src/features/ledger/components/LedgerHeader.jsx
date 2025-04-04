@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import Box from "./Box";
 import PurseImg from "../assets/money_purse.png";
 import { useDispatch, useSelector } from "react-redux";
-import { toggleEditMode } from "../editSlice";
+import { toggleEditMode } from "../EditSlice";
 
 export default function LedgerHeader() {
   const navigate = useNavigate();
