@@ -12,6 +12,7 @@ import Api from "@/services/Api";
 import InviteLinkSection from "./components/InviteLinkSection";
 import ProfileImageList from "./components/ProfileImageList";
 import PaymentDetails from "./components/PaymentDetails";
+import BellIcon from "./assets/Bell.png"
 
   const formatDate = (date) =>
     date.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
@@ -23,12 +24,40 @@ export default function SharedLedger() {
   const [viewingNickname, setViewingNickname] = useState(""); // 🔥 현재 보고 있는 사람 닉네임
   const [selectedDate, setSelectedDate] = useState(null); // 날짜 선택 상태
   const [selectedUserId, setSelectedUserId] = useState(null); // 내 or 친구 ID
+  const [isOpen, setIsOPen] = useState(false)
+  const [ blinkList, setBlinkList ] = useState([])
+  const [calendarKey, setCalendarKey] =useState(0)
 
   const emojiMap = {
     0: <img src={BlueFish} alt="BlueFish" className="w-5 mx-auto" />,
     1: <img src={GoldFish} alt="GoldFish" className="w-5 mx-auto" />,
     2: <img src={BlackFish} alt="BlackFish" className="w-5 mx-auto" />,
   };
+
+  // 캘린더 다시 로딩
+  function refreshCalendar() {
+    alamHandler(value)
+    setCalendarKey(prevKey => prevKey+1)
+  }
+
+  // 알림 조회
+  function alamHandler(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const fetchData = async () => {
+      try {
+        const response = await Api.get(`api/share/notification/dates?year=${year}&month=${month}`)
+        if (response.data.status === "success") {
+          const data = response.data.data.dates
+          setBlinkList(data)
+          console.log(data)
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    fetchData()
+  }
 
   // ✅ 기본 내 가계부 조회
   const fetchMyLedger = async () => {
@@ -49,10 +78,10 @@ export default function SharedLedger() {
 
   // ✅ 친구 가계부 조회
   const fetchUserLedger = async (userId) => {
+    setBlinkList([])
+    setIsOPen(false)
     const year = value.getFullYear();
     const month = value.getMonth() + 1;
-    console.log(value)
-    console.log(year,month,userId)
     try {
       const res = await Api.get(
         `/api/share/ledger/user/${userId}?year=${year}&month=${month}`
@@ -92,6 +121,7 @@ export default function SharedLedger() {
 
   useEffect(() => {
     fetchMyLedger();
+    alamHandler(value)
   }, []);
 
   return (
@@ -117,10 +147,13 @@ export default function SharedLedger() {
           {/* 달력 및 BlackCat 이미지 */}
           <div className="relative">
             <CustomCalendar
+            key={calendarKey}
               onActiveStartDateChange={({activeStartDate,view})=>{
                 if (view === "month") {
+                  console.log("선택날",activeStartDate)
                   setValue(activeStartDate)
                   setSelectedDate(activeStartDate);
+                  alamHandler(activeStartDate)
                 }
               }}
               className="z-0"
@@ -129,6 +162,7 @@ export default function SharedLedger() {
                 setValue(date);
                 const formatted = formatDate(date);
                 setSelectedDate((prev) => (prev === formatted ? null : formatted));
+                setIsOPen(true)
               }}
               tileContent={({ date, view }) => {
                 if (view === "month") {
@@ -138,11 +172,20 @@ export default function SharedLedger() {
                   const entry = calendarData.find(
                     (item) => item.date === formatted
                   );
-                  return entry ? (
-                    <div className="mt-4 text-center text-[18px]">
-                      {emojiMap[entry.emoji] || ""}
+                  const alam = Array.isArray(blinkList) ? blinkList.find(
+                    (item) => item === formatted
+                  )
+                  : null
+                  return entry && alam  ? (
+                    <div className="relative w-full h-full flex items-end">
+                        {emojiMap[entry.emoji] || ""}
+                      <span className="animate-pulse bg-red-500 absolute top-3 right-1 w-[8px] h-[8px] rounded-full z-[10]"></span>
                     </div>
-                  ) : null;
+                  ) : entry ? (
+                    <div className="mt-4 text-center text-[18px]">
+                      {emojiMap[entry.emoji] || null}
+                    </div>
+                  ) : ""
                 }
                 return null;
               }}
@@ -160,7 +203,10 @@ export default function SharedLedger() {
               <span className="font-semibold">{viewingNickname}</span>님의
               가계부를 보고 있어요
               <button
-                onClick={fetchMyLedger}
+                onClick={()=>{
+                  setIsOPen(false)
+                  fetchMyLedger()
+                }}
                 className="ml-2 px-2 py-1 text-xs border rounded hover:bg-gray-100"
               >
                 내 가계부로
@@ -181,7 +227,10 @@ export default function SharedLedger() {
             </InviteModal>
           )}
         </div>
-          <PaymentDetails type="share" date={selectedDate} userId={selectedUserId}/>
+        {isOpen
+        ? <PaymentDetails type="share" date={selectedDate} userId={selectedUserId} onUse={refreshCalendar}/>
+        : ""
+        }
       </Container>
     </div>
   );
