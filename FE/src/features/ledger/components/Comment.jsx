@@ -16,7 +16,6 @@ export default function Comment({isOpen, onClose, title, date, userId}) {
     const {profileImg} = useSelector((state)=> state.user)
     const [isEmoji, setIsEmoji] = useState(false)
     const [emoji, setEmoji] = useState(9)
-    const {id} = useSelector((state)=> state.user)
 
     // 이모지 창
     function isOpenEmoji() {
@@ -47,6 +46,7 @@ export default function Comment({isOpen, onClose, title, date, userId}) {
     function commentHandler() {
         const fetchData = async () => {
             try {
+                console.log(date)
                 const response = await Api.get(`api/share/comments/${date}`)
                 if (response.data.status === "success") {
                     const data = response.data.data.comments
@@ -59,6 +59,10 @@ export default function Comment({isOpen, onClose, title, date, userId}) {
         }
         fetchData()
     }
+
+    useEffect(()=> {
+        commentHandler()
+    },[])
 
     return(
         <div>

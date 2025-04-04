@@ -32,7 +32,7 @@ const formatKoreanDate = (dateStr) => {
   return `${day}일 ${weekday}`;
 };
 
-export default function PaymentDetails({ date, type,userId = null }) {
+export default function PaymentDetails({ date, type,userId = null, onUse }) {
   const [paymentData, setPaymentData] = useState(null);
   const [isOpen, setIsOPen] =useState(false)
   const [ blinkList, setBlinkList ] = useState([])
@@ -55,6 +55,7 @@ export default function PaymentDetails({ date, type,userId = null }) {
 
   //모달 닫기
   function onCloseModalHandler() {
+    onUse()
     setIsOPen(false)
   }
 
@@ -64,6 +65,7 @@ export default function PaymentDetails({ date, type,userId = null }) {
       // 상대방 아이디가 있고 공유일때만
       if (type === "share" && userId) {
         if (userId){
+          console.log(date)
           const response = await Api.get(`api/share/ledger/user/${userId}/daily/${date}`)
           if (response.data.status === "success") {
             setPaymentData(response.data.data)
@@ -81,7 +83,16 @@ export default function PaymentDetails({ date, type,userId = null }) {
   
     // 알림 조회
     function alamHandler() {
-      const [year,month,day] = date.split("-")
+      let year, month, day
+      if (typeof date === 'string') {
+        [year, month, day] = date.split("-")
+      } else if (date instanceof Date) {
+        year = date.getFullYear()
+        month = date.getMonth() + 1
+        day = date.getDate()
+      } else {
+        console.error("지원되지 않는 날짜 형식:", date)
+      }
       const fetchData = async () => {
         try {
           const response = await Api.get(`api/share/notification/dates?year=${year}&month=${month}`)
@@ -97,8 +108,8 @@ export default function PaymentDetails({ date, type,userId = null }) {
     }
 
   useEffect(() => {
-
     if (date) {
+      console.log(date)
       fetchedPaymentData();
       alamHandler()
     }
@@ -116,7 +127,7 @@ export default function PaymentDetails({ date, type,userId = null }) {
             {formatKoreanDate(!userId ? paymentData?.data?.date : paymentData?.date)}
           </p>
           {match ? 
-            <div onClick={()=> {cancleAlamHandler(),setIsOPen(true)}} className="relative">
+            <div onClick={ async ()=> { await cancleAlamHandler(),setIsOPen(true)}} className="relative">
               <span className="animate-pulse bg-red-500 absolute top-0 right-0 w-[10px] h-[10px] rounded-full"/>
               <Comment title="댓글" isOpen={isOpen} onClose={onCloseModalHandler} userId={userId} date={!userId ? paymentData?.data?.date : paymentData?.date}/> 
           </div>
