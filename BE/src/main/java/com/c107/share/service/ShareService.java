@@ -142,7 +142,7 @@ public class ShareService {
         ShareEntity shareEntity = ShareEntity.builder()
                 .ownerId(owner.getUserId())
                 .invitationLink(invitationLink)
-                .linkExpire(LocalDateTime.now().plusDays(7))
+                .linkExpire(LocalDateTime.now().plusDays(1))
                 .status(0)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -151,37 +151,6 @@ public class ShareService {
         shareRepository.save(shareEntity);
 
         return invitationLink;
-    }
-
-
-
-    // 초대 수락 처리 메서드
-    @Transactional
-    public String acceptInvitation(String token, String invitedEmail) {
-        // invitationLink의 마지막 부분(token)으로 ShareEntity를 조회
-        ShareEntity shareEntity = shareRepository.findByInvitationLinkEndingWith(token)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 링크입니다."));
-
-        // 만료 여부 확인
-        if (shareEntity.getLinkExpire().isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("초대 링크가 만료되었습니다.");
-        }
-
-        // 초대받은 사용자 조회
-        User invitedUser = userRepository.findByEmail(invitedEmail)
-                .orElseThrow(() -> new IllegalArgumentException("초대받은 사용자를 찾을 수 없습니다."));
-
-        // 이미 수락된 경우 중복 수락 방지
-        if (shareEntity.getSharedUserId() != null) {
-            throw new IllegalArgumentException("이미 초대가 수락되었습니다.");
-        }
-
-        // 초대 수락 처리: sharedUserId 업데이트, 상태를 1(공유 중)으로 변경
-        shareEntity.setSharedUserId(invitedUser.getUserId());
-        shareEntity.setStatus(1);
-        shareRepository.save(shareEntity);
-
-        return "초대가 수락되었습니다.";
     }
 
     @Transactional(readOnly = true)
@@ -570,5 +539,46 @@ public class ShareService {
 
         shareNotificationRepository.save(notification);
     }
+
+    @Transactional
+    public String acceptInvitation(String token, String invitedEmail) {
+        // 1) 초대 링크로 ShareEntity 찾기
+        ShareEntity shareEntity = shareRepository.findByInvitationLinkEndingWith(token)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 링크입니다."));
+
+        // 2) 초대 링크 만료 여부 확인
+        if (shareEntity.getLinkExpire().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("초대 링크가 만료되었습니다.");
+        }
+
+        // 3) 초대받은 사용자 조회
+        User invitedUser = userRepository.findByEmail(invitedEmail)
+                .orElseThrow(() -> new IllegalArgumentException("초대받은 사용자를 찾을 수 없습니다."));
+
+        // 3-1) **자기 자신 초대 불가** (ownerId == 초대받은 userId)
+        if (shareEntity.getOwnerId().equals(invitedUser.getUserId())) {
+            throw new IllegalArgumentException("자기 자신에게는 초대할 수 없습니다.");
+        }
+
+        // 4) 이미 이 ShareEntity가 수락된 상태인지 확인
+        if (shareEntity.getSharedUserId() != null) {
+            throw new IllegalArgumentException("이미 초대가 수락된 링크입니다.");
+        }
+
+        // 4-1) **이미 두 사용자간 공유 관계(status=1)가 있는지 확인**
+        boolean existsActive = shareRepository.existsActiveShareBetween(
+                shareEntity.getOwnerId(), invitedUser.getUserId());
+        if (existsActive) {
+            throw new IllegalArgumentException("이미 공유 관계가 맺어진 사용자입니다.");
+        }
+
+        // 5) 초대 수락 처리
+        shareEntity.setSharedUserId(invitedUser.getUserId());
+        shareEntity.setStatus(1); // 공유 중
+        shareRepository.save(shareEntity);
+
+        return "초대가 수락되었습니다.";
+    }
+
 
 }
