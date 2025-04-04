@@ -1,7 +1,7 @@
 package com.c107.share.repository;
 
 import com.c107.share.entity.ShareEntity;
-import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.repository.query.Param;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -26,6 +26,18 @@ public interface ShareRepository extends JpaRepository<ShareEntity, Integer> {
 
     @Transactional
     int deleteByStatusAndLinkExpireBefore(Integer status, LocalDateTime time);
+
+    @Query("""
+   SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END
+   FROM ShareEntity s
+   WHERE 
+     (
+       (s.ownerId = :userA AND s.sharedUserId = :userB) 
+       OR (s.ownerId = :userB AND s.sharedUserId = :userA)
+     )
+     AND s.status = 1
+""")
+    boolean existsActiveShareBetween(Integer userA, Integer userB);
 
 }
 
