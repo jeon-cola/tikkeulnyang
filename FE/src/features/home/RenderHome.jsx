@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { HomeService } from "@/features/home/services/HomeService";
 import { useNavigate } from "react-router-dom";
 import CustomBackHeader from "@/components/CustomBackHeader";
+import CalendarWidget from "@/features/home/assets/calendar_widget.png";
 
 export default function RenderHome() {
   const navigate = useNavigate();
@@ -62,7 +63,7 @@ export default function RenderHome() {
 
         break;
       case "widget-6":
-        navigate(`/bucketlist`);
+        navigate(`/bucketlist/list`);
 
         break;
     }
@@ -175,11 +176,14 @@ export default function RenderHome() {
               </div>
 
               <div className="text-left font-semibold text-lg leading-[13px] tracking-[0.07em] text-black">
-                카드 혜택으로 절약해보아요
+                카드 혜택으로 절약하기
               </div>
 
               <div className="absolute flex flex-row justify-center items-center pt-2 pb-2 pl-2 pr-2 gap-[10px] right-4 bottom-4 bg-[rgba(8,8,8,0.46)] rounded-[30px]">
-                <span className="font-semibold text-xs leading-[6px] tracking-[0.07em] text-white">
+                <span
+                  className="font-semibold text-xs leading-[6px] tracking-[0.07em] text-white"
+                  onClick={() => navigate(`/card`)}
+                >
                   자세히 보기
                 </span>
               </div>
@@ -205,20 +209,29 @@ export default function RenderHome() {
               </div>
             </div>
 
-            <div className="flex flex-col p-[12px_20px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
+            <div
+              className="flex flex-col p-[12px_20px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]"
+              onClick={() => navigate(`/ledger`)}
+            >
               <div className="flex flex-col items-start mt-[20px]">
-                <h2 className=" font-['Pretendard'] text-left font-semibold text-xl leading-[17px] tracking-[0.07em] text-black mb-[7px]">
+                <h2 className=" text-left font-semibold text-xl leading-[17px] tracking-[0.01em] text-black mb-[7px]">
                   가계부로 이동
                 </h2>
 
-                <p className="mt-[10px] mb-[24px] text-left font-['Pretendard'] font-semibold text-lg leading-[14px] tracking-[0.07em] text-black">
+                <p className="mt-[10px] mb-[24px] text-left font-normal text-lg leading-[14px] tracking-3 text-black">
                   오늘의 지출 확인하기
                 </p>
+
+                <img
+                  src={CalendarWidget}
+                  alt={CalendarWidget}
+                  className="absolute right-5 bottom-6 w-17 object-contain ml-17 mt-17"
+                />
               </div>
             </div>
 
             <div className="flex justify-between w-full h-auto mt-[1px]">
-              <h2 className="ml-[20px] font-['Pretendard'] font-semibold text-[14px] leading-[17px] tracking-[0.01em] text-black"></h2>
+              <h2 className="ml-[20px] font-semibold text-[14px] leading-[17px] tracking-[0.01em] text-black"></h2>
 
               <div
                 className="flex justify-center items-center px-[5px] py-[3px] bg-white shadow-[1px_1px_4px_rgba(0,0,0,0.1)] rounded-[30px] cursor-pointer"
