@@ -10,6 +10,7 @@ import TransportationIcon from "../assets/category/transportation_icon.png";
 import IncomeIcon from "../assets/category/income_icon.png";
 import SpenseIcon from "../assets/category/spense_icon.png";
 import EducationIcon from "../assets/category/education_icon.png";
+import Comment from "./Comment";
 
 const categories = [
   { id: 1, name: "주거/통신", Icon: HousingIcon },
@@ -31,88 +32,186 @@ const formatKoreanDate = (dateStr) => {
   return `${day}일 ${weekday}`;
 };
 
-export default function PaymentDetails({ date, type,userId = null }) {
+export default function PaymentDetails({ date, type,userId = null, onUse }) {
   const [paymentData, setPaymentData] = useState(null);
+  const [isOpen, setIsOPen] =useState(false)
+  const [ blinkList, setBlinkList ] = useState([])
 
-  useEffect(() => {
-    const fetchedPaymentData = async () => {
+  // 알람 지우기
+  function cancleAlamHandler() {
+    const fetchData = async () => {
       try {
-
-        // 상대방 아이디가 있고 공유일때만
-        if (type === "share" && userId) {
-          if (userId){
-            const response = await Api.get(`api/share/ledger/user/${userId}/daily/${date}`)
-            if (response.data.status === "success") {
-              setPaymentData(response.data.data)
-            } 
-          } 
-        } else {
-          const response = await Api.get(`api/payment/consumption/daily/${date}`);
-          console.log("일별 세부내역 데이터:", response.data.data);
-          setPaymentData(response.data); 
+        const response = await Api.post(`api/share/notification/date/read/${date}`)
+        console.log(response.data)
+        if (response.data.status === "success") {
+          alamHandler()
         }
       } catch (error) {
-        console.error("일별 세부내역조회 실패", error);
+        console.log(error)
       }
-    };
+    }
+    fetchData()
+  }
 
+  //모달 닫기
+  function onCloseModalHandler() {
+    onUse()
+    setIsOPen(false)
+  }
+
+  // 상세 내역 조회
+  const fetchedPaymentData = async () => {
+    try {
+      // 상대방 아이디가 있고 공유일때만
+      if (type === "share" && userId) {
+        if (userId){
+          console.log(date)
+          const response = await Api.get(`api/share/ledger/user/${userId}/daily/${date}`)
+          if (response.data.status === "success") {
+            setPaymentData(response.data.data)
+          } 
+        } 
+      } else {
+        const response = await Api.get(`api/payment/consumption/daily/${date}`);
+        setPaymentData(response.data); 
+      }
+    } catch (error) {
+      console.error("일별 세부내역조회 실패", error);
+    }
+  };
+
+  
+    // 알림 조회
+    function alamHandler() {
+      let year, month, day
+      if (typeof date === 'string') {
+        [year, month, day] = date.split("-")
+      } else if (date instanceof Date) {
+        year = date.getFullYear()
+        month = date.getMonth() + 1
+        day = date.getDate()
+      } else {
+        console.error("지원되지 않는 날짜 형식:", date)
+      }
+      const fetchData = async () => {
+        try {
+          const response = await Api.get(`api/share/notification/dates?year=${year}&month=${month}`)
+          if (response.data.status === "success") {
+            const data = response.data.data.dates
+            setBlinkList(data)
+          }
+        } catch (error) {
+          console.log(error)
+        }
+      }
+      fetchData()
+    }
+
+  useEffect(() => {
     if (date) {
+      console.log(date)
       fetchedPaymentData();
+      alamHandler()
     }
   }, [date]); //data가 바뀔 때마다 다시 요청
 
-  if (!paymentData) return <div>로딩 중...</div>;
+  if (!paymentData) return <div>소비내역이 없습니다</div>;
+
+  const match = blinkList.some(item => item === date);
+
   return (
     <div className="bg-white w-full p-[10px] text-black">
-      <p className="flex flex-start pb-[10px]">
-        {formatKoreanDate(type === "personal" || !userId ? paymentData.data.date : paymentData.date)}
-      </p>
-
+      {type === "personal" ? <p className="flex flex-start pb-[10px]">{formatKoreanDate(paymentData?.data?.date)}</p>
+      : <div className="flex justify-between">
+          <p className="flex flex-start pb-[10px]">
+            {formatKoreanDate(!userId ? paymentData?.data?.date : paymentData?.date)}
+          </p>
+          {match ? 
+            <div onClick={ async ()=> { await cancleAlamHandler(),setIsOPen(true)}} className="relative">
+              <span className="animate-pulse bg-red-500 absolute top-0 right-0 w-[10px] h-[10px] rounded-full"/>
+              <Comment title="댓글" isOpen={isOpen} onClose={onCloseModalHandler} userId={userId} date={!userId ? paymentData?.data?.date : paymentData?.date}/> 
+          </div>
+          :<div onClick={()=> setIsOPen(true)}>
+            <Comment title="댓글" isOpen={isOpen} onClose={onCloseModalHandler} userId={userId} date={!userId ? paymentData?.data?.date : paymentData?.date}/> 
+          </div>
+          }
+        </div>}
+      
+  
       <ul className="space-y-2">
-        {(type === "personal" || !userId )  ? paymentData.data.transactions.map((item, index) => {
-          const matchedCategory = categories.find(
-            (cat) => cat.name === item.category
-          );
-          const Icon = matchedCategory ? matchedCategory.Icon : null;
-
-          return (
-            <li key={index} className="flex items-center gap-2 text-sm">
-              {Icon && (
-                <img src={Icon} alt={item.category} className="w-8 h-auto" />
-              )}
-              <span className="ml-[20px]">{item.category}</span>
-              <span className="relative left-30px">{item.matchedName}</span>
-              <span>{item.description}</span>
-              <span className="ml-auto">
-                {item.amount != null
-                  ? `${item.amount.toLocaleString()}`
-                  : "금액 없음"}
-              </span>
-            </li>
-          );
-        })
-        : paymentData.transactions.map((item, index) => {
-          const matchedCategory = categories.find(
-            (cat) => cat.name === item.category
-          );
-          const Icon = matchedCategory ? matchedCategory.Icon : null;
-
-          return (
-            <li key={index} className="flex items-center gap-2 text-sm">
-              {Icon && (
-                <img src={Icon} alt={item.category} className="w-8 h-auto" />
-              )}
-              <span className="ml-[20px]">{item.category}</span>
-              <span className="relative left-30px">{item.matchedName}</span>
-              <span>{item.description}</span>
-              <span className="ml-auto">
-                {item.amount != null
-                  ? `${item.amount.toLocaleString()}`
-                  : "금액 없음"}
-              </span>
-            </li>
-          );
-        })}
+        {type === "personal" ? (
+          // 개인 가계부 데이터
+          paymentData?.data?.transactions?.map((item, index) => {
+            const matchedCategory = categories.find(
+              (cat) => cat.name === item.category
+            );
+            const Icon = matchedCategory ? matchedCategory.Icon : null;
+  
+            return (
+              <li key={index} className="flex items-center gap-2 text-sm">
+                {Icon && (
+                  <img src={Icon} alt={item.category} className="w-8 h-auto" />
+                )}
+                <span className="ml-[20px]">{item.category}</span>
+                <span className="relative left-30px">{item.matchedName}</span>
+                <span>{item.description}</span>
+                <span className="ml-auto">
+                  {item.amount != null
+                    ? `${item.amount.toLocaleString()}`
+                    : "금액 없음"}
+                </span>
+              </li>
+            );
+          })
+        ) : !userId ? (
+          // 본인 공유 가계부 데이터
+          paymentData?.data?.transactions?.map((item, index) => {
+            const matchedCategory = categories.find(
+              (cat) => cat.name === item.category
+            );
+            const Icon = matchedCategory ? matchedCategory.Icon : null;
+  
+            return (
+              <li key={index} className="flex items-center gap-2 text-sm">
+                {Icon && (
+                  <img src={Icon} alt={item.category} className="w-8 h-auto" />
+                )}
+                <span className="ml-[20px]">{item.category}</span>
+                <span className="relative left-30px">{item.matchedName}</span>
+                <span>{item.description}</span>
+                <span className="ml-auto">
+                  {item.amount != null
+                    ? `${item.amount.toLocaleString()}`
+                    : "금액 없음"}
+                </span>
+              </li>
+            );
+          })
+        ) : (
+          // 타인 공유 가계부 데이터
+          paymentData?.transactions?.map((item, index) => {
+            const matchedCategory = categories.find(
+              (cat) => cat.name === item.category
+            );
+            const Icon = matchedCategory ? matchedCategory.Icon : null;
+            
+            return (
+              <li key={index} className="flex items-center gap-2 text-sm">
+                {Icon && (
+                  <img src={Icon} alt={item.category} className="w-8 h-auto" />
+                )}
+                <span className="ml-[20px]">{item.category}</span>
+                <span className="relative left-30px">{item.matchedName}</span>
+                <span>{item.description}</span>
+                <span className="ml-auto">
+                  {item.amount != null
+                    ? `${item.amount.toLocaleString()}`
+                    : "금액 없음"}
+                </span>
+              </li>
+            );
+          })
+        )}
       </ul>
     </div>
   );
