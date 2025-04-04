@@ -75,12 +75,12 @@ export default function ChallengeNav() {
        *
        */}
 
-      <div className="w-full bg-white">
+      <div className="w-full bg-white!">
         {/* 탭 헤더 */}
         <div className="relative border-b border-gray-200">
           <div className="flex">
             {tabs.map((tab, index) => (
-              <button
+              <div
                 key={tab.id}
                 ref={(el) => (tabsRef.current[index] = el)}
                 className={`w-full py-3 px-4 text-center focus:outline-none transition-colors duration-300 ${
@@ -91,7 +91,7 @@ export default function ChallengeNav() {
                 onClick={() => handleClick(index)}
               >
                 {tab.title}
-              </button>
+              </div>
             ))}
           </div>
 
