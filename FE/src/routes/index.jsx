@@ -13,6 +13,7 @@ export default function Router() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<HomeMain />} />
         <Route path="/:token" element={<AcceptInvite />} />
         <Route path="/home/*" element={<HomeMain />} />
         <Route path="/bucketlist/*" element={<BucketListRouter />} />
