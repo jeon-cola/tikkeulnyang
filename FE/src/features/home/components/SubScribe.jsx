@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import CustomHeader from "../../../components/CustomHeader"
 import Api from "../../../services/Api"
 import CustomModal from "../../../components/CustomModal"
 import { useSelector } from "react-redux"
@@ -7,6 +6,7 @@ import IconFunction from "./IconFunction"
 import {motion} from "framer-motion"
 import ChooseAlertModal from "../../../components/ChooseAlertModal"
 import AlertModal from "../../../components/AlertModal"
+import CustomBackHeader from "../../../components/CustomBackHeader"
 
 export default function SubScribe() {
     const {nickName} = useSelector(state=> state.user)
@@ -192,7 +192,7 @@ export default function SubScribe() {
 
     return(
         <div className="w-full flex flex-col gap-4 relative">
-            <CustomHeader title="티끌냥"/>
+            <CustomBackHeader title="구독 정보"/>
             
             <div className="absolute left-0 right-0 top-16 flex flex-col gap-4">
                 <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 mx-auto flex flex-col gap-2">
@@ -255,7 +255,7 @@ export default function SubScribe() {
                             </div>
                             <div className="w-full flex items-center justify-center justify-between">
                                 <p className="text-xl w-3/10">금액 : </p>
-                                <input className=" border p-1 w-7/10" type="text" placeholder="1000" name="subscribePrice" onChange={onChangeHandler} value={isSelectOption.subscribePrice}/>
+                                <input className=" border p-1 w-7/10" type="number" placeholder="1000" name="subscribePrice" onChange={onChangeHandler} value={isSelectOption.subscribePrice}/>
                             </div>
                             <div className="w-full">
                                 <input type="date" name="paymentDate" onChange={onChangeHandler} value={isSelectOption.paymentDate}/>
@@ -280,7 +280,7 @@ export default function SubScribe() {
                 :(!!buttonChange) ? Array.isArray(subScribeList) && subScribeList.map((item, index)=> (
                     <div className="relative overflow-hidden" key={index}>
                     {/* 뒤에 위치할 삭제 아이콘 영역 */}
-                    <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 z-0 rounded-[6px] bg-white" onClick={()=>deleteModalOpenHandler(item.subscribeId)}>
+                    <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 z-0  rounded-xl shadow-md bg-white" onClick={()=>deleteModalOpenHandler(item.subscribeId)}>
                     <svg 
                         xmlns="http://www.w3.org/2000/svg" 
                         width="24" 
@@ -301,11 +301,11 @@ export default function SubScribe() {
                     
                     {/* 스와이프 가능한 콘텐츠 - z-index와 배경색 추가 */}
                     <motion.div 
-                        className="w-full flex bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 justify-between items-center relative" 
+                        className="w-full flex bg-white  rounded-xl shadow-md p-4 justify-between items-center relative" 
                         style={{ zIndex: 2 }}
                         drag="x" 
-                        dragConstraints={{ left: -64, right: 0 }} 
-                        animate={{ x: swipedItems[item.subscribeId] ? -64 : 0 }}
+                        dragConstraints={{ left: -75, right: 0 }} 
+                        animate={{ x: swipedItems[item.subscribeId] ? -75 : 0 }}
                         onDragEnd={(_, info) => handleDragEnd(item.subscribeId, info)}
                         dragElastic={0.1}
                     >
@@ -324,7 +324,7 @@ export default function SubScribe() {
                         <img 
                           src={IconFunction(item.subscribeName)} 
                           alt={`${item.subscribeName} 구독 이미지`} 
-                          className="max-w-[50px] max-h-[50px] rounded-lg shadow-[5px_5px_15px_rgba(0,0,0,0.3)]"
+                          className="max-w-[50px] max-h-[50px] rounded-xl shadow-[5px_5px_15px_rgba(0,0,0,0.3)]"
                           />
                       </div>
                     </div>
@@ -334,7 +334,7 @@ export default function SubScribe() {
                 : Array.isArray(subScribeList) && subScribeList.map((item, index)=> (
                     <div className="relative overflow-hidden" key={index}>
                         {/* 뒤에 위치할 삭제 아이콘 영역 - z-index 낮게 설정 */}
-                        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 rounded-[6px] bg-white" style={{ zIndex: 1 }} onClick={()=>deleteModalOpenHandler(item.subscribeId)}>
+                        <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center w-16 rounded-xl bg-white" style={{ zIndex: 1 }} onClick={()=>deleteModalOpenHandler(item.subscribeId)}>
                             <svg 
                             xmlns="http://www.w3.org/2000/svg" 
                             width="24" 
@@ -355,11 +355,11 @@ export default function SubScribe() {
                         
                         {/* 스와이프 가능한 콘텐츠 - z-index 높게 설정 */}
                         <motion.div 
-                            className="w-full flex bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 justify-between items-center relative" 
+                            className="w-full flex bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-xl p-4 justify-between items-center relative" 
                             style={{ zIndex: 2 }}
                             drag="x" 
-                            dragConstraints={{ left: -64, right: 0 }} 
-                            animate={{ x: swipedItems[item.subscribeId] ? -64 : 0 }}
+                            dragConstraints={{ left: -75, right: 0 }} 
+                            animate={{ x: swipedItems[item.subscribeId] ? -75 : 0 }}
                             onDragEnd={(_, info) => handleDragEnd(item.subscribeId, info)}
                             dragElastic={0.1}
                         >
@@ -379,7 +379,7 @@ export default function SubScribe() {
                         <img 
                           src={IconFunction(item.subscribeName)} 
                           alt={`${item.subscribeName} 구독 이미지`} 
-                          className="max-w-[50px] max-h-[50px] rounded-lg shadow-[5px_5px_15px_rgba(0,0,0,0.3)]"
+                          className="max-w-[50px] max-h-[50px] rounded-xl shadow-[5px_5px_15px_rgba(0,0,0,0.3)]"
                           />
                       </div>
                     </div>

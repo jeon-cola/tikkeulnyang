@@ -76,7 +76,7 @@ export default function CardRecommend() {
       <CustomHeader title="티끌냥"/>
 
       {/* 광고 이미지 */}
-      <div className="w-full flex flex-row justify-between m-0 bg-[#fff0ba] shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 ">
+      <div className="w-full flex flex-row justify-between m-0 bg-[#fff0ba] rounded-2xl shadow-md p-4 ">
         <div className="flex flex-col justify-center text-lg">
           <p className="text-left font-semibold text-[#3d3d3d]">하나카드 3월 캐시백 이벤트</p>
           <p className="text-left text-[#3d3d3d]">이벤트 기간 3/1 ~ 3/31</p>
@@ -109,7 +109,7 @@ export default function CardRecommend() {
         {cardList.length > 0 ? (
           cardList.map((card, index ) => (
             <Link to={`detail_card/${card.recoCardId}`} state={{ cardData: card}} key={card.recoCardId}>
-              <div className="w-full flex flex-row bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 gap-10" key={index}>
+              <div className="w-full flex flex-row bg-white rounded-2xl shadow-md p-4 gap-10" key={index}>
                     {(index+1 === 1)
                     ? <div className="flex flex-col items-center justify-center w-[27px]">
                         <img src={CatFootPrint} alt="고양이 발자국 이미지" />
