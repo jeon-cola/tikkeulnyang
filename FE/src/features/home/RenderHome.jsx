@@ -6,6 +6,11 @@ import { HomeService } from "@/features/home/services/HomeService";
 import { useNavigate } from "react-router-dom";
 import CustomBackHeader from "@/components/CustomBackHeader";
 import CalendarWidget from "@/features/home/assets/calendar_widget.png";
+import { ChallengeService } from "@/features/challenge/services/ChallengeService";
+import ChallengeWidget from "@/features/home/components/ChallengeWidget";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 export default function RenderHome() {
   const navigate = useNavigate();
@@ -20,10 +25,42 @@ export default function RenderHome() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [challengeParticipated, setChallengeParticipated] = useState([]);
+
+  const sliderSettings = {
+    arrows: false,
+    dots: false,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: Math.floor(Math.random() * (10000 - 2000 + 1)) + 5000, // 5초~10초 사이에 자동 재생
+    appendDots: (dots) => (
+      <div
+        style={{
+          position: "absolute",
+          bottom: "5px",
+          width: "100%",
+        }}
+      >
+        <ul style={{ margin: "0" }}> {dots} </ul>
+      </div>
+    ),
+    dotsClass: "slick-dots custom-dots",
+  };
 
   useEffect(() => {
     fetchMain();
+    fetchChallenges();
   }, []);
+
+  // 현재 유저가 참여하고 있는 챌린지 조회
+  const fetchChallenges = async () => {
+    const response = await ChallengeService.getChallengeParticipated();
+    console.log("참여중인 챌린지:", response.data);
+    setChallengeParticipated(response.data);
+  };
 
   // 드래그 중인 상태를 추적하기 위한 ref
   const isDraggingRef = useRef(false);
@@ -166,47 +203,36 @@ export default function RenderHome() {
         <>
           <CustomBackHeader title="홈" />
           <div className="flex flex-col items-start p-[30px_10px_82px] gap-6 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
-            <div className="flex flex-col pt-9 pb-9 p-[12px_11px_12px] gap-2 relative w-full h-auto bg-white rounded-[6px]">
+            {/* 참여중인 챌린지 위젯 */}
+            <Slider {...sliderSettings} className="h-fill w-full">
+              {challengeParticipated.length > 0 &&
+                challengeParticipated.map((challenge) => (
+                  <ChallengeWidget
+                    key={challenge.id}
+                    challengeId={challenge.challengeId}
+                    thumbnailUrl={challenge.thumbnailUrl}
+                    challengeName={challenge.challengeName}
+                  />
+                ))}
+            </Slider>
+
+            <div className="flex flex-col pt-5 pb-9 p-[12px_11px_15px] gap-2 relative w-full h-auto bg-white rounded-[6px]">
               <div className="text-left font-semibold text-sm leading-[12px] tracking-[0.07em] text-[#D0D0D0]">
                 이번달 카드 추천
               </div>
 
-              <div className="text-left font-semibold text-lg leading-7 tracking-[0.07em] text-black">
-                혜택이 많은 카드를 골라
-              </div>
-
-              <div className="text-left font-semibold text-lg leading-[13px] tracking-[0.07em] text-black">
+              <div className="text-left pt-3 font-semibold text-lg leading-[13px] tracking-[0.07em] text-black">
                 카드 혜택으로 절약하기
               </div>
 
-              <div className="absolute flex flex-row justify-center items-center pt-2 pb-2 pl-2 pr-2 gap-[10px] right-4 bottom-4 bg-[rgba(8,8,8,0.46)] rounded-[30px]">
+              {/* <div className="absolute flex flex-row justify-center items-center pt-2 pb-2 pl-2 pr-2 gap-[10px] right-4 bottom-2 bg-[rgba(8,8,8,0.46)] rounded-[30px]">
                 <span
                   className="font-semibold text-xs leading-[6px] tracking-[0.07em] text-white"
                   onClick={() => navigate(`/card`)}
                 >
                   자세히 보기
                 </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col p-[12px_20px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]">
-              <h2 className="pt-[18px] font-semibold text-xl text-left leading-[17px] tracking-[0.01em] text-primary-500 mb-[6px]">
-                안녕하세요 유저님
-              </h2>
-
-              <div className="font-light text-lg text-left leading-7 tracking-[0.01em] text-black">
-                주 5회 무지출 챌린지에 도전 중이시군요
-                <br />
-                곧 마감일이 다가오고 있어요
-                <br />
-                끝까지 힘내요
-              </div>
-
-              <div className="pt-[99px] w-full justify-center flex flex-row">
-                {/* <button className=" text-white longButton">
-                  챌린지 자세히보기
-                </button> */}
-              </div>
+              </div> */}
             </div>
 
             <div
