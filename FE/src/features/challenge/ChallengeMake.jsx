@@ -24,26 +24,11 @@ export default function ChallengeMake() {
 
   // 썸네일 이미지 파일을 저장할 state
   const [thumbnail, setThumbnail] = useState(null);
-  const [challengeId, setChallengeId] = useState(0);
 
   useEffect(() => {
     //uploadThumbnail(challengeId);
     console.log("thumbnail", thumbnail);
   }, [thumbnail]);
-
-  const uploadThumbnail = async () => {
-    try {
-      if (thumbnail) {
-        const response = await ChallengeService.postChallengeThumbnail(
-          challengeId,
-          thumbnail
-        );
-        console.log("썸네일 업로드 성공:", response);
-      }
-    } catch (error) {
-      console.error("썸네일 업로드 실패:", error);
-    }
-  };
 
   // 요청값 입력 함수
   const handleInputChange = (e) => {
@@ -109,9 +94,21 @@ export default function ChallengeMake() {
       const response = await ChallengeService.postChallengeCreate(
         challengeData
       );
-      setChallengeId(response.challengeId);
-      uploadThumbnail(challengeId);
-      //TODO : 추후에 챌린지 알림 페이지도 이동하게끔 수정
+
+      // 챌린지 생성 직후 바로 썸네일 업로드
+      try {
+        if (thumbnail) {
+          await ChallengeService.postChallengeThumbnail(
+            response.challengeId,
+            thumbnail
+          );
+          console.log("썸네일 업로드 성공");
+        }
+      } catch (error) {
+        console.error("썸네일 업로드 실패:", error);
+        alert("썸네일 업로드에 실패했습니다.");
+      }
+
       navigate(`/challenge`);
     } catch (error) {
       console.error("챌린지 생성 실패", error);
