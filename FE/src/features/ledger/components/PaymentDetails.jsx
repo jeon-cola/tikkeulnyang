@@ -128,7 +128,7 @@ export default function PaymentDetails({ date, type,userId = null, onUse }) {
           </p>
           {match ? 
             <div onClick={ async ()=> { await cancleAlamHandler(),setIsOPen(true)}} className="relative">
-              <span className="animate-pulse bg-red-500 absolute top-0 right-0 w-[10px] h-[10px] rounded-full"/>
+              <span className=" bg-red-500 absolute top-0 right-0 w-[8px] h-[8px] rounded-full"/>
               <Comment title="댓글" isOpen={isOpen} onClose={onCloseModalHandler} userId={userId} date={!userId ? paymentData?.data?.date : paymentData?.date}/> 
           </div>
           :<div onClick={()=> setIsOPen(true)}>
