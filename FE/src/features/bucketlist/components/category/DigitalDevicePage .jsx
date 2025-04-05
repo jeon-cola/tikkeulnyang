@@ -8,7 +8,7 @@ export default function DigitalDevicePage ({title, current_savings, target_amoun
         onSaving(bucketListId)
     }
     return(
-        <div className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 flex flex-col gap-3">
+        <div className="w-full bg-white rounded-2xl shadow-md p-4 flex flex-col gap-3">
             <div className="w-full flex flex-row">
                 <div className="w-full flex flex-col gap-6">
                     <p className="text-left font-semibold text-xl" style={{color:"#321B41"}}>#버킷리스트</p>
