@@ -1,7 +1,12 @@
 import { useNavigate } from "react-router-dom";
 
-export default function CustomBackHeader({ title }) {
+export default function CustomBackHeader({ title, showCreateButton=false, navigate="/" }) {
   const nav = useNavigate();
+
+  function handleClick(e) {
+    e.preventDefault()
+    nav(navigate)
+  }
 
   function backHandler(e) {
     e.preventDefault();
@@ -22,6 +27,14 @@ export default function CustomBackHeader({ title }) {
       <div className="h-full flex items-center">
         <p className="text-[23px] font-bold">{title}</p>
       </div>
+
+      {showCreateButton &&        <div
+        onClick={handleClick}
+        className="fixed top-[25px] right-[30px] transform scale-y-[-1] z-[51]"
+      >
+        <div className="absolute w-[21px] h-0 border-black border-t-[2px]"></div>
+        <div className="absolute w-[21px] h-0 border-black border-t-[2px] transform rotate-90"></div>
+      </div>}
     </header>
   );
 }
