@@ -11,6 +11,7 @@ import ChallengeWidget from "@/features/home/components/ChallengeWidget";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import AlertModal from "@/components/AlertModal";
 
 export default function RenderHome() {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ export default function RenderHome() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModal, setIsModal] = useState(false);
   const [challengeParticipated, setChallengeParticipated] = useState([]);
 
   const sliderSettings = {
@@ -51,8 +53,18 @@ export default function RenderHome() {
   };
 
   useEffect(() => {
-    fetchMain();
-    fetchChallenges();
+    const initialize = async () => {
+      try {
+        await fetchMain();
+        await fetchChallenges();
+        // setIsModal(true);
+        //await challengeSettle();
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    initialize();
   }, []);
 
   // 현재 유저가 참여하고 있는 챌린지 조회
@@ -60,7 +72,35 @@ export default function RenderHome() {
     const response = await ChallengeService.getChallengeParticipated();
     console.log("참여중인 챌린지:", response.data);
     setChallengeParticipated(response.data);
+    return response.data; // 챌린지 데이터 반환
   };
+
+  // 챌린지 성공시 분배
+  async function challengeSettle() {
+    const challenges = await ChallengeService.getPast(); // 로그인한 사용자가 참여한 챌린지 이력 조회
+
+    console.log(challenges.data);
+    if (challenges.data.length > 0) {
+      console.log("챌린지 성공시 분배 challengeSettle 실행");
+      for (const challenge of challenges.data) {
+        console.log("challengeId:", challenge.challengeId);
+        const response = await HomeService.postChallengeSettle(
+          challenge.challengeId
+        );
+
+        console.log(response);
+        if (response.status === 200) {
+          setIsModal(true);
+        }
+      }
+    }
+  }
+
+  // 모달창 닫은 후 챌린지 페이지로 이동
+  function isCloseModal(challengeId = 1) {
+    setIsModal(false);
+    navigate(`/challenge/${challengeId}`);
+  }
 
   // 드래그 중인 상태를 추적하기 위한 ref
   const isDraggingRef = useRef(false);
@@ -318,6 +358,17 @@ export default function RenderHome() {
               </Droppable>
             </DragDropContext>
           </div>
+          <AlertModal
+            title="챌린지 성공"
+            isClose={isCloseModal}
+            isOpen={isModal}
+            height={170}
+          >
+            <div>
+              <p></p>
+            </div>
+          </AlertModal>
+          ;
         </>
       )}
     </>

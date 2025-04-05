@@ -27,7 +27,7 @@ export default function ChallengeWidget({
             {challengeName} 챌린지
           </h2>
 
-          <div className="font-light text-lg text-right pt-10 leading-7 tracking-[0.01em] text-white">
+          <div className="font-light text-lg text-right pt-17 leading-7 tracking-[0.01em] text-white">
             {challengeName} 챌린지
           </div>
 
