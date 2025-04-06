@@ -30,7 +30,33 @@ export default defineConfig({
       },
       // 파일 이름에 해시를 붙여 SW 충돌 방지
       useFilenameHash: true,
-      /* manifest 설정(아이콘 등) 필요 시 여기에 추가 */
+      /* manifest 설정(아이콘 등). 해당 정보들이 있어야 PWA로 다운로드 및 오프라인 노출이 가능해진다. */
+      manifest: {
+        name: "TIKKUEL",
+        short_name: "TIKKUEL",
+        description: "가계부와 챌린지를 통한 절약 유도 앱",
+        theme_color: "#FF957A",
+        background_color: "#ffffff",
+        display: "standalone",
+        icons: [
+          {
+            src: "/icons/logo_tmp_192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: "/icons/logo_tmp_512.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+          {
+            src: "/icons/logo_tmp_512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+      },
     }),
   ],
   resolve: {
