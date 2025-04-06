@@ -12,6 +12,7 @@ import { addOfficialChallenge } from "@/features/challenge/ChallengeSlice";
 import RenderList from "@/features/challenge/components/RenderList";
 import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
 import CreateButton from "./components/CreateButton";
+import CustomHeader from "@/components/CustomHeader";
 
 export default function ChallengeMain() {
   const [officialChallenges, setOfficialChallenges] = useState([]);
@@ -209,9 +210,9 @@ export default function ChallengeMain() {
   };
   return (
     <>
-      {/* <CustomHeader title="챌린지" showCreateButton="true" /> */}
+      <CustomHeader title="챌린지" />
       <CreateButton />
-      <CustomBackHeader title="챌린지" />
+      {/* <CustomBackHeader title="챌린지" /> */}
       <div className="flex flex-col items-start p-[0px_0px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
         <ChallengeNav />
         {renderPage()}
