@@ -129,4 +129,17 @@ export const ChallengeService = {
       throw error;
     }
   },
+
+  // 참여중인 챌린지 취소
+  postChallengeCancel: async (challengeId) => {
+    try {
+      const response = await Api.post(`api/challenge/${challengeId}/cancel`);
+
+      console.log("챌린지 취소", response);
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
 };

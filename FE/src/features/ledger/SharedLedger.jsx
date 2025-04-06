@@ -29,8 +29,8 @@ export default function SharedLedger() {
   const [calendarKey, setCalendarKey] =useState(0)
 
   const emojiMap = {
-    0: <img src={BlueFish} alt="BlueFish" className="w-5 mx-auto" />,
-    1: <img src={GoldFish} alt="GoldFish" className="w-5 mx-auto" />,
+    0: <img src={GoldFish} alt="GoldFish" className="w-5 mx-auto" />,
+    1: <img src={BlueFish} alt="BlueFish" className="w-5 mx-auto" />,
     2: <img src={BlackFish} alt="BlackFish" className="w-5 mx-auto" />,
   };
 
@@ -145,7 +145,7 @@ export default function SharedLedger() {
           </div>
 
           {/* 달력 및 BlackCat 이미지 */}
-          <div className="relative">
+          <div>
             <CustomCalendar
             key={calendarKey}
               onActiveStartDateChange={({activeStartDate,view})=>{
@@ -179,7 +179,7 @@ export default function SharedLedger() {
                   return entry && alam  ? (
                     <div className="relative w-full h-full flex items-end">
                         {emojiMap[entry.emoji] || ""}
-                      <span className="animate-pulse bg-red-500 absolute top-3 right-1 w-[8px] h-[8px] rounded-full z-[10]"></span>
+                      <span className="bg-red-500 absolute top-[13px] right-[4px] w-[4.5px] h-[5px] rounded-full z-[10]"></span>
                     </div>
                   ) : entry ? (
                     <div className="mt-4 text-center text-[18px]">
@@ -192,7 +192,7 @@ export default function SharedLedger() {
             />
             {/* BlackCat: 달력 기준 우측 상단에 겹치게 배치 */}
             <img
-              className="absolute top-0 right-0 z-10 w-12 h-auto"
+              className="absolute top-5 right-0 z-10 w-12 h-auto"
               src={BlackCat}
               alt="캣 이미지"
             />

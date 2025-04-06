@@ -27,6 +27,12 @@ export default function ChallengeDetail() {
       },
     });
   };
+
+  const handleCancel = () => {
+    ChallengeService.postChallengeCancel(id);
+    navigate("/challenge");
+  };
+
   const [currChallenge, setCurrChallenge] = useState({
     challenge: {
       challengeId: 0,
@@ -53,6 +59,8 @@ export default function ChallengeDetail() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isExpired, setIsExpired] = useState(false);
+  const [isNotStarted, setIsNotStarted] = useState(false);
+  const [isParticipated, setIsparticipated] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -87,11 +95,31 @@ export default function ChallengeDetail() {
       console.log("formatted response", formattedData);
 
       setCurrChallenge(formattedData);
-      setIsLoading(false);
     } catch (error) {
       console.error(error);
       setIsLoading(false);
-      throw error;
+    }
+
+    try {
+      const response = await ChallengeService.getChallengeParticipated();
+
+      // 참여중인 챌린지 배열에서 현재 챌린지 ID와 일치하는 항목 확인
+      const participatedChallenge = response.data.find(
+        (challenge) => challenge.challengeId === parseInt(id)
+      );
+
+      if (participatedChallenge) {
+        setIsparticipated(true);
+
+        // 참여 중인 챌린지의 시작 날짜가 현재 날짜보다 이후인지 확인
+        const startDate = new Date(participatedChallenge.startDate);
+        const today = new Date();
+        setIsNotStarted(startDate > today);
+      }
+      setIsLoading(false);
+    } catch (error) {
+      console.log(error);
+      setIsLoading(false);
     }
   };
   // 페이지가 실행될 때 현재 보고자 하는 챌린지의 상세 내용을 가져온다.
@@ -122,8 +150,10 @@ export default function ChallengeDetail() {
 
             {/* 챌린지 상세 설명 */}
             <div className="flex flex-col items-center p-[22px_11px_22px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
-              <div className="whitespace-pre-line text-left w-full h-auto font-normal text-[17px] leading-[20px] text-black flex-none order-0 flex-grow-0">
-                <p>{currChallenge.challenge.description}</p>
+              <div className="whitespace-pre-line text-left w-full h-auto font-normal text-[17px] leading-8 text-black flex-none order-0 flex-grow-0">
+                <div className="pl-4 pr-4">
+                  {currChallenge.challenge.description}
+                </div>
               </div>
             </div>
 
@@ -159,10 +189,22 @@ export default function ChallengeDetail() {
               bucket100to85={currChallenge.bucket100to85}
             />
             {/* 참가 버튼 */}
-            {!isExpired && (
+            {!isExpired && !isParticipated && (
               <div className="w-full justify-center flex flex-row">
                 <button className="longButton text-white" onClick={handleClick}>
                   참여하기
+                </button>
+              </div>
+            )}
+
+            {/* 참여 취소 버튼 - 참여 중이고 시작되지 않은 챌린지일 때만 표시 */}
+            {isParticipated && isNotStarted && (
+              <div className="w-full justify-center flex flex-row">
+                <button
+                  className="longButton text-white "
+                  onClick={handleCancel}
+                >
+                  참여 취소
                 </button>
               </div>
             )}
