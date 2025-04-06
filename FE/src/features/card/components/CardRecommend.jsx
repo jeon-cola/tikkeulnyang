@@ -6,6 +6,7 @@ import Api from "../../../services/Api"
 import CatFootPrint from "../assets/CatFootPrint.png"
 import questionIcon from "../assets/QuestionIcon.png"
 import AlertModal from "../../../components/AlertModal"
+import IsLoading from "../../../components/IsLoading"
 
 export default function CardRecommend() {
   const [cardList, setCardList] = useState([])
@@ -134,6 +135,8 @@ export default function CardRecommend() {
         )
       }
       </div>
+
+      <IsLoading/>
 
     </div>
   )
