@@ -10,8 +10,6 @@ export default function PersonalLedgerCalendar() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [calendarData, setCalendarData] = useState([]);
 
-
-
   const formatDate = (date) =>
     date.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
 
@@ -36,8 +34,8 @@ export default function PersonalLedgerCalendar() {
         const response = await Api.get("api/payment/consumption", {
           params: { year, month },
         });
-        console.log(response.data)
-        if (response.data.status === "success"){
+        console.log(response.data);
+        if (response.data.status === "success") {
           const fetchedData = response.data.data.data;
           const formattedData = fetchedData.map((item) => ({
             date: item.date,
@@ -89,15 +87,20 @@ export default function PersonalLedgerCalendar() {
       <CustomCalendar
         value={value}
         onChange={(date) => {
-          console.log("값 변경")
+          console.log("값 변경");
           setValue(date);
           handleDateClick(date);
         }}
         onActiveStartDateChange={({ activeStartDate, view }) => {
           console.log("달력 월 변경:", activeStartDate);
-          console.log("년도:", activeStartDate.getFullYear(), "월:", activeStartDate.getMonth() + 1);
+          console.log(
+            "년도:",
+            activeStartDate.getFullYear(),
+            "월:",
+            activeStartDate.getMonth() + 1
+          );
           // 월 변경 시 데이터 가져오기
-          if (view === 'month') {
+          if (view === "month") {
             setValue(activeStartDate);
           }
         }}
@@ -113,7 +116,7 @@ export default function PersonalLedgerCalendar() {
 
       {selectedDate && (
         <div className="mt-4">
-          <PaymentDetails date={selectedDate} type="personal"/>
+          <PaymentDetails date={selectedDate} type="personal" />
         </div>
       )}
     </div>
