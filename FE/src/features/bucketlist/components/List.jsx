@@ -4,6 +4,7 @@ import Api from "../../../services/Api";
 import MapCategory from "./category/MapCategory";
 import AlertModal from "../../../components/AlertModal";
 import ChooseAlertModal from "../../../components/ChooseAlertModal";
+import CustomBackHeader from "../../../components/CustomBackHeader";
 
 export default function List() {
   const [userData, setUserData] = useState([]);
@@ -78,22 +79,25 @@ export default function List() {
 
   return (
     <div className="flex flex-col gap-4 mb-4">
-      {userData.map((data,index)=>(
-        <MapCategory key={index} list={data} onSaving={checkAlertModalOpen}/>
-      ))}
-      <ChooseAlertModal title="저축하기" isClose={checkAlertModalClose} isOpen={savingCheck} isFunctionHandler={()=>saveHandler(selectBucketListId)}>
-        <div>
-          <p>확인 버튼을 누르면 자동으로</p>
-          <p>설정된 계좌를 통해 저축이 이루어 집니다</p>
-          <p>저축을 진행하시겠습니까?</p>
-        </div>
-      </ChooseAlertModal>
+      <CustomBackHeader title="버킷 리스트 조회" showCreateButton={true} navigate="/bucketlist"/>
+      <div className="mt-[37px] flex flex-col gap-3">
+        {userData.map((data,index)=>(
+          <MapCategory key={index} list={data} onSaving={checkAlertModalOpen}/>
+        ))}
+        <ChooseAlertModal title="저축하기" isClose={checkAlertModalClose} isOpen={savingCheck} isFunctionHandler={()=>saveHandler(selectBucketListId)}>
+          <div>
+            <p>확인 버튼을 누르면 자동으로</p>
+            <p>설정된 계좌를 통해 저축이 이루어 집니다</p>
+            <p>저축을 진행하시겠습니까?</p>
+          </div>
+        </ChooseAlertModal>
 
-      <AlertModal title="저축 완료" isOpen={isAlertModal} isClose={AlertModalClose} height={170}>
-        <div>
-          <p>저축이 완료되었습니다다</p>
-        </div>
-      </AlertModal>
+        <AlertModal title="저축 완료" isOpen={isAlertModal} isClose={AlertModalClose} height={170}>
+          <div>
+            <p>저축이 완료되었습니다다</p>
+          </div>
+        </AlertModal>
+      </div>
     </div>
   )
 }

@@ -69,7 +69,7 @@ export default function Homewidget({ title, content }) {
             <img
               src={icon}
               alt={icon}
-              className="w-15.5 object-contain ml-18 mt-18"
+              className="w-15.5 object-contain ml-17 mt-17"
             />
           </div>
           {/* <Slider {...settings} className="h-[140px]"> */}
