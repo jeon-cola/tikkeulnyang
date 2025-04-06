@@ -2,13 +2,16 @@
 FROM node:18-bullseye-slim AS build
 WORKDIR /app
 
-# package.json 및 package-lock.json 복사 (캐시 활용을 위해)
+# package.json 및 package-lock.json 복사 (캐시 활용)
 COPY package.json package-lock.json ./
 
-# 의존성 설치 (캐시 활용)
+# 의존성 설치
 RUN npm ci
 
-# 전체 소스 복사 후 빌드
+# 누락된 optional dependency 설치 (Rollup의 GNU용 native 모듈)
+RUN npm install @rollup/rollup-linux-x64-gnu
+
+# 전체 소스 복사 후 빌드 실행
 COPY . .
 RUN npm run build
 
