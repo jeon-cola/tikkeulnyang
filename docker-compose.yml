@@ -84,3 +84,4 @@ networks:
 volumes:
   mysql_data:
   grafana_data:
+    name: grafana_data
