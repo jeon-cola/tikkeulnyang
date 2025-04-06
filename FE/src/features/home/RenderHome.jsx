@@ -17,8 +17,8 @@ export default function RenderHome() {
   const navigate = useNavigate();
   const [widgets, setWidgets] = useState([
     { id: "widget-1", title: "남은예산", content: ["0원"] },
-    { id: "widget-2", title: "결제예정", content: [] },
-    { id: "widget-3", title: "저번달통계", content: [] },
+    { id: "widget-2", title: "구독 결제 예정", content: [] },
+    { id: "widget-3", title: "지난달 통계", content: [] },
     { id: "widget-4", title: "현재 소비 금액", content: ["0원"] },
     { id: "widget-5", title: "남은 카드 실적", content: ["50,000원"] },
     { id: "widget-6", title: "버킷리스트", content: [] },
@@ -252,6 +252,7 @@ export default function RenderHome() {
                     challengeId={challenge.challengeId}
                     thumbnailUrl={challenge.thumbnailUrl}
                     challengeName={challenge.challengeName}
+                    endDate={challenge.endDate}
                   />
                 ))}
             </Slider>
