@@ -238,17 +238,15 @@ export default function SubScribe() {
                         </select>
                         {(!isSelectOption)?"":
                         <div className="w-full flex flex-col gap-4">
-                            <div>
                                 {isSelectOption.subscribeName && (
                                     <div className="flex justify-center">
                                         <img 
                                             src={IconFunction(isSelectOption.subscribeName)} 
                                             alt={`${isSelectOption.subscribeName} 구독 이미지`} 
-                                            style={{ maxWidth: '100px', maxHeight: '100px' }} 
+                                            className="w-[100px] h-[100px] rounded-xl shadow-2xl"
                                         />
                                     </div>
                                 )}
-                            </div>
                             <div className="w-full flex items-center justify-center justify-between">
                                 <p className="w-3/10 text-xl">항목 : </p>
                                 <p className="border p-1 w-7/10">{isSelectOption.subscribeName}</p>
@@ -301,8 +299,7 @@ export default function SubScribe() {
                     
                     {/* 스와이프 가능한 콘텐츠 - z-index와 배경색 추가 */}
                     <motion.div 
-                        className="w-full flex bg-white  rounded-xl shadow-md p-4 justify-between items-center relative" 
-                        style={{ zIndex: 2 }}
+                        className="w-full flex bg-white  rounded-xl shadow-md p-4 justify-between items-center relative z-2" 
                         drag="x" 
                         dragConstraints={{ left: -75, right: 0 }} 
                         animate={{ x: swipedItems[item.subscribeId] ? -75 : 0 }}
@@ -355,13 +352,12 @@ export default function SubScribe() {
                         
                         {/* 스와이프 가능한 콘텐츠 - z-index 높게 설정 */}
                         <motion.div 
-                            className="w-full flex bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-xl p-4 justify-between items-center relative" 
-                            style={{ zIndex: 2 }}
+                            className="w-full flex bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-xl p-4 justify-between items-center relative z-2" 
                             drag="x" 
                             dragConstraints={{ left: -75, right: 0 }} 
                             animate={{ x: swipedItems[item.subscribeId] ? -75 : 0 }}
                             onDragEnd={(_, info) => handleDragEnd(item.subscribeId, info)}
-                            dragElastic={0.1}
+                            dragElastic={0.2}
                         >
                             {/* 왼쪽 구독 정보 영역 */}
                       <div className="w-3/10">

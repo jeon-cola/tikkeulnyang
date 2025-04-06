@@ -3,7 +3,6 @@ import MyPageMenu from "./components/MyPageMenu";
 import Correction from "./components/Correction";
 import Account from "./components/Account";
 import Card from "./components/Card";
-import Attendance from "./components/Attendance";
 
 export default function MyPageMain(){
     return(
