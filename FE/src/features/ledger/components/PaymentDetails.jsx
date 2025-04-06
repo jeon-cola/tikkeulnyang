@@ -137,36 +137,18 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
               !userId ? paymentData?.data?.date : paymentData?.date
             )}
           </p>
-          {match ? (
-            <div
-              onClick={async () => {
-                await cancleAlamHandler(), setIsOPen(true);
-              }}
-              className="relative"
-            >
-              <span className="animate-pulse bg-red-500 absolute top-0 right-0 w-[10px] h-[10px] rounded-full" />
-              <Comment
-                title="댓글"
-                isOpen={isOpen}
-                onClose={onCloseModalHandler}
-                userId={userId}
-                date={!userId ? paymentData?.data?.date : paymentData?.date}
-              />
-            </div>
-          ) : (
-            <div onClick={() => setIsOPen(true)}>
-              <Comment
-                title="댓글"
-                isOpen={isOpen}
-                onClose={onCloseModalHandler}
-                userId={userId}
-                date={!userId ? paymentData?.data?.date : paymentData?.date}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
+          {match ? 
+            <div onClick={ async ()=> { await cancleAlamHandler(),setIsOPen(true)}} className="relative">
+              <span className=" bg-red-500 absolute top-0 right-0 w-[8px] h-[8px] rounded-full"/>
+              <Comment title="댓글" isOpen={isOpen} onClose={onCloseModalHandler} userId={userId} date={!userId ? paymentData?.data?.date : paymentData?.date}/> 
+          </div>
+          :<div onClick={()=> setIsOPen(true)}>
+            <Comment title="댓글" isOpen={isOpen} onClose={onCloseModalHandler} userId={userId} date={!userId ? paymentData?.data?.date : paymentData?.date}/> 
+          </div>
+          }
+        </div>}
+      
+  
       <ul className="space-y-2">
         {type === "personal"
           ? // 개인 가계부 데이터

@@ -13,4 +13,15 @@ export const HomeService = {
       throw error;
     }
   },
+
+  // 챌린지 성공시 분배
+  postChallengeSettle: async (challengeId) => {
+    try {
+      const response = await Api.post(`api/challenge/${challengeId}/settle`);
+      console.log(response);
+      return response;
+    } catch (error) {
+      console.error(error);
+    }
+  },
 };
