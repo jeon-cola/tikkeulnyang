@@ -144,7 +144,7 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
               }}
               className="relative"
             >
-              <span className="animate-pulse bg-red-500 absolute top-0 right-0 w-[10px] h-[10px] rounded-full" />
+              <span className=" bg-red-500 absolute top-0 right-0 w-[8px] h-[8px] rounded-full" />
               <Comment
                 title="댓글"
                 isOpen={isOpen}
