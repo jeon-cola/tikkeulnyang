@@ -37,6 +37,7 @@ export default function BudgetMake() {
   const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
 
   // 예산 데이터 조회
+  // 예산 데이터 조회
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -48,10 +49,10 @@ export default function BudgetMake() {
         const backendData = response.data.data?.categories || [];
         console.log("예산 데이터 조회", backendData);
 
-        // 카테고리 이름 기준으로 매칭하여 예산 구성
+        // 카테고리 ID 기준으로 매칭하여 예산 구성
         const mappedData = categories.map((cat) => {
           const matched = backendData.find(
-            (item) => item.categoryName === cat.name
+            (item) => item.categoryId === cat.id
           );
 
           return {
@@ -61,11 +62,15 @@ export default function BudgetMake() {
             remaining_amount: matched?.remainingAmount || 0,
             spending_amount: matched?.spendingAmount || 0,
             is_exceed: matched?.isExceed || false,
+            has_budget: matched?.hasBudget || false,
           };
         });
 
         setBudgetData(mappedData);
-        setIsFirstBudget(backendData.length === 0);
+
+        // 예산이 설정된 카테고리가 없는지 확인
+        const hasBudgets = backendData.some((item) => item.hasBudget);
+        setIsFirstBudget(!hasBudgets);
 
         // 총 예산 계산
         const total = mappedData.reduce(
@@ -83,8 +88,10 @@ export default function BudgetMake() {
           remaining_amount: 0,
           spending_amount: 0,
           is_exceed: 0,
+          has_budget: false,
         }));
         setBudgetData(emptyBudget);
+        setIsFirstBudget(true);
       } finally {
         setIsLoading(false);
       }
@@ -106,11 +113,30 @@ export default function BudgetMake() {
         `api/budget/categories?year=${prevYear}&month=${prevMonth}`
       );
 
-      if (response.data.data && response.data.data.length > 0) {
-        setBudgetData(response.data.data);
+      const backendData = response.data.data?.categories || [];
+
+      if (backendData.some((item) => item.hasBudget)) {
+        // 카테고리 ID 기준으로 매칭하여 예산 구성
+        const mappedData = categories.map((cat) => {
+          const matched = backendData.find(
+            (item) => item.categoryId === cat.id
+          );
+
+          return {
+            category_id: cat.id,
+            category_name: cat.name,
+            budget_amount: matched?.amount || 0,
+            remaining_amount: matched?.remainingAmount || 0,
+            spending_amount: matched?.spendingAmount || 0,
+            is_exceed: matched?.isExceed || false,
+            has_budget: matched?.hasBudget || false,
+          };
+        });
+
+        setBudgetData(mappedData);
 
         // 총 예산 계산
-        const total = response.data.data.reduce(
+        const total = mappedData.reduce(
           (sum, item) => sum + (item.budget_amount || 0),
           0
         );
@@ -150,22 +176,55 @@ export default function BudgetMake() {
   };
 
   // 예산 저장
-  // const saveBudget = async (category_id, amount) => {
-  //   try {
-  //     // 백엔드에서 기대하는 형식으로 변환
+  const saveBudget = async () => {
+    try {
+      // API는 한 번에 하나의 카테고리만 업데이트
+      // 모든 카테고리에 대해 순차적으로 API 호출
+      for (const item of budgetData) {
+        // 모든 카테고리에 대해 예산 저장 (금액이 0이어도 저장)
+        const payload = {
+          category_id: item.category_id,
+          amount: item.budget_amount,
+        };
+        await Api.post(`api/budget/plan?year=${year}&month=${month}`, payload);
+      }
 
-  //     const payload = {
-  //       category_id
-  //       amount,
-  //     };
-  //     console.log()
-  //     await Api.post(`api/budget/plan?year=${year}&month=${month}`, payload);
-  //     alert("예산이 성공적으로 저장되었습니다.");
-  //   } catch (error) {
-  //     console.error("예산 저장 실패:", error);
-  //     alert("예산 저장에 실패했습니다.");
-  //   }
-  // };
+      alert("예산이 성공적으로 저장되었습니다.");
+
+      // 저장 후 데이터 다시 불러오기
+      const response = await Api.get(
+        `api/budget/categories?year=${year}&month=${month}`
+      );
+      const backendData = response.data.data?.categories || [];
+
+      // 데이터 매핑 및 상태 업데이트
+      const mappedData = categories.map((cat) => {
+        const matched = backendData.find((item) => item.categoryId === cat.id);
+
+        return {
+          category_id: cat.id,
+          category_name: cat.name,
+          budget_amount: matched?.amount || 0,
+          remaining_amount: matched?.remainingAmount || 0,
+          spending_amount: matched?.spendingAmount || 0,
+          is_exceed: matched?.isExceed || false,
+          has_budget: matched?.hasBudget || false,
+        };
+      });
+
+      setBudgetData(mappedData);
+
+      // 총 예산 계산
+      const total = mappedData.reduce(
+        (sum, item) => sum + (item.budget_amount || 0),
+        0
+      );
+      setTotalBudget(total);
+    } catch (error) {
+      console.error("예산 저장 실패:", error);
+      alert("예산 저장에 실패했습니다.");
+    }
+  };
 
   // 숫자에 천 단위 콤마 추가
   const formatNumber = (num) => {
@@ -293,10 +352,10 @@ export default function BudgetMake() {
             </div>
 
             {/* 저장 버튼 */}
-            <div className="bottom-0 left-0 right-0 bg-black p-4 shadow-lg">
+            <div>
               <button
                 onClick={saveBudget}
-                className="w-full bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600"
+                className="w-full bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 px-5"
               >
                 예산 저장하기
               </button>
