@@ -1,29 +1,10 @@
 import { useEffect, useState } from "react";
 import Api from "../../../services/Api";
-import EntertainmentIcon from "../assets/category/entertainment_icon.png";
-import FoodIcon from "../assets/category/food_icon.png";
-import GoodsIcon from "../assets/category/goods_icon.png";
-import HousingIcon from "../assets/category/housing_icon.png";
-import MedicalIcon from "../assets/category/medical_icon.png";
-import ShoppingIcon from "../assets/category/shopping_icon.png";
-import TransportationIcon from "../assets/category/transportation_icon.png";
-import IncomeIcon from "../assets/category/income_icon.png";
-import SpenseIcon from "../assets/category/spense_icon.png";
-import EducationIcon from "../assets/category/education_icon.png";
+import CategoryList from "./CategoryList";
 import Comment from "./Comment";
 
-const categories = [
-  { id: 1, name: "주거/통신", Icon: HousingIcon },
-  { id: 2, name: "식비", Icon: FoodIcon },
-  { id: 3, name: "교통/차량", Icon: TransportationIcon },
-  { id: 4, name: "교육/육아", Icon: EducationIcon },
-  { id: 5, name: "쇼핑/미용", Icon: ShoppingIcon },
-  { id: 6, name: "병원/약국", Icon: MedicalIcon },
-  { id: 7, name: "문화/여가", Icon: EntertainmentIcon },
-  { id: 8, name: "잡화", Icon: GoodsIcon },
-  { id: 9, name: "결제", Icon: SpenseIcon },
-  { name: "수입", Icon: IncomeIcon },
-];
+// 카테고리 아이콘 관련 컴포넌트
+const categories = CategoryList();
 
 const formatKoreanDate = (dateStr) => {
   const date = new Date(dateStr);
@@ -127,7 +108,7 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
   return (
     <div className="bg-white w-full p-[10px] text-black">
       {type === "personal" ? (
-        <p className="flex flex-start pb-[10px]">
+        <p className="flex flex-start text-lg mt-2">
           {formatKoreanDate(paymentData?.data?.date)}
         </p>
       ) : (
@@ -167,7 +148,8 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
         </div>
       )}
 
-      <ul className="space-y-2">
+      {/* <ul className="space-y-2 m"> */}
+      <ul className="h-auto">
         {type === "personal"
           ? // 개인 가계부 데이터
             paymentData?.data?.transactions?.map((item, index) => {
@@ -177,12 +159,15 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
               const Icon = matchedCategory ? matchedCategory.Icon : null;
 
               return (
-                <li key={index} className="flex items-center gap-2 text-sm">
+                <li
+                  key={index}
+                  className="flex items-center gap-2 text-lg pt-4"
+                >
                   {Icon && (
                     <img
                       src={Icon}
                       alt={item.category}
-                      className="w-8 h-auto"
+                      className="w-10 h-auto"
                     />
                   )}
                   <span className="ml-[20px]">{item.category}</span>
@@ -205,12 +190,15 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
               const Icon = matchedCategory ? matchedCategory.Icon : null;
 
               return (
-                <li key={index} className="flex items-center gap-2 text-sm">
+                <li
+                  key={index}
+                  className="flex items-center gap-2 text-lg pt-4"
+                >
                   {Icon && (
                     <img
                       src={Icon}
                       alt={item.category}
-                      className="w-8 h-auto"
+                      className="w-10 h-auto"
                     />
                   )}
                   <span className="ml-[20px]">{item.category}</span>
@@ -232,12 +220,15 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
               const Icon = matchedCategory ? matchedCategory.Icon : null;
 
               return (
-                <li key={index} className="flex items-center gap-2 text-sm">
+                <li
+                  key={index}
+                  className="flex items-center gap-2 text-lg pt-4"
+                >
                   {Icon && (
                     <img
                       src={Icon}
                       alt={item.category}
-                      className="w-8 h-auto"
+                      className="w-10 h-auto"
                     />
                   )}
                   <span className="ml-[20px]">{item.category}</span>
