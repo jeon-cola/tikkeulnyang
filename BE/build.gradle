@@ -24,6 +24,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.674'
+	// Redis 관련 추가
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
 
 	// Micrometer Prometheus - ⭐ Prometheus 연동 핵심
 	implementation 'io.micrometer:micrometer-registry-prometheus'
