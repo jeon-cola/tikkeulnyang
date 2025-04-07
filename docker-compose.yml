@@ -150,17 +150,6 @@ services:
     restart: always
     networks:
       - app_network
-  jenkins:
-    image: jenkins/jenkins:lts
-    container_name: jenkins
-    ports:
-      - "8080:8080"
-      - "50000:50000"
-    volumes:
-      - jenkins_home:/var/jenkins_home
-    networks:
-      - app_network
-    restart: always
 
 
 networks:
@@ -171,4 +160,3 @@ volumes:
   mysql_data:
   grafana_data:
   elasticsearch_data:
-  jenkins_home:
