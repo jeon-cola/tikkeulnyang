@@ -60,11 +60,13 @@ export default function ChallengeDetail() {
       thumbnailUrl: "",
     },
     participantCount: 0,
+    bucketOver100: 0,
     bucket100to85: 0,
     bucket84to50: 0,
     bucket49to25: 0,
     bucket24to0: 0,
     averageSuccessRate: 0.0,
+    mySpendingAmount: 3300,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isExpired, setIsExpired] = useState(false);
@@ -89,6 +91,7 @@ export default function ChallengeDetail() {
           endDate: ChallengeUtils.formatDate(response.data.challenge.endDate),
           limitAmount: response.data.challenge.limitAmount.toLocaleString(),
         },
+        bucketOver100: Math.round(response.data.bucketOver100 * 100) / 100,
         bucket100to85: Math.round(response.data.bucket100to85 * 100) / 100,
         bucket84to50: Math.round(response.data.bucket84to50 * 100) / 100,
         bucket49to25: Math.round(response.data.bucket49to25 * 100) / 100,
@@ -191,17 +194,18 @@ export default function ChallengeDetail() {
 
             {/* 현재 챌린지들의 현황*/}
             <MyCurrentStatus
-              deposit={currChallenge.challenge.limitAmount}
-              currentProgress={currChallenge.averageSuccessRate}
+              mySpendingAmount={currChallenge.mySpendingAmount}
+              targetAmount={currChallenge.challenge.targetAmount}
             />
 
             <ParticiStatics
               participantCount={currChallenge.participantCount}
-              averageExpectedSuccessRate={currChallenge.averageSuccessRate}
+              averageSuccessRate={currChallenge.averageSuccessRate}
               bucket24to0={currChallenge.bucket24to0}
               bucket49to25={currChallenge.bucket49to25}
               bucket84to50={currChallenge.bucket84to50}
               bucket100to85={currChallenge.bucket100to85}
+              bucketOver100={currChallenge.bucketOver100}
             />
             {/* 참가 버튼 */}
             {!isExpired && !isParticipated && (

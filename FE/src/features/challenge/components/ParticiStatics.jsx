@@ -5,11 +5,12 @@ import RoundChart from "@/features/challenge/components/RoundChart";
  */
 export default function ParticiStatics({
   participantCount = 100,
-  averageExpectedSuccessRate = 50,
+  averageSuccessRate = 50,
   bucket24to0 = 50,
   bucket49to25 = 50,
   bucket84to50 = 50,
   bucket100to85 = 50,
+  bucketOver100 = 50,
 }) {
   return (
     <>
@@ -38,10 +39,10 @@ export default function ParticiStatics({
             {/* 달성률 영역 */}
             <div className="absolute flex flex-rows  w-[108px] h-[44px] left-[231px] top-0">
               <p className="whitespace-nowrap absolute w-[108px] h-[23px] right-[12px] top-0 font-['Prompt'] font-normal text-[15px] leading-[23px] text-black">
-                평균 예상 달성률
+                평균 소비 비율
               </p>
               <p className="absolute w-[30px] h-[23px] right-[14px] top-[21px] font-['Prompt'] font-normal text-[15px] leading-[23px] text-black">
-                {averageExpectedSuccessRate}%
+                {averageSuccessRate}%
               </p>
             </div>
           </div>
@@ -49,13 +50,33 @@ export default function ParticiStatics({
 
         {/* 원형 차트 */}
         <RoundChart
-          data={[averageExpectedSuccessRate, 100 - averageExpectedSuccessRate]}
+          data={[averageSuccessRate, 100 - averageSuccessRate]}
         ></RoundChart>
         {/* 참가자 현황 상세 */}
-        <div className="relative w-[293px] h-[143px] bg-white shadow-sm rounded-md">
-          <div className="absolute w-[248px] h-[116px] left-[23px] top-[13px]">
+        <div className="relative w-[293px] pt-2 pb-2 h-44 bg-white shadow-sm rounded-md">
+          <div className="absolute gap-4 flex flex-col w-[248px] h-auto left-[23px] top-[13px]">
+            {/* 100 ~%  항목 */}
+            <div className=" w-full h-[17px] flex items-center">
+              {/* 발바닥 아이콘 */}
+              <img
+                src="/foot_print.png"
+                alt="아이콘"
+                className="w-[17px] h-[14px]"
+              />
+
+              {/* 등급 범위 텍스트 */}
+              <div className="ml-[26px] w-[86px] font-['Pretendard'] text-[13px] leading-4 text-black">
+                ~ 100%
+              </div>
+
+              {/* 인원 수 */}
+              <div className="ml-auto font-['Pretendard'] text-[13px] leading-4 text-black">
+                {/*studentCounts[0]*/ `${bucketOver100}명`}
+              </div>
+            </div>
+
             {/* 100 ~ 86% 항목 */}
-            <div className="absolute w-full h-[17px] left-0 top-0 flex items-center">
+            <div className="flex w-full h-[17px] left-0 top-0 items-center">
               {/* 발바닥 아이콘 */}
               <img
                 src="/foot_print.png"
@@ -75,7 +96,7 @@ export default function ParticiStatics({
             </div>
 
             {/* 85 ~ 51% 항목 */}
-            <div className="absolute w-full h-[17px] left-0 top-[33px] flex items-center">
+            <div className="w-full h-[17px] flex items-center">
               {/* 발바닥 아이콘 */}
               <img
                 src="/foot_print.png"
@@ -95,7 +116,7 @@ export default function ParticiStatics({
             </div>
 
             {/* 50 ~ 26% 항목 */}
-            <div className="absolute w-full h-[17px] left-0 top-[66px] flex items-center">
+            <div className="w-full h-[17px] flex items-center">
               {/* 발바닥 아이콘 */}
               <img
                 src="/foot_print.png"
@@ -115,7 +136,7 @@ export default function ParticiStatics({
             </div>
 
             {/* 25 ~ 0% 항목 */}
-            <div className="absolute w-full h-[17px] left-0 top-[99px] flex items-center">
+            <div className="w-full h-[17px] flex items-center">
               {/* 발바닥 아이콘 */}
               <img
                 src="/foot_print.png"
