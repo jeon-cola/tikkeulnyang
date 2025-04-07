@@ -9,6 +9,7 @@ import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
 import com.c107.common.util.ResponseUtil;
 import com.c107.s3.service.S3Service;
+import com.c107.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -128,6 +129,19 @@ public class ChallangeController {
             e.printStackTrace();
             return ResponseUtil.badRequest("파일 업로드 실패", null);
         }
+    }
+
+    @GetMapping("/settlement-alert")
+    public ResponseEntity<List<PastChallengeResponseDto>> getSettlementAlert() {
+        List<PastChallengeResponseDto> alerts = challengeService.getUnnotifiedResults();
+        return ResponseEntity.ok(alerts);
+    }
+
+    @PatchMapping("/settlement-alert")
+    public ResponseEntity<String> markSettlementAlertAsRead() {
+        User user = challengeService.getAuthenticatedUser();
+        challengeService.markAsNotified(user.getUserId());
+        return ResponseEntity.ok("알림 확인됨");
     }
 
 
