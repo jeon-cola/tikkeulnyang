@@ -63,7 +63,6 @@ h1 {
   line-height: 1.1;
 }
 
-
 .customButton {
   display: flex;
   justify-content: center;
@@ -167,10 +166,10 @@ h1 {
   border: none;
   border-radius: 100px;
   width: auto;
-  /* height: px; */
+  height: 27px;
   font-family: "Pretendard-thin";
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 300;
   padding: 2px 15px;
 }
 
@@ -181,20 +180,20 @@ h1 {
 /* 작은 버튼 */
 .whiteButton {
   display: flex;
-  flex-direction: row;
+  justify-content: center;
   align-items: center;
   text-align: center;
   color: #3d3d3d;
   background: white;
   border-radius: 100px;
   width: auto;
-  /* height: 25px; */
+  height: 27px;
   font-family: "Pretendard-thin";
-  font-size: 13px !important;
+  font-size: 15px !important;
   font-weight: 500;
   padding: 2px 15px;
   /* 그림자효과 */
-  box-shadow: 1px 1px 2px 0px rgba(0, 0, 0, 15%);
+  box-shadow: 2px 2px 2px 0px rgba(0, 0, 0, 20%);
 }
 
 .whiteButton:active {
@@ -218,6 +217,22 @@ h1 {
   padding: 2px 15px;
 }
 
+.tikkeulButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #3d3d3d;
+  background: #ff957a;
+  border: none;
+  border-radius: 100px;
+  width: auto;
+  height: 30px;
+  font-family: "Pretendard-thin";
+  font-size: 13px;
+  font-weight: 500;
+  padding: 2px 15px;
+}
 button:hover {
   border-color: #646cff;
 }
