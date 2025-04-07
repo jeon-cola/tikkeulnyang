@@ -230,6 +230,7 @@ public class ShareService {
                 .orElse(defalutImage);
     }
 
+    //
     @Transactional
     public void unsharePartner(String myEmail, Long partnerUserId) {
         // 내 정보 조회
