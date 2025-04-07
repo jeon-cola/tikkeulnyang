@@ -20,6 +20,7 @@ services:
     container_name: backend
     depends_on:
       - mysql
+      - redis
     environment:
       - TZ=Asia/Seoul
       - JAVA_TOOL_OPTIONS=-Duser.timezone=Asia/Seoul
@@ -139,6 +140,15 @@ services:
     networks:
       - app_network
     restart: always
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      - app_network
 
 networks:
   app_network:
