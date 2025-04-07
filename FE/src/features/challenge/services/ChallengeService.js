@@ -142,4 +142,16 @@ export const ChallengeService = {
       throw error;
     }
   },
+
+  // 생성한 챌린지 삭제
+  deleteChallenge: async (challengeId) => {
+    try {
+      const response = await Api.delete(`api/challenge/${challengeId}`);
+      console.log("챌린지 삭제", response);
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
 };
