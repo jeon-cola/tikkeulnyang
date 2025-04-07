@@ -2,6 +2,7 @@ package com.c107.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -24,6 +25,7 @@ public class FinanceService {
     /**
      * 금융 사용자의 userKey 반환 (검색 → 없으면 생성)
      */
+    @Cacheable(value = "financeUserKeyCache", key = "#email")
     public String getFinanceUserKey(String email) {
         // (1) 검색
         String userKey = doSearch(email);
