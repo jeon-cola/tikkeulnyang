@@ -227,6 +227,7 @@ public class ChallengeService {
         throw new CustomException(ErrorCode.UNAUTHORIZED, "유효하지 않은 사용자 정보입니다.");
     }
 
+    //
     // 로그인한 User 객체 조회
     public User getAuthenticatedUser() {
         String email = getAuthenticatedUserEmail();
