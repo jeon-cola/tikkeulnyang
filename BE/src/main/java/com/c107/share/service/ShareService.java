@@ -20,6 +20,7 @@ import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +52,7 @@ public class ShareService {
     private String defalutImage;
 
 
+    @Cacheable(value = "myLedgerCache", key = "#email + ':' + #year + '-' + #month", unless = "#result == null")
     @Transactional(readOnly = true)
     public ShareLedgerResponseDto getMyLedger(String email, Integer year, Integer month) {
         // 사용자 검증
@@ -153,6 +155,7 @@ public class ShareService {
         return invitationLink;
     }
 
+    @Cacheable(value = "sharedLedgerCache", key = "#token + ':' + #year + '-' + #month", unless = "#result == null")
     @Transactional(readOnly = true)
     public ShareLedgerResponseDto getSharedLedger(String token, String requesterEmail, Integer year, Integer month) {
         // 초대 링크 토큰으로 ShareEntity 조회
@@ -227,6 +230,7 @@ public class ShareService {
                 .orElse(defalutImage);
     }
 
+    //
     @Transactional
     public void unsharePartner(String myEmail, Long partnerUserId) {
         // 내 정보 조회
@@ -252,6 +256,7 @@ public class ShareService {
         log.info("[스케줄러] 만료된 초대 링크 {}개 삭제됨", deletedCount);
     }
 
+    @Cacheable(value = "sharedLedgerCache", key = "#token + ':' + #year + '-' + #month", unless = "#result == null")
     @Transactional(readOnly = true)
     public ShareLedgerResponseDto getSharedLedgerByUserId(Long targetUserId, String requesterEmail, Integer year, Integer month) {
         // 요청자 정보 조회
