@@ -44,6 +44,23 @@ export default function List() {
     fetchData()
   }
 
+    // 삭제제 통신
+    function deleteHandler(bucketListId) {
+      console.log(bucketListId)
+      const fetchData = async () => {
+        try {
+          const response = await Api.delete("api/bucket/saving",{"bucketId":bucketListId})
+          if (response.data.status) {
+            setIsAlertModal(true)
+            refreshList()
+          }
+        } catch (error) {
+          console.log(error)
+        }
+      }
+      fetchData()
+    }
+
   // 리스트 새로고침
   function refreshList() {
     const fetchData = async() => {
@@ -84,7 +101,7 @@ export default function List() {
         {userData.map((data,index)=>(
           <MapCategory key={index} list={data} onSaving={checkAlertModalOpen}/>
         ))}
-        <ChooseAlertModal title="저축하기" isClose={checkAlertModalClose} isOpen={savingCheck} isFunctionHandler={()=>saveHandler(selectBucketListId)}>
+        <ChooseAlertModal title="저축하기" isClose={checkAlertModalClose} isOpen={savingCheck} isFunctionHandler={()=>saveHandler(selectBucketListId)} onDelete={()=>deleteHandler(selectBucketListId)}>
           <div>
             <p>확인 버튼을 누르면 자동으로</p>
             <p>설정된 계좌를 통해 저축이 이루어 집니다</p>
