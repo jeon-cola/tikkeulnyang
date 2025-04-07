@@ -28,6 +28,7 @@ export default function RenderHome() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModal, setIsModal] = useState(false);
   const [challengeParticipated, setChallengeParticipated] = useState([]);
+  const [completedChallenges, setCompletedChallenges] = useState([]);
 
   const sliderSettings = {
     arrows: false,
@@ -59,6 +60,7 @@ export default function RenderHome() {
         await fetchChallenges();
         // setIsModal(true);
         //await challengeSettle();
+        await getSettlementAlert();
       } catch (error) {
         console.error(error);
       }
@@ -76,30 +78,45 @@ export default function RenderHome() {
   };
 
   // 챌린지 성공시 분배
-  async function challengeSettle() {
-    const challenges = await ChallengeService.getPast(); // 로그인한 사용자가 참여한 챌린지 이력 조회
+  // async function challengeSettle() {
+  //   const challenges = await ChallengeService.getPast(); // 로그인한 사용자가 참여한 챌린지 이력 조회
 
-    console.log(challenges.data);
+  //   console.log(challenges.data);
+  //   if (challenges.data.length > 0) {
+  //     console.log("챌린지 성공시 분배 challengeSettle 실행");
+  //     for (const challenge of challenges.data) {
+  //       console.log("challengeId:", challenge.challengeId);
+  //       const response = await HomeService.postChallengeSettle(
+  //         challenge.challengeId
+  //       );
+
+  //       console.log(response);
+  //       if (response.status === 200) {
+  //         setIsModal(true);
+  //       }
+  //     }
+  //   }
+  // }
+
+  // 성공한 챌린지가 있는지 알람
+  const getSettlementAlert = async () => {
+    const challenges = await HomeService.getSettlementAlert();
+    console.log("종료한 챌린지가 있는지 알람", challenges);
+
     if (challenges.data.length > 0) {
-      console.log("챌린지 성공시 분배 challengeSettle 실행");
+      setCompletedChallenges(challenges.data);
+      setIsModal(true);
       for (const challenge of challenges.data) {
-        console.log("challengeId:", challenge.challengeId);
-        const response = await HomeService.postChallengeSettle(
-          challenge.challengeId
-        );
-
-        console.log(response);
-        if (response.status === 200) {
-          setIsModal(true);
-        }
+        console.log(challenge.challengeName);
       }
     }
-  }
+  };
 
   // 모달창 닫은 후 챌린지 페이지로 이동
-  function isCloseModal(challengeId = 1) {
+  function isCloseModal() {
     setIsModal(false);
-    navigate(`/challenge/${challengeId}`);
+    HomeService.patchSettlementAlert();
+    navigate(`/challenge`);
   }
 
   // 드래그 중인 상태를 추적하기 위한 ref
@@ -360,14 +377,24 @@ export default function RenderHome() {
               </Droppable>
             </DragDropContext>
           </div>
+          {/* 챌린지 종료 알람 */}
           <AlertModal
-            title="챌린지 성공"
+            title="챌린지 종료"
             isClose={isCloseModal}
             isOpen={isModal}
             height={170}
           >
-            <div>
-              <p></p>
+            <div className="flex flex-col items-center gap-4">
+              {completedChallenges.map((challenge, index) => (
+                <div>
+                  <div key={index} className="text-center">
+                    <span className="text-xl">{challenge.challengeName}</span>
+                    <span className="font-semibold text-blue-900 ml-2 text-xl">
+                      {challenge.participationStatus}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </AlertModal>
           ;
