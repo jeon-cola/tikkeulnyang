@@ -42,4 +42,7 @@ public class UserChallengeEntity {
 
     @Column(name = "spend_amount")
     private Integer spendAmount;
+
+    @Column(name = "notified")
+    private boolean notified;
 }

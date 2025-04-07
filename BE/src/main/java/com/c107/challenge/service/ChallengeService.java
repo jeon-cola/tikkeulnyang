@@ -225,7 +225,7 @@ public class ChallengeService {
     }
 
     // 로그인한 User 객체 조회
-    private User getAuthenticatedUser() {
+    public User getAuthenticatedUser() {
         String email = getAuthenticatedUserEmail();
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보를 찾을 수 없습니다."));
@@ -645,4 +645,39 @@ public class ChallengeService {
             }
         }
     }
+
+    @Transactional(readOnly = true)
+    public List<PastChallengeResponseDto> getUnnotifiedResults() {
+        User user = getAuthenticatedUser();
+        List<UserChallengeEntity> results = userChallengeRepository
+                .findByUserIdAndStatusInAndNotified(user.getUserId(), List.of("성공", "실패"), false);
+
+        return results.stream()
+                .map(participation -> {
+                    ChallengeEntity challenge = participation.getChallenge();
+                    return PastChallengeResponseDto.builder()
+                            .challengeId(challenge.getChallengeId())
+                            .challengeName(challenge.getChallengeName())
+                            .challengeType(challenge.getChallengeType())
+                            .startDate(challenge.getStartDate())
+                            .endDate(challenge.getEndDate())
+                            .description(challenge.getDescription())
+                            .participationStatus(participation.getStatus())
+                            .thumbnailUrl(mapToDto(challenge).getThumbnailUrl())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void markAsNotified(Integer userId) {
+        List<UserChallengeEntity> results = userChallengeRepository
+                .findByUserIdAndStatusInAndNotified(userId, List.of("성공", "실패"), false);
+        for (UserChallengeEntity result : results) {
+            result.setNotified(true);
+            result.setUpdatedAt(LocalDateTime.now());
+            userChallengeRepository.save(result);
+        }
+    }
+
 }
