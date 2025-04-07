@@ -90,7 +90,6 @@ export default function ChallengeMake() {
         return;
       }
 
-      console.log("challengeData", challengeData);
       const response = await ChallengeService.postChallengeCreate(
         challengeData
       );
@@ -99,7 +98,7 @@ export default function ChallengeMake() {
       try {
         if (thumbnail) {
           await ChallengeService.postChallengeThumbnail(
-            response.challengeId,
+            response.data.challengeId,
             thumbnail
           );
           console.log("썸네일 업로드 성공");
