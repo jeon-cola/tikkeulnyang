@@ -52,8 +52,6 @@ export const ChallengeService = {
     }
   },
 
-  //TODO: 참여전 챌린지 상세조회
-
   // 챌린지 생성
   postChallengeCreate: async (challengeData) => {
     try {
@@ -136,6 +134,18 @@ export const ChallengeService = {
       const response = await Api.post(`api/challenge/${challengeId}/cancel`);
 
       console.log("챌린지 취소", response);
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  },
+
+  // 생성한 챌린지 삭제
+  deleteChallenge: async (challengeId) => {
+    try {
+      const response = await Api.delete(`api/challenge/${challengeId}`);
+      console.log("챌린지 삭제", response);
       return response;
     } catch (error) {
       console.error(error);

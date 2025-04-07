@@ -52,6 +52,8 @@ export default function RenderList({ pageType }) {
                   startDate={challenge.startDate}
                   endDate={challenge.endDate}
                   challengeId={challenge.challengeId}
+                  participationStatus={challenge.participationStatus}
+                  pageType="past"
                 />
               ))
             : challengeParticipated.map((challenge) => (
@@ -63,6 +65,8 @@ export default function RenderList({ pageType }) {
                   startDate={challenge.startDate}
                   endDate={challenge.endDate}
                   challengeId={challenge.challengeId}
+                  participationStatus={challenge.participationStatus}
+                  pageType="participated"
                 />
               ))}
         </>
