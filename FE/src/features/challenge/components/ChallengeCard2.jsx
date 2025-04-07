@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
+import successStamp from "@/features/challenge/assets/success_stamp.png";
+import failStamp from "@/features/challenge/assets/fail_stamp.png";
 
 {
   /**
@@ -15,6 +17,8 @@ export default function ChallengeCard2({
   startDate = "01-01",
   endDate = "01-31",
   challengeId = 1,
+  participationStatus = "성공",
+  pageType = "past",
 }) {
   const navigate = useNavigate();
   const handleClick = () => {
@@ -30,10 +34,37 @@ export default function ChallengeCard2({
         {/* 내부 컨텐츠 영역 - 상대적 위치 지정으로 레이아웃 구성 */}
         <div className="relative w-full h-[74px]">
           {/* 이미지 영역 - 절대 위치로 배치 */}
-          <div
-            className="absolute w-[95px] h-[78px] left-0 top-0 rounded-md bg-cover bg-center"
-            style={{ backgroundImage: `url(${thumbnailUrl})` }}
-          ></div>
+          <div className="relative">
+            <div
+              className="absolute w-[95px] h-[78px] left-0 top-0 rounded-md bg-cover bg-center"
+              style={{ backgroundImage: `url(${thumbnailUrl})` }}
+            ></div>
+
+            {/* 어두운 오버레이 추가 (participationStatus가 있고 pageType이 past일 경우에만) */}
+            {participationStatus && pageType === "past" && (
+              <div className="absolute w-[95px] h-[78px] left-0 top-0 rounded-md bg-gray-500 opacity-40"></div>
+            )}
+
+            {/* 참여 상태에 따라 스탬프 이미지 표시 */}
+            {participationStatus && pageType === "past" && (
+              <div className="absolute w-[95px] h-[78px] left-0 top-0 flex items-center justify-center">
+                {participationStatus === "성공" && (
+                  <img
+                    src={successStamp}
+                    alt="성공"
+                    className="w-[70px] h-[70px] object-contain z-10"
+                  />
+                )}
+                {participationStatus === "실패" && (
+                  <img
+                    src={failStamp}
+                    alt="실패"
+                    className="w-[70px] h-[70px] object-contain z-10"
+                  />
+                )}
+              </div>
+            )}
+          </div>
 
           {/* 텍스트 영역 - 제목 (택시 요금 줄이기) */}
           {/* - 텍스트 스타일, 크기, 위치 설정 */}
