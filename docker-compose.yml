@@ -151,6 +151,18 @@ services:
     networks:
       - app_network
 
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    restart: always
+    networks:
+      - app_network
+
+
 networks:
   app_network:
     driver: bridge
