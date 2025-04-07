@@ -4,33 +4,14 @@ import Container from "@/components/Container";
 import LedgerHeader from "./components/LedgerHeader";
 import CategoryBox from "./components/CategoryBox";
 import Api from "../../services/Api";
+import CategoryList from "./components/CategoryList";
 
-import EntertainmentIcon from "./assets/category/entertainment_icon.png";
-import FoodIcon from "./assets/category/food_icon.png";
-import GoodsIcon from "./assets/category/goods_icon.png";
-import HousingIcon from "./assets/category/housing_icon.png";
-import MedicalIcon from "./assets/category/medical_icon.png";
-import ShoppingIcon from "./assets/category/shopping_icon.png";
-import TransportationIcon from "./assets/category/transportation_icon.png";
-import IncomeIcon from "./assets/category/income_icon.png";
-import SpenseIcon from "./assets/category/spense_icon.png";
-import EducationIcon from "./assets/category/education_icon.png";
 import WasteIcon from "./assets/waste_icon.png";
 import EmptyIcon from "./assets/empty_icon.png";
 // import DeleteIcon from "./assets/delete_icon.png"; // 삭제 아이콘 추가 (아이콘 필요)
 
-const categories = [
-  { id: 1, name: "교통/차량", Icon: TransportationIcon },
-  { id: 2, name: "쇼핑/미용", Icon: ShoppingIcon },
-  { id: 3, name: "교육/육아", Icon: EducationIcon },
-  { id: 4, name: "주거/통신", Icon: HousingIcon },
-  { id: 5, name: "문화/여가", Icon: EntertainmentIcon },
-  { id: 6, name: "병원/약국", Icon: MedicalIcon },
-  { id: 7, name: "식비", Icon: FoodIcon },
-  { id: 8, name: "잡화", Icon: GoodsIcon },
-  { id: 9, name: "결제", Icon: SpenseIcon },
-  { id: 10, name: "수입", Icon: IncomeIcon },
-];
+// 카테고리 아이콘 관련 컴포넌트
+const categories = CategoryList();
 
 export default function LedgerDetail() {
   const [activeDate, setActiveDate] = useState(new Date());
@@ -46,12 +27,16 @@ export default function LedgerDetail() {
   const [wasteStates, setWasteStates] = useState({});
   // 낭비 항목만 보여줄지 여부
   const [showWasteOnly, setShowWasteOnly] = useState(false);
+  // 생성 모드
+  const [isCreateModeOn, setIsCreateModeOn] = useState(false);
   // 수정 모드 상태
   const [isEditMode, setIsEditMode] = useState(false);
   // 삭제 모드 상태 추가
   const [isDeleteMode, setIsDeleteMode] = useState(false);
-  // 모달 상태
+  // 수정 모달 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // 내역 추가 모달 상태
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   // 현재 수정 중인 트랜잭션
   const [currentTransaction, setCurrentTransaction] = useState(null);
   // 수정 중인 데이터
@@ -61,6 +46,15 @@ export default function LedgerDetail() {
     selectedDay: 1, // 선택된 일자
     selectedMonth: 1, // 선택된 월
     categoryId: 0,
+    merchantName: "",
+  });
+  // 새 트랜잭션 데이터
+  const [createData, setCreateData] = useState({
+    amount: 0,
+    transactionDate: "",
+    selectedDay: new Date().getDate(),
+    selectedMonth: new Date().getMonth() + 1,
+    categoryId: 2, // 기본 카테고리: 식비
     merchantName: "",
   });
   // 확인 모달 상태
@@ -285,8 +279,9 @@ export default function LedgerDetail() {
       date.getHours()
     ).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:00`;
 
+    // 중요: 수정 시에는 기존 금액 값을 유지
     setEditData({
-      amount: item.amount,
+      amount: item.amount, // 기존 금액 값 사용
       transactionDate: formattedDate,
       selectedDay: date.getDate(),
       selectedMonth: date.getMonth() + 1,
@@ -339,7 +334,7 @@ export default function LedgerDetail() {
     }
   };
 
-  // 카테고리 변경 핸들러
+  // 카테고리 변경 핸들러 - 수정용
   const handleCategoryChange = (categoryId) => {
     setEditData((prev) => ({
       ...prev,
@@ -347,7 +342,15 @@ export default function LedgerDetail() {
     }));
   };
 
-  // 날짜 변경 핸들러 (월)
+  // 카테고리 변경 핸들러 - 추가용
+  const handleAddCategoryChange = (categoryId) => {
+    setCreateData((prev) => ({
+      ...prev,
+      categoryId: categoryId,
+    }));
+  };
+
+  // 날짜 변경 핸들러 (월) - 수정용
   const handleMonthChange = (month) => {
     setEditData((prev) => ({
       ...prev,
@@ -355,7 +358,15 @@ export default function LedgerDetail() {
     }));
   };
 
-  // 날짜 변경 핸들러 (일)
+  // 날짜 변경 핸들러 (월) - 추가용
+  const handleAddMonthChange = (month) => {
+    setCreateData((prev) => ({
+      ...prev,
+      selectedMonth: parseInt(month),
+    }));
+  };
+
+  // 날짜 변경 핸들러 (일) - 수정용
   const handleDayChange = (day) => {
     setEditData((prev) => ({
       ...prev,
@@ -363,7 +374,15 @@ export default function LedgerDetail() {
     }));
   };
 
-  // 모달 저장 버튼 핸들러
+  // 날짜 변경 핸들러 (일) - 추가용
+  const handleAddDayChange = (day) => {
+    setCreateData((prev) => ({
+      ...prev,
+      selectedDay: parseInt(day),
+    }));
+  };
+
+  // 모달 저장 버튼 핸들러 - 수정
   const handleSaveChanges = async () => {
     if (!currentTransaction) return;
 
@@ -375,6 +394,64 @@ export default function LedgerDetail() {
     if (success) {
       setIsModalOpen(false);
       setCurrentTransaction(null);
+    }
+  };
+
+  // 내역 추가 시작 함수
+  const startAddTransaction = () => {
+    // 현재 날짜로 기본값 설정
+    const now = new Date();
+    const formattedDate = `${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(
+      now.getHours()
+    ).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:00`;
+
+    // createData 사용하도록 수정
+    setCreateData({
+      amount: 0,
+      transactionDate: formattedDate,
+      selectedDay: now.getDate(),
+      selectedMonth: now.getMonth() + 1,
+      categoryId: 2, // 기본 카테고리: 식비
+      merchantName: "",
+    });
+
+    // 추가 모달 열기
+    setIsAddModalOpen(true);
+    setIsCreateModeOn(true);
+  };
+
+  // 내역 추가 실행 함수
+  const executeAddTransaction = async () => {
+    const now = new Date();
+    const payload = {
+      cardId: 0,
+      transactionType: 2, // 1: 수입, 2: 지출
+      amount: createData.amount, // createData 사용
+      categoryId: createData.categoryId, // createData 사용
+      merchantName: createData.merchantName, // createData 사용
+      year: now.getFullYear(),
+      month: createData.selectedMonth, // createData 사용
+      day: createData.selectedDay, // createData 사용
+    };
+
+    try {
+      const response = await Api.post(`api/transactions`, payload);
+      console.log("새 거래 내역 생성:", response.data);
+
+      // 성공시 데이터 새로고침
+      await refreshData();
+
+      // 모달 닫기
+      setIsAddModalOpen(false);
+      setIsCreateModeOn(false);
+
+      // 성공 메시지
+      alert("새 내역이 추가되었습니다.");
+    } catch (error) {
+      console.error("새 거래 내역 생성 실패:", error);
+      alert("새 거래 내역 추가에 실패했습니다.");
     }
   };
 
@@ -429,62 +506,16 @@ export default function LedgerDetail() {
     (_, i) => i + 1
   );
 
-  // 새 거래내역 추가 함수
-  const addTransaction = async () => {
-    // 현재 날짜 기준으로 기본값 설정
-    const now = new Date();
-    const payload = {
-      cardId: 0, // 사용자 카드 선택적, 없으면 0 처리
-      transactionType: 2, // 1: 수입, 2: 지출
-      amount: 0, // 기본값 0
-      categoryId: 2, // 기본 카테고리: 식비
-      merchantName: "",
-      year: now.getFullYear(),
-      month: now.getMonth() + 1,
-      day: now.getDate(),
-    };
-
-    try {
-      const response = await Api.post(`api/transactions`, payload);
-      console.log("새 거래 내역 생성:", response.data);
-
-      // 성공시 데이터 새로고침
-      await refreshData();
-
-      // 새로 생성된 내역의 ID를 이용해 바로 수정 모드로 전환 (옵션)
-      if (response.data.status === "success") {
-        const newTransaction = response.data.data;
-        setCurrentTransaction(newTransaction);
-
-        setEditData({
-          amount: newTransaction.amount,
-          transactionDate: newTransaction.transactionDate,
-          selectedDay: new Date(newTransaction.transactionDate).getDate(),
-          selectedMonth:
-            new Date(newTransaction.transactionDate).getMonth() + 1,
-          categoryId: newTransaction.categoryId,
-          merchantName: newTransaction.merchantName || "",
-        });
-
-        setIsEditMode(true);
-        setIsModalOpen(true);
-      }
-    } catch (error) {
-      console.error("새 거래 내역 생성 실패:", error);
-      console.error("에러 상세:", error.response?.data || error.message);
-      alert("새 거래 내역 추가에 실패했습니다.");
-    }
-  };
-
   return (
     <div className="h-screen overflow-y-auto">
       <Container>
         <LedgerHeader
           onEditClick={toggleMainEditMode}
           isEditMode={isMainEditMode}
-          onAdd={addTransaction}
+          onAdd={startAddTransaction}
           onEdit={toggleEditMode}
           onDelete={toggleDeleteMode}
+          isCreateModeOn={isCreateModeOn}
           isEditModeOn={isEditMode}
           isDeleteModeOn={isDeleteMode}
         />
@@ -538,6 +569,21 @@ export default function LedgerDetail() {
               {showWasteOnly ? "전체 내역" : "낭비 내역"}
             </button>
           </div>
+
+          {/* 모드 안내 메시지 */}
+          {(isEditMode || isDeleteMode) && (
+            <div
+              className={`mt-2 p-2 rounded text-white ${
+                isEditMode ? "bg-blue-500" : "bg-red-500"
+              }`}
+            >
+              <p className="text-center">
+                {isEditMode
+                  ? "✏️ 수정하려는 항목을 클릭하세요."
+                  : "🗑️ 삭제하려는 항목을 클릭하세요."}
+              </p>
+            </div>
+          )}
 
           {/* 상세 내역 */}
           <ul>
@@ -662,15 +708,26 @@ export default function LedgerDetail() {
               />
             </div>
 
-            {/* 금액 입력 */}
+            {/* 금액 입력 - 수정 모달 */}
             <div className="mb-4">
               <label className="block text-gray-600 mb-1">금액</label>
               <input
-                type="number"
+                type="text"
                 value={editData.amount}
-                onChange={(e) =>
-                  setEditData({ ...editData, amount: Number(e.target.value) })
-                }
+                onChange={(e) => {
+                  // 입력값이 빈 문자열이면 0으로 설정
+                  if (e.target.value === "") {
+                    setEditData({ ...editData, amount: 0 });
+                    return;
+                  }
+
+                  // 숫자만 입력 허용
+                  if (/^\d*$/.test(e.target.value)) {
+                    // 앞에 오는 0 제거 (예: "0123" -> "123")
+                    const cleanValue = e.target.value.replace(/^0+(\d)/, "$1");
+                    setEditData({ ...editData, amount: Number(cleanValue) });
+                  }
+                }}
                 className="w-full p-2 border rounded-lg"
                 placeholder="금액 입력"
               />
@@ -716,7 +773,7 @@ export default function LedgerDetail() {
             <div className="flex gap-2 mt-8 pb-4">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="flex-1 py-4 bg-gray-200 rounded-lg font-medium text-lg"
+                className="flex-1 py-4 bg-gray-200! rounded-lg font-medium text-lg"
               >
                 취소
               </button>
@@ -725,6 +782,149 @@ export default function LedgerDetail() {
                 className="flex-1 py-4 bg-blue-500 text-white rounded-lg font-medium text-lg"
               >
                 저장
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 내역 추가 모달 */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-[#525252]/40 flex items-end justify-center z-50 pb-8">
+          <div className="bg-white w-full rounded-t-xl p-4 animate-slide-up h-[650px] overflow-y-auto mb-safe">
+            <h3 className="text-xl font-bold mb-4 mt-2">내역 추가</h3>
+
+            {/* 카테고리 선택 */}
+            <div className="mb-4">
+              <p className="text-gray-600 mb-2">카테고리</p>
+              <div className="grid grid-cols-5 gap-2">
+                {categories.map((category) => (
+                  <div
+                    key={category.id}
+                    onClick={() => handleAddCategoryChange(category.id)}
+                    className={`flex flex-col items-center p-2 rounded-lg cursor-pointer ${
+                      createData.categoryId === category.id
+                        ? "bg-green-100 border border-green-400"
+                        : "bg-gray-50"
+                    }`}
+                  >
+                    <img
+                      src={category.Icon}
+                      alt={category.name}
+                      className="w-10 h-10 mb-1"
+                    />
+                    <span className="text-xs text-center">{category.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 상호명 입력 */}
+            <div className="mb-4">
+              <label className="block text-gray-600 mb-1">상호명</label>
+              <input
+                type="text"
+                value={createData.merchantName}
+                onChange={(e) =>
+                  setCreateData({
+                    ...createData,
+                    merchantName: e.target.value,
+                  })
+                }
+                className="w-full p-2 border rounded-lg"
+                placeholder="상호명 입력"
+              />
+            </div>
+
+            {/* 금액 입력 */}
+            <div className="mb-4">
+              <label className="block text-gray-600 mb-1">금액</label>
+              <input
+                type="text"
+                value={
+                  createData.amount === 0
+                    ? "0"
+                    : String(createData.amount).replace(/^0+/, "")
+                }
+                onChange={(e) => {
+                  // 입력값이 빈 문자열이면 0으로 설정
+                  if (e.target.value === "") {
+                    setCreateData({ ...createData, amount: 0 });
+                    return;
+                  }
+
+                  // 숫자만 입력 허용
+                  if (/^\d*$/.test(e.target.value)) {
+                    // 앞에 오는 0 제거 (예: "0123" -> "123")
+                    const cleanValue = e.target.value.replace(/^0+(\d)/, "$1");
+                    setCreateData({
+                      ...createData,
+                      amount: Number(cleanValue),
+                    });
+                  }
+                }}
+                className="w-full p-2 border rounded-lg"
+                placeholder="금액 입력"
+              />
+            </div>
+
+            {/* 거래일자 선택 (월/일 선택) */}
+            <div className="mb-6">
+              <label className="block text-gray-600 mb-1">거래일자</label>
+              <div className="flex gap-2">
+                {/* 월 선택 */}
+                <div className="flex-1">
+                  <select
+                    value={createData.selectedMonth}
+                    onChange={(e) => handleAddMonthChange(e.target.value)}
+                    className="w-full p-2 border rounded-lg appearance-none bg-white"
+                  >
+                    {monthOptions.map((month) => (
+                      <option key={month} value={month}>
+                        {month}월
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 일 선택 */}
+                <div className="flex-1">
+                  <select
+                    value={createData.selectedDay}
+                    onChange={(e) => handleAddDayChange(e.target.value)}
+                    className="w-full p-2 border rounded-lg appearance-none bg-white"
+                  >
+                    {Array.from(
+                      {
+                        length: getDaysInMonth(createData.selectedMonth),
+                      },
+                      (_, i) => i + 1
+                    ).map((day) => (
+                      <option key={day} value={day}>
+                        {day}일
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* 버튼 영역 */}
+            <div className="flex gap-2 mt-8 pb-4">
+              <button
+                onClick={() => {
+                  setIsAddModalOpen(false);
+                  setIsCreateModeOn(false);
+                }}
+                className="flex-1 py-4 bg-gray-200! rounded-lg font-medium text-lg"
+              >
+                취소
+              </button>
+              <button
+                onClick={executeAddTransaction}
+                className="flex-1 py-4 bg-green-500 text-white rounded-lg font-medium text-lg"
+              >
+                추가
               </button>
             </div>
           </div>
@@ -767,41 +967,36 @@ export default function LedgerDetail() {
 
       {/* 애니메이션 스타일 */}
       <style>{`
-  @keyframes pop {
-    0% {
-      transform: scale(0.5);
-      opacity: 0;
-    }
-    50% {
-      transform: scale(1.2);
-      opacity: 1;
-    }
-    100% {
-      transform: scale(1);
-      opacity: 1;
-    }
+@keyframes pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
   }
-  .animate-pop {
-    animation: pop 0.4s ease-out;
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
   }
-  
-  @keyframes slide-up {
-    0% {
-      transform: translateY(100%);
-    }
-    100% {
-      transform: translateY(0);
-    }
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
-  .animate-slide-up {
-    animation: slide-up 0.3s ease-out forwards;
+}
+.animate-pop {
+  animation: pop 0.4s ease-out;
+}
+
+@keyframes slide-up {
+  0% {
+    transform: translateY(100%);
   }
-  
-  /* 아이폰 하단의 안전 영역을 고려한 마진 */
-  .mb-safe {
-    margin-bottom: env(safe-area-inset-bottom, 0);
-    padding-bottom: env(safe-area-inset-bottom, 16px);
+  100% {
+    transform: translateY(0);
   }
+}
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
+}
+
 `}</style>
     </div>
   );

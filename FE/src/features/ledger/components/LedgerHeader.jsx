@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import Box from "./Box";
 import PurseImg from "../assets/money_purse.png";
 import { useDispatch, useSelector } from "react-redux";
-import { toggleEditMode } from "../EditSlice";
 
 export default function LedgerHeader({
   onEditClick,
@@ -10,6 +9,7 @@ export default function LedgerHeader({
   onAdd,
   onEdit,
   onDelete,
+  isCreateModeOn,
   isEditModeOn,
   isDeleteModeOn,
 }) {
@@ -18,15 +18,6 @@ export default function LedgerHeader({
   const isDetailPage = location.pathname.includes("detail");
   const userInfo = useSelector((state) => state.user);
   const dispatch = useDispatch();
-
-  // 편집 모드 토글 처리 함수
-  const handleEditToggle = () => {
-    // Redux와 함께, prop으로 받은 함수도 호출
-    dispatch(toggleEditMode());
-    if (onEditClick) {
-      onEditClick();
-    }
-  };
 
   return (
     <div className="w-full item-center flex flex-col gap-3">
@@ -99,12 +90,17 @@ export default function LedgerHeader({
             {isEditMode && (
               <div className="pt-1">
                 <div className="grid grid-cols-3 gap-2">
-                  <button className="greyButton" onClick={onAdd}>
-                    내역 추가
+                  <button
+                    className={`py-3 rounded transition-colors text-sm md:text-base ${
+                      isCreateModeOn ? "tikkeulButton" : "greyButton"
+                    }`}
+                    onClick={onAdd}
+                  >
+                    {isCreateModeOn ? "추가 완료" : "내역 추가"}
                   </button>
                   <button
                     className={`py-3 rounded transition-colors text-sm md:text-base ${
-                      isEditModeOn ? "greyButton" : "greyButton"
+                      isEditModeOn ? "tikkeulButton" : "greyButton"
                     }`}
                     onClick={onEdit}
                   >
@@ -112,11 +108,11 @@ export default function LedgerHeader({
                   </button>
                   <button
                     className={`py-3 rounded transition-colors text-sm md:text-base ${
-                      isDeleteModeOn ? "greyButton" : "greyButton"
+                      isDeleteModeOn ? "tikkeulButton" : "greyButton"
                     }`}
                     onClick={onDelete}
                   >
-                    {isDeleteModeOn ? "삭제 끄기" : "내역 삭제"}
+                    {isDeleteModeOn ? "삭제 완료" : "내역 삭제"}
                   </button>
                 </div>
               </div>
