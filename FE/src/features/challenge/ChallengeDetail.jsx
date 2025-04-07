@@ -10,6 +10,7 @@ import { ChallengeService } from "@/features/challenge/services/ChallengeService
 import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
 import CustomBackHeader from "@/components/CustomBackHeader";
 import CreateButton from "./components/CreateButton";
+import { useSelector } from "react-redux";
 
 /*
   추후에 axios로 채워넣을 데이터: 
@@ -20,6 +21,8 @@ import CreateButton from "./components/CreateButton";
 export default function ChallengeDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const userEmail = useSelector((state) => state.user.email);
+
   const handleClick = () => {
     navigate(`/challenge/enter/${id}`, {
       state: {
@@ -30,6 +33,12 @@ export default function ChallengeDetail() {
 
   const handleCancel = () => {
     ChallengeService.postChallengeCancel(id);
+    navigate("/challenge");
+  };
+
+  const handleDelete = () => {
+    // 챌린지 삭제 로직 구현
+    ChallengeService.deleteChallenge(id);
     navigate("/challenge");
   };
 
@@ -61,6 +70,7 @@ export default function ChallengeDetail() {
   const [isExpired, setIsExpired] = useState(false);
   const [isNotStarted, setIsNotStarted] = useState(false);
   const [isParticipated, setIsparticipated] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -95,6 +105,11 @@ export default function ChallengeDetail() {
       console.log("formatted response", formattedData);
 
       setCurrChallenge(formattedData);
+
+      // 사용자가 챌린지 작성자인지 확인
+      if (userEmail === response.data.challenge.createdBy) {
+        setIsOwner(true);
+      }
     } catch (error) {
       console.error(error);
       setIsLoading(false);
@@ -197,14 +212,14 @@ export default function ChallengeDetail() {
               </div>
             )}
 
-            {/* 참여 취소 버튼 - 참여 중이고 시작되지 않은 챌린지일 때만 표시 */}
+            {/* 참여 취소/챌린지 삭제 버튼 */}
             {isParticipated && isNotStarted && (
               <div className="w-full justify-center flex flex-row">
                 <button
-                  className="longButton text-white "
-                  onClick={handleCancel}
+                  className="longButton text-white"
+                  onClick={isOwner ? handleDelete : handleCancel}
                 >
-                  참여 취소
+                  {isOwner ? "챌린지 삭제" : "참여 취소"}
                 </button>
               </div>
             )}
