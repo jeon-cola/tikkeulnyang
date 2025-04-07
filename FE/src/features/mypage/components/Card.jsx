@@ -56,7 +56,7 @@ export default function Card() {
             <div 
               key={cardItem.card_name} 
               onClick={() => handleCardSelect(cardItem)} 
-              className={`card-item absolute w-13/14 transform transition-all duration-300 ease-in-out`}
+              className={`card-item absolute w-13/14 transform transition-all duration-500 ease-in-out`}
               style={{ 
                 zIndex: selectedCardNo === cardItem.card_no ? 100 : list.length - index,
                 top: selectedCardNo === cardItem.card_no ? '43%' : `${Math.min(45 + (index * 5), 80)}%`,
@@ -84,7 +84,7 @@ export default function Card() {
       
       {/* 선택된 카드 정보 표시 영역 */}
       {selectedCardNo && (
-        <div className="mt-8 p-6 bg-gradient-to-b from-[#FFECE6] to-white rounded-2xl shadow-2xl w-full max-w-md border border-[#FFD5C7] transition duration-300 hover:scale-105 hover:shadow-2xl gap-2">
+        <div className="mt-8 p-6 bg-gradient-to-b from-[#FFECE6] to-white rounded-2xl shadow-2xl w-full border border-[#FFD5C7] gap-2">
         <h3 className="font-bold text-2xl text-[#FF7043] text-center tracking-wide mb-2">
           {card.cardName}
         </h3>

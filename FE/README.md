@@ -82,3 +82,8 @@ npm install @fortawesome/fontawesome-free
 ```
 npm i pretendard
 ```
+
+### lucide-react
+```
+npm install lucide-react
+```
