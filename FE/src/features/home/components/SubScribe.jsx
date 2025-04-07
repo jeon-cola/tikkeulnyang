@@ -8,7 +8,6 @@ import ChooseAlertModal from "../../../components/ChooseAlertModal"
 import AlertModal from "../../../components/AlertModal"
 import CustomBackHeader from "../../../components/CustomBackHeader"
 import IsLoading from "../../../components/IsLoading"
-import { tr } from "framer-motion/client"
 
 export default function SubScribe() {
     const [isLoading, setIsLoading] = useState(false)
