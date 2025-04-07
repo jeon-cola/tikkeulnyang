@@ -52,8 +52,6 @@ export const ChallengeService = {
     }
   },
 
-  //TODO: 참여전 챌린지 상세조회
-
   // 챌린지 생성
   postChallengeCreate: async (challengeData) => {
     try {
