@@ -124,6 +124,22 @@ services:
       - app_network
     restart: always
 
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.17.13
+    container_name: filebeat
+    user: root
+    volumes:
+      - ./elk/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./logs:/var/log/spring-boot:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: filebeat -e -strict.perms=false
+    depends_on:
+      - elasticsearch
+      - logstash
+    networks:
+      - app_network
+    restart: always
+
 networks:
   app_network:
     driver: bridge
