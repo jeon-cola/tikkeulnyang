@@ -12,6 +12,7 @@ export default function CardRecommend() {
   const [cardList, setCardList] = useState([])
   const [buttonChange, setButtonChange] = useState(false)
   const [isAlertModal, setIsAlertModal] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   // 모달 열기
   function AlertModalOpen() {
@@ -26,12 +27,14 @@ export default function CardRecommend() {
   //체크카드 리스트 전환
   function checkHandler () {
     setButtonChange(true)
+    setIsLoading(false)
     const fetchData = async () => {
       try {
         const response = await Api.get("api/recommend/cards/check")
         console.log(response.data)
         if (response.data.status == "success") {
           setCardList(response.data.data)
+          setIsLoading(true)
         }
       } catch (error) {
         console.log(error)
@@ -43,11 +46,13 @@ export default function CardRecommend() {
   //신용카드 리스트 전환
   function creditHandler() {
     setButtonChange(false)
+    setIsLoading(false)
     const fetchData = async()=>{
       try {
         const response = await Api.get("api/recommend/cards/credit")
         if (response.data.status == "success") {
           setCardList(response.data.data)
+          setIsLoading(true)
         }
       } catch (error) {
         console.log(error)
@@ -64,6 +69,7 @@ export default function CardRecommend() {
         if (response.data.status == "success") {
           setCardList(response.data.data)
           console.log(response.data.data)
+          setIsLoading(true)
         }
       } catch (error) {
         console.log(error)
@@ -107,7 +113,7 @@ export default function CardRecommend() {
       </AlertModal>
 
       <div className="w-full flex flex-col gap-5">
-        {cardList.length > 0 ? (
+        {isLoading ? (
           cardList.map((card, index ) => (
             <Link to={`detail_card/${card.recoCardId}`} state={{ cardData: card}} key={card.recoCardId}>
               <div className="w-full flex flex-row bg-white rounded-2xl shadow-md p-4 gap-10" key={index}>
@@ -129,15 +135,10 @@ export default function CardRecommend() {
           ))
         )
         : (
-          <div className="w-full flex flex-row bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4">
-            <p>추천 카드를 불러오는 중...</p>
-          </div>
+            <IsLoading/>
         )
       }
       </div>
-
-      <IsLoading/>
-
     </div>
   )
 }

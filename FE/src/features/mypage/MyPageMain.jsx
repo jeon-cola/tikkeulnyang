@@ -11,7 +11,6 @@ export default function MyPageMain(){
             <Route path="correction" element={<Correction/>}/>
             <Route path="account" element={<Account/>}/>
             <Route path="card" element={<Card/>}/>
-            <Route path="attendance" element={<Attendance/>}/>
         </Routes>
     )
 }
