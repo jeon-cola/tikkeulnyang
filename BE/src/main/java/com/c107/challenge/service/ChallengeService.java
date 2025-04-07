@@ -25,6 +25,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -184,6 +185,7 @@ public class ChallengeService {
     }
 
     // 공식 챌린지 조회: soft delete되지 않고, activeFlag가 false이며, 종료일이 오늘 이후(또는 오늘 포함)인 챌린지
+    @Cacheable(value = "officialChallenges", key = "#page + '-' + #size")
     public Page<ChallengeResponseDto> getOfficialChallenges(int page, int size) {
         Page<ChallengeEntity> challenges = challengeRepository
                 .findByChallengeTypeAndDeletedFalseAndActiveFlagFalseAndEndDateGreaterThanEqual(
@@ -195,6 +197,7 @@ public class ChallengeService {
     }
 
     // 유저 챌린지 조회: 위와 동일 조건 적용
+    @Cacheable(value = "userChallenges", key = "#page + '-' + #size")
     public Page<ChallengeResponseDto> getUserChallenges(int page, int size) {
         Page<ChallengeEntity> challenges = challengeRepository
                 .findByChallengeTypeAndDeletedFalseAndActiveFlagFalseAndEndDateGreaterThanEqual(
@@ -224,6 +227,7 @@ public class ChallengeService {
         throw new CustomException(ErrorCode.UNAUTHORIZED, "유효하지 않은 사용자 정보입니다.");
     }
 
+    //
     // 로그인한 User 객체 조회
     public User getAuthenticatedUser() {
         String email = getAuthenticatedUserEmail();
