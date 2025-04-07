@@ -8,12 +8,15 @@ import HomeMain from "../features/home/HomeMain";
 import CardRouter from "./CardRouter";
 import UserRouter from "./UserRouter";
 import AcceptInvite from "@/features/ledger/AcceptInvite";
+import { useSelector } from "react-redux";
+import Login from "../features/user/components/Login";
 
 export default function Router() {
+  const {isAuthenticated} = useSelector((state)=> state.user)
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomeMain />} />
+        <Route path="/" element={isAuthenticated?<Navigate to="/home" replace/> : <UserRouter/>} />
         <Route path="/:token" element={<AcceptInvite />} />
         <Route path="/home/*" element={<HomeMain />} />
         <Route path="/bucketlist/*" element={<BucketListRouter />} />

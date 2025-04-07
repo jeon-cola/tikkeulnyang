@@ -7,8 +7,10 @@ import {motion} from "framer-motion"
 import ChooseAlertModal from "../../../components/ChooseAlertModal"
 import AlertModal from "../../../components/AlertModal"
 import CustomBackHeader from "../../../components/CustomBackHeader"
+import IsLoading from "../../../components/IsLoading"
 
 export default function SubScribe() {
+    const [isLoading, setIsLoading] = useState(false)
     const {nickName} = useSelector(state=> state.user)
     const [buttonChange, setButtonChange] = useState(false)
     const [subScribeCost, setSubScribeCost] = useState(null)
@@ -58,6 +60,7 @@ export default function SubScribe() {
 
     // 삭제 구현
     function deleteHandler(id) {
+        setIsLoading(false)
         const fetchData = async () => {
             try {
                 const response = await Api.delete(`api/subscribe/${id}`)
@@ -72,6 +75,7 @@ export default function SubScribe() {
                     const newSwipedItems = { ...swipedItems };
                     delete newSwipedItems[id];
                     setSwipedItems(newSwipedItems);
+                    setIsLoading(true)
                 }
             } catch (error) {
                 console.log(error)
@@ -103,6 +107,7 @@ export default function SubScribe() {
     // 구독 등록 
     function spend() {
         const fetchData = async () => {
+            setIsLoading(false)
             try {
                 const response = await Api.post("api/subscribe",{
                     "subscribeName": isSelectOption.subscribeName,
@@ -122,6 +127,7 @@ export default function SubScribe() {
                     ])
                     const currentCost = parseInt(subScribeCost,10) + parseInt(isSelectOption.subscribePrice,10)
                     setSubScribeCost(currentCost)
+                    setIsLoading(true)
                 }
             } catch (error) {
                 console.log(error)
@@ -142,6 +148,7 @@ export default function SubScribe() {
                         return sum+ price.subscribePrice
                     },0)
                     setSubScribeCost(totallCost)
+                    setIsLoading(true)
                 }
             } catch (error) {
                 console.log(error)
@@ -153,6 +160,7 @@ export default function SubScribe() {
     // 결제일순 
     function payButtonChangeHandler() {
         setButtonChange(false)
+        setIsLoading(false)
         const fetchData = async () => {
             try {
                 const response = await Api.get("api/subscribe/day")
@@ -162,6 +170,7 @@ export default function SubScribe() {
                         return sum+ price.subscribePrice
                     },0)
                     setSubScribeCost(totallCost)
+                    setIsLoading(true)
                 }
             } catch (error) {
                 console.log(error)
@@ -172,6 +181,7 @@ export default function SubScribe() {
 
     // 금액순
     function costButtonChangeHandler() {
+        setIsLoading(false)
         setButtonChange(true)
         const fetchData = async () => {
             try {
@@ -182,6 +192,7 @@ export default function SubScribe() {
                         return sum+ price.subscribePrice
                     },0)
                     setSubScribeCost(totallCost)
+                    setIsLoading(true)
                 }
             } catch (error) {
                 console.log(error)
@@ -191,6 +202,8 @@ export default function SubScribe() {
     }
 
     return(
+        <>
+        {isLoading?
         <div className="w-full flex flex-col gap-4 relative">
             <CustomBackHeader title="구독 정보"/>
             
@@ -238,17 +251,15 @@ export default function SubScribe() {
                         </select>
                         {(!isSelectOption)?"":
                         <div className="w-full flex flex-col gap-4">
-                            <div>
                                 {isSelectOption.subscribeName && (
                                     <div className="flex justify-center">
                                         <img 
                                             src={IconFunction(isSelectOption.subscribeName)} 
                                             alt={`${isSelectOption.subscribeName} 구독 이미지`} 
-                                            style={{ maxWidth: '100px', maxHeight: '100px' }} 
-                                        />
+                                            className="w-[100px] h-[100px] rounded-xl shadow-2xl"
+                                            />
                                     </div>
                                 )}
-                            </div>
                             <div className="w-full flex items-center justify-center justify-between">
                                 <p className="w-3/10 text-xl">항목 : </p>
                                 <p className="border p-1 w-7/10">{isSelectOption.subscribeName}</p>
@@ -301,14 +312,13 @@ export default function SubScribe() {
                     
                     {/* 스와이프 가능한 콘텐츠 - z-index와 배경색 추가 */}
                     <motion.div 
-                        className="w-full flex bg-white  rounded-xl shadow-md p-4 justify-between items-center relative" 
-                        style={{ zIndex: 2 }}
+                        className="w-full flex bg-white  rounded-xl shadow-md p-4 justify-between items-center relative z-2" 
                         drag="x" 
                         dragConstraints={{ left: -75, right: 0 }} 
                         animate={{ x: swipedItems[item.subscribeId] ? -75 : 0 }}
                         onDragEnd={(_, info) => handleDragEnd(item.subscribeId, info)}
                         dragElastic={0.1}
-                    >
+                        >
                       {/* 왼쪽 구독 정보 영역 */}
                       <div className="w-3/10">
                             <p>{item.subscribeName}</p>
@@ -355,14 +365,13 @@ export default function SubScribe() {
                         
                         {/* 스와이프 가능한 콘텐츠 - z-index 높게 설정 */}
                         <motion.div 
-                            className="w-full flex bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-xl p-4 justify-between items-center relative" 
-                            style={{ zIndex: 2 }}
+                            className="w-full flex bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-xl p-4 justify-between items-center relative z-2" 
                             drag="x" 
                             dragConstraints={{ left: -75, right: 0 }} 
                             animate={{ x: swipedItems[item.subscribeId] ? -75 : 0 }}
                             onDragEnd={(_, info) => handleDragEnd(item.subscribeId, info)}
-                            dragElastic={0.1}
-                        >
+                            dragElastic={0.2}
+                            >
                             {/* 왼쪽 구독 정보 영역 */}
                       <div className="w-3/10">
                             <p>D-{item.daysRemaining}</p>
@@ -411,5 +420,8 @@ export default function SubScribe() {
             </AlertModal>
             
         </div>
+        :<IsLoading/>
+    }
+    </>
     )
 }
