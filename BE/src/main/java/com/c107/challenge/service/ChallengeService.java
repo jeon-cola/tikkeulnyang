@@ -399,53 +399,86 @@ public class ChallengeService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ChallengeDetailResponseDto getChallengeDetail(Integer challengeId) {
         ChallengeEntity challenge = findChallengeById(challengeId);
         List<UserChallengeEntity> participants = userChallengeRepository.findByChallenge_ChallengeIdAndStatus(challengeId, "진행중");
 
-        double totalSuccessRateSum = 0.0;
+        // ✅ 로그인한 유저
+        User currentUser = getAuthenticatedUser();
+        Integer myUserId = currentUser.getUserId();
+        int mySpendingAmount;
+
+        logger.debug("📍 challenge.getEndDate()={}, LocalDate.now()={}", challenge.getEndDate(), LocalDate.now());
+
+        // ✅ 챌린지 기간이면 실시간 계산 + DB에 최신화
+        if (challenge.getEndDate().isAfter(LocalDate.now())) {
+            int freshSpending = calculateUserSpendingForChallengeCategory(challenge, myUserId);
+            logger.info("💸 계산된 소비 금액 = {}", freshSpending);
+
+            mySpendingAmount = freshSpending;
+
+            UserChallengeEntity myParticipation = participants.stream()
+                    .filter(p -> p.getUserId() == myUserId)
+                    .findFirst()
+                    .orElse(null);
+            if (myParticipation != null) {
+                myParticipation.setSpendAmount(freshSpending);
+                myParticipation.setUpdatedAt(LocalDateTime.now());
+                userChallengeRepository.save(myParticipation);
+                userChallengeRepository.flush();
+                logger.info("✅ spendAmount 업데이트됨: {}", freshSpending);
+            }
+        } else {
+            // 이미 종료된 경우 DB 값 그대로 사용
+            mySpendingAmount = participants.stream()
+                    .filter(p -> p.getUserId() == myUserId)
+                    .map(UserChallengeEntity::getSpendAmount)
+                    .findFirst()
+                    .orElse(0);
+        }
+
+        // ✅ 아래는 그대로 통계 계산 로직
+        double totalRateSum = 0.0;
         int count = 0;
-        int bucket1 = 0; // 100 ~ 85%
-        int bucket2 = 0; // 84 ~ 50%
-        int bucket3 = 0; // 49 ~ 25%
-        int bucket4 = 0; // 24 ~ 0%
+        int bucketOver100 = 0;
+        int bucket100to85 = 0;
+        int bucket84to50 = 0;
+        int bucket49to25 = 0;
+        int bucket24to0 = 0;
 
         for (UserChallengeEntity participation : participants) {
-            Integer userId = participation.getUserId();
-            List<UserChallengeEntity> history = userChallengeRepository.findByUserIdAndStatusNot(userId, "진행중");
-            double successRate = 0.0;
-            if (!history.isEmpty()) {
-                long successCount = history.stream()
-                        .filter(h -> "성공".equals(h.getStatus()))
-                        .count();
-                long total = history.size();
-                successRate = ((double) successCount / total) * 100;
-            }
-            totalSuccessRateSum += successRate;
+            int userSpending = participation.getSpendAmount();
+            int limit = challenge.getLimitAmount();
+            double rate = limit > 0 ? ((double) userSpending / limit) * 100.0 : 0.0;
+
+            totalRateSum += rate;
             count++;
-            if (successRate >= 85) {
-                bucket1++;
-            } else if (successRate >= 50) {
-                bucket2++;
-            } else if (successRate >= 25) {
-                bucket3++;
-            } else {
-                bucket4++;
-            }
+
+            if (rate > 100.0) bucketOver100++;
+            else if (rate >= 85.0) bucket100to85++;
+            else if (rate >= 50.0) bucket84to50++;
+            else if (rate >= 25.0) bucket49to25++;
+            else bucket24to0++;
         }
-        double averageSuccessRate = count > 0 ? totalSuccessRateSum / count : 0.0;
-        ChallengeResponseDto challengeDto = mapToDto(challenge);
+
+        double averageRate = count > 0 ? totalRateSum / count : 0.0;
+
         return ChallengeDetailResponseDto.builder()
-                .challenge(challengeDto)
+                .challenge(mapToDto(challenge))
                 .participantCount(participants.size())
-                .bucket100to85(bucket1)
-                .bucket84to50(bucket2)
-                .bucket49to25(bucket3)
-                .bucket24to0(bucket4)
-                .averageSuccessRate(averageSuccessRate)
+                .bucketOver100(bucketOver100)
+                .bucket100to85(bucket100to85)
+                .bucket84to50(bucket84to50)
+                .bucket49to25(bucket49to25)
+                .bucket24to0(bucket24to0)
+                .averageSuccessRate(averageRate)
+                .mySpendingAmount(mySpendingAmount) // ✅ 추가된 필드
                 .build();
     }
+
+
+
 
     @Transactional(readOnly = true)
     public List<PastChallengeResponseDto> getPastParticipatedChallenges() {
@@ -525,7 +558,7 @@ public class ChallengeService {
         List<Transaction> transactions = transactionRepository.findByUserId(user.getUserId());
         Map<String, Integer> categoryScores = new HashMap<>();
         for (Transaction tx : transactions) {
-            if ("WITHDRAW".equals(tx.getTransactionType()) && tx.getCategoryId() != null) {
+            if (tx.getTransactionType() == 2 && tx.getCategoryId() != null) {
                 Optional<CategoryEntity> optCategory = categoryRepository.findById(tx.getCategoryId());
                 if (optCategory.isPresent() && optCategory.get().getChallengeCategoryId() != null) {
                     String challengeCategory = String.valueOf(optCategory.get().getChallengeCategoryId());
@@ -576,26 +609,77 @@ public class ChallengeService {
     public int calculateUserSpendingForChallengeCategory(ChallengeEntity challenge, Integer userId) {
         LocalDateTime challengeStart = challenge.getStartDate().atStartOfDay();
         LocalDateTime challengeEnd = challenge.getEndDate().atTime(23, 59, 59);
+
+        logger.debug("📅 챌린지 기간: {} ~ {}", challengeStart, challengeEnd);
+        logger.debug("🎯 챌린지 카테고리 (문자열): {}", challenge.getChallengeCategory());
+
         List<Transaction> transactions = transactionRepository.findByUserId(userId);
+        logger.debug("💾 사용자 거래내역 총 개수: {}", transactions.size());
+
         int totalSpending = 0;
+
         for (Transaction tx : transactions) {
             LocalDateTime txDate = tx.getTransactionDate();
-            if (txDate == null) continue;
-            if ((txDate.isEqual(challengeStart) || txDate.isAfter(challengeStart))
-                    && (txDate.isEqual(challengeEnd) || txDate.isBefore(challengeEnd))) {
-                if ("WITHDRAW".equals(tx.getTransactionType()) && tx.getCategoryId() != null) {
-                    Optional<CategoryEntity> optCategory = categoryRepository.findById(tx.getCategoryId());
-                    if (optCategory.isPresent() && optCategory.get().getChallengeCategoryId() != null) {
-                        String txChallengeCategory = String.valueOf(optCategory.get().getChallengeCategoryId());
-                        if (txChallengeCategory.equals(challenge.getChallengeCategory())) {
-                            totalSpending += tx.getAmount();
-                        }
-                    }
-                }
+            if (txDate == null) {
+                logger.warn("❗ 거래 날짜가 null: txId={}, amount={}", tx.getTransactionId(), tx.getAmount());
+                continue;
             }
+
+            if (txDate.isBefore(challengeStart) || txDate.isAfter(challengeEnd)) {
+                logger.debug("⛔ 날짜 범위 밖 거래: txId={}, txDate={}", tx.getTransactionId(), txDate);
+                continue;
+            }
+
+            if (tx.getTransactionType() != 2) {
+                logger.debug("❌ 출금 아님: txId={}, txType={}", tx.getTransactionId(), tx.getTransactionType());
+                continue;
+            }
+
+            if (tx.getCategoryId() == null) {
+                logger.debug("❌ 카테고리 없음: txId={}", tx.getTransactionId());
+                continue;
+            }
+
+            Optional<CategoryEntity> optCategory = categoryRepository.findById(tx.getCategoryId());
+            if (optCategory.isEmpty()) {
+                logger.warn("❓ 존재하지 않는 카테고리 ID: txId={}, categoryId={}", tx.getTransactionId(), tx.getCategoryId());
+                continue;
+            }
+
+            CategoryEntity category = optCategory.get();
+            if (category.getChallengeCategoryId() == null) {
+                logger.debug("🚨 조건 테스트: txId={}, type={}, catId={}, catChallengeId={}, challengeCat={}, amount={}",
+                        tx.getTransactionId(),
+                        tx.getTransactionType(),
+                        tx.getCategoryId(),
+                        category.getChallengeCategoryId(),
+                        challenge.getChallengeCategory(),
+                        tx.getAmount());
+                logger.debug("❌ challengeCategoryId가 null: categoryId={}", category.getCategoryId());
+                continue;
+            }
+
+            String txChallengeCategoryName = category.getCategoryName(); // "택시"
+            String challengeCategory = challenge.getChallengeCategory(); // "택시"
+
+            if (!txChallengeCategoryName.equals(challengeCategory)) {
+                logger.debug("❌ 챌린지 카테고리 불일치 (이름 기준): txCategoryName={}, challengeCategory={}, txId={}",
+                        txChallengeCategoryName, challengeCategory, tx.getTransactionId());
+                continue;
+            }
+
+
+            // ✅ 최종 소비 인정
+            logger.info("✅ 소비 인정: txId={}, amount={}, 카테고리={}", tx.getTransactionId(), tx.getAmount(), txChallengeCategoryName);
+            totalSpending += tx.getAmount();
         }
+
+        logger.info("💰 최종 소비 금액 = {}", totalSpending);
         return totalSpending;
     }
+
+
+
 
     /**
      * 챌린지 종료 시점에, 참여 유저별로 해당 챌린지 카테고리 소비 금액을 산출하여,
@@ -612,6 +696,7 @@ public class ChallengeService {
                 .findByChallenge_ChallengeIdAndStatus(challengeId, "진행중");
         for (UserChallengeEntity participation : participants) {
             int spending = calculateUserSpendingForChallengeCategory(challenge, participation.getUserId());
+            participation.setSpendAmount(spending);
             if (spending <= challenge.getLimitAmount()) {
                 participation.setStatus("성공");
             } else {
