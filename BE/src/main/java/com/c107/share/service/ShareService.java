@@ -136,9 +136,9 @@ public class ShareService {
                 .build();
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "sharedLedgerCache", allEntries = true)
-    })
+//    @Caching(evict = {
+//            @CacheEvict(value = "sharedLedgerCache", allEntries = true)
+//    })
     @Transactional
     public String generateInvitationLink(String email) {
         String token = UUID.randomUUID().toString();
@@ -160,7 +160,7 @@ public class ShareService {
         return invitationLink;
     }
 
-    @Cacheable(value = "sharedLedgerCache", key = "#token + ':' + #year + '-' + #month", unless = "#result == null")
+    //@Cacheable(value = "sharedLedgerCache", key = "#token + ':' + #year + '-' + #month", unless = "#result == null")
     @Transactional(readOnly = true)
     public ShareLedgerResponseDto getSharedLedger(String token, String requesterEmail, Integer year, Integer month) {
         ShareEntity shareEntity = shareRepository.findByInvitationLinkEndingWith(token)
@@ -225,10 +225,10 @@ public class ShareService {
     }
 
     //
-    @Caching(evict = {
-            @CacheEvict(value = "sharedLedgerCache", allEntries = true),
-            @CacheEvict(value = "myLedgerCache", allEntries = true)
-    })
+//    @Caching(evict = {
+//            @CacheEvict(value = "sharedLedgerCache", allEntries = true),
+//            @CacheEvict(value = "myLedgerCache", allEntries = true)
+//    })
     @Transactional
     public void unsharePartner(String myEmail, Long partnerUserId) {
         User me = userRepository.findByEmail(myEmail)
@@ -241,9 +241,9 @@ public class ShareService {
     }
 
     // 매일 새벽 3시에 실행 (cron: 초 분 시 일 월 요일)
-    @Caching(evict = {
-            @CacheEvict(value = "sharedLedgerCache", allEntries = true)
-    })
+//    @Caching(evict = {
+//            @CacheEvict(value = "sharedLedgerCache", allEntries = true)
+//    })
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
     public void deleteExpiredInvitationLinks() {
@@ -252,7 +252,7 @@ public class ShareService {
         log.info("[스케줄러] 만료된 초대 링크 {}개 삭제됨", deletedCount);
     }
 
-    @Cacheable(value = "sharedLedgerCache", key = "#token + ':' + #year + '-' + #month", unless = "#result == null")
+    //@Cacheable(value = "sharedLedgerCache", key = "#token + ':' + #year + '-' + #month", unless = "#result == null")
     @Transactional(readOnly = true)
     public ShareLedgerResponseDto getSharedLedgerByUserId(Long targetUserId, String requesterEmail, Integer year, Integer month) {
         // 요청자 정보 조회
@@ -401,10 +401,10 @@ public class ShareService {
     }
 
     // 타인의 가계부에 댓글 및 이모지 등록
-    @Caching(evict = {
-            @CacheEvict(value = "sharedLedgerCache", allEntries = true),
-            @CacheEvict(value = "myLedgerCache", allEntries = true)
-    })
+//    @Caching(evict = {
+//            @CacheEvict(value = "sharedLedgerCache", allEntries = true),
+//            @CacheEvict(value = "myLedgerCache", allEntries = true)
+//    })
     @Transactional
     public ShareCommentDto.CommentResponse addComment(Long targetUserId, String dateStr, ShareCommentDto.CommentRequest request, String email) {
         User requester = userRepository.findByEmail(email)
@@ -512,9 +512,9 @@ public class ShareService {
         shareNotificationRepository.save(notification);
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "sharedLedgerCache", allEntries = true)
-    })
+//    @Caching(evict = {
+//            @CacheEvict(value = "sharedLedgerCache", allEntries = true)
+//    })
     @Transactional
     public String acceptInvitation(String token, String invitedEmail) {
         ShareEntity shareEntity = shareRepository.findByInvitationLinkEndingWith(token)
