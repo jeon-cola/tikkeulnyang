@@ -118,7 +118,7 @@ export default function List() {
         {userData.map((data,index)=>(
           <MapCategory key={index} list={data} onSaving={checkAlertModalOpen} onDelete={deleteModalOpen}/>
         ))}
-        <ChooseAlertModal title="저축하기" isClose={checkAlertModalClose} isOpen={savingCheck} isFunctionHandler={()=>saveHandler(selectBucketListId)} onDelete={()=>deleteHandler(selectBucketListId)}>
+        <ChooseAlertModal title="저축하기" isClose={checkAlertModalClose} isOpen={savingCheck} isFunctionHandler={()=>saveHandler(selectBucketListId)}>
           <div>
             <p>확인 버튼을 누르면 자동으로</p>
             <p>설정된 계좌를 통해 저축이 이루어 집니다</p>
