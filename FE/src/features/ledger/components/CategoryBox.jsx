@@ -74,7 +74,7 @@ export default function CategoryBox({ activeCategory, setActiveCategory }) {
               key={category.id}
               src={isActive ? category.activeIcon : category.inactiveIcon}
               alt={category.id}
-              className="w-12 h-auto cursor-pointer snap-center"
+              className="w-10 h-auto cursor-pointer snap-center"
               onClick={() => setActiveCategory(category.id)}
             />
           );
