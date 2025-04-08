@@ -18,7 +18,7 @@ export default function ChallengeDesc({ type, button }) {
 
   return (
     <>
-      <div className="flex w-[370px]">
+      <div className="flex w-full">
         <div className="flex justify-between items-center w-full self-stretch">
           {/* 추천 챌린지 텍스트 */}
           <h2 className="pl-3 font-inter font-semibold text-xl leading-7 text-black">
