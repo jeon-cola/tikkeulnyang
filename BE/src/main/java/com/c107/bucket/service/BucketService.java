@@ -16,7 +16,10 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import org.springframework.http.HttpHeaders;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -48,8 +50,12 @@ public class BucketService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // 카테고리 목록 조회 메서드
+    /**
+     * 카테고리 목록 조회
+     * 캐시 이름: bucketCategories
+     */
     @Transactional(readOnly = true)
+    @Cacheable(value = "bucketCategories")
     public List<BucketCategoryResponseDto> getAllCategories() {
         List<BucketCategoryEntity> categories = bucketCategoryRepository.findAll();
         return categories.stream()
@@ -57,8 +63,12 @@ public class BucketService {
                 .collect(Collectors.toList());
     }
 
-    // 버킷리스트 생성 기능
+    /**
+     * 버킷리스트 생성 기능
+     * 버킷리스트 조회 캐시(bucketLists)를 무효화합니다.
+     */
     @Transactional
+    @CacheEvict(value = "bucketLists", key = "#email")
     public BucketResponseDto.Response createBucket(String email, BucketResponseDto.Request request) {
 
         User user = userRepository.findByEmail(email)
@@ -81,8 +91,12 @@ public class BucketService {
         return BucketResponseDto.Response.fromEntity(savedBucket, category.getCategoryName());
     }
 
-    // 저축 날짜와 금액 설정
+    /**
+     * 저축 날짜와 금액 설정
+     * 버킷리스트 조회 캐시(bucketLists)를 무효화합니다.
+     */
     @Transactional
+    @CacheEvict(value = "bucketLists", key = "#email")
     public BucketDateDto.Response setBucketSavingConfig(String email, BucketDateDto.Request request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
@@ -110,7 +124,6 @@ public class BucketService {
                 .build();
     }
 
-    //
     private void validateDaysOfWeek(String savingDays) {
         if (savingDays == null || savingDays.isEmpty()) {
             return; // 빈 값 허용 시
@@ -119,15 +132,20 @@ public class BucketService {
         List<String> validDays = DayOfWeek.getAllKoreanNames();
         List<String> selectedDays = Arrays.asList(savingDays.split(","));
 
-//        for (String day : selectedDays) {
-//            if (!validDays.contains(day.trim())) {
-//                throw new CustomException(ErrorCode.INVALID_REQUEST, "유효하지 않은 요일이 포함되어 있습니다: " + day);
-//            }
-//        }
+//      // 유효한 요일 체크 - 필요 시 주석 해제
+//      for (String day : selectedDays) {
+//          if (!validDays.contains(day.trim())) {
+//              throw new CustomException(ErrorCode.INVALID_REQUEST, "유효하지 않은 요일이 포함되어 있습니다: " + day);
+//          }
+//      }
     }
 
-
+    /**
+     * 버킷리스트에 계좌 설정
+     * 버킷리스트 조회 캐시(bucketLists)를 무효화합니다.
+     */
     @Transactional
+    @CacheEvict(value = "bucketLists", key = "#email")
     public BucketAccountDto.Response setBucketAccounts(String email, BucketAccountDto.Request request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
@@ -186,8 +204,12 @@ public class BucketService {
                 .build();
     }
 
-    // 버킷리스트 조회 기능
+    /**
+     * 버킷리스트 조회 기능
+     * 캐시 이름: bucketLists, 키: email
+     */
     @Transactional(readOnly = true)
+    @Cacheable(value = "bucketLists", key = "#email")
     public List<BucketListResponseDto> getBucketLists(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
@@ -205,8 +227,12 @@ public class BucketService {
                 .collect(Collectors.toList());
     }
 
-    // 버킷리스트 삭제
+    /**
+     * 버킷리스트 삭제
+     * 버킷리스트 관련 캐시(bucketLists)를 무효화합니다.
+     */
     @Transactional
+    @CacheEvict(value = "bucketLists", key = "#email")
     public void deleteBucket(String email, Integer bucketId) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
@@ -218,9 +244,12 @@ public class BucketService {
         logger.info("버킷리스트 삭제 완료: {}", bucketId);
     }
 
-
-    // 계좌이체
+    /**
+     * 계좌이체 및 저축 진행
+     * 버킷리스트 관련 캐시(bucketLists)를 무효화합니다.
+     */
     @Transactional
+    @CacheEvict(value = "bucketLists", key = "#email")
     public BucketSavingDto.Response processBucketSaving(String email, BucketSavingDto.Request request) {
 
         User user = userRepository.findByEmail(email)
