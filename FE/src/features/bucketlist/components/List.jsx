@@ -14,6 +14,8 @@ export default function List() {
   const [selectBucketListId, setSelectBucketListID] = useState(null)
   const [isDeleteModal, setIsDeleteModal] = useState(false)
   const [delteCheck, setDeleteCheck] = useState(false)
+  const [isPassword, setIsPassword] = useState(false)
+  const [checkMessage, setCheckMessage] = useState(false)
 
 
   // 버킷리스트 리스트 가져오기
@@ -32,10 +34,10 @@ export default function List() {
   },[])
 
   // 저축 통신
-  function saveHandler(bucketListId) {
+  function saveHandler(password) {
     const fetchData = async () => {
       try {
-        const response = await Api.post("api/bucket/saving",{"bucketId":bucketListId})
+        const response = await Api.post("api/bucket/saving",{"bucketId":selectBucketListId,"transactionPassword":password})
         if (response.data.status) {
           setIsAlertModal(true)
           refreshList()
@@ -147,7 +149,7 @@ export default function List() {
           </div>
         </AlertModal>
       </div>
-      <Password/>
+      {isPassword?<Password isFail={checkMessage} isFunction={saveHandler}/>:""}
     </div>
   )
 }
