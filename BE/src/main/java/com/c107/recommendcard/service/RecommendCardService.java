@@ -14,6 +14,7 @@ import com.c107.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -91,19 +92,17 @@ public class RecommendCardService {
     /**
      * 신용카드 추천
      */
+    @Cacheable(value = "recommendCreditCardsCache", key = "#email", unless = "#result == null")
     @Transactional
     public List<RecommendCardResponseDto> recommendCreditCards(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
         List<String> topCategories = extractTopCategories(user);
         log.info("신용카드 추천 대상 상위 카테고리: {}", topCategories);
-
         Set<RecommendCard> recommendedCards = new HashSet<>();
         Map<String, Integer> budgetCategoryNameToId = budgetCategoryRepository.findAll()
                 .stream()
                 .collect(Collectors.toMap(b -> b.getCategoryName(), b -> b.getBudgetCategoryId()));
-
-        // 각 상위 카테고리에 대해 budget_credit_mapping을 조회하여, 해당 카테고리와 매핑된 creditBenefitId 집합 구성
         Map<String, Set<Integer>> categoryToCreditBenefitIds = new HashMap<>();
         for (String category : topCategories) {
             Integer budgetCategoryId = budgetCategoryNameToId.get(category);
@@ -112,12 +111,9 @@ public class RecommendCardService {
                         .stream()
                         .map(mapping -> mapping.getBenefitId())
                         .collect(Collectors.toList());
-
                 categoryToCreditBenefitIds.put(category, new HashSet<>(benefitIds));
             }
         }
-
-        // 각 상위 카테고리별로 추천 카드 조회
         for (String category : topCategories) {
             Integer budgetCategoryId = budgetCategoryNameToId.get(category);
             if (budgetCategoryId != null) {
@@ -135,14 +131,10 @@ public class RecommendCardService {
             List<RecommendCard> fallbackCards = recommendCardRepository.findByCreditBenefitCategory(category);
             recommendedCards.addAll(fallbackCards);
         }
-
-        // 각 카드에 대해, 상위 카테고리 중 몇 개와 매핑되어 있는지 점수를 계산
         Map<RecommendCard, Long> cardScoreMap = recommendedCards.stream().collect(Collectors.toMap(
                 card -> card,
                 card -> {
-                    // 해당 카드의 모든 혜택 조회
                     List<CreditCardBenefit> benefits = creditCardBenefitRepository.findByRecoCardId(card.getRecoCardId());
-                    // 각 topCategory에 대해, 이 카드의 혜택이 해당 카테고리 매핑 집합에 속하는지 체크
                     long score = topCategories.stream().filter(category -> {
                         Set<Integer> mappedIds = categoryToCreditBenefitIds.getOrDefault(category, Collections.emptySet());
                         return benefits.stream().anyMatch(b -> mappedIds.contains(b.getCreditBenefitsId()));
@@ -150,8 +142,6 @@ public class RecommendCardService {
                     return score;
                 }
         ));
-
-        // 점수가 높은 순으로 내림차순 정렬 후, 동일하면 recoCardId 오름차순 정렬하여 limit 적용
         return cardScoreMap.entrySet().stream()
                 .sorted((e1, e2) -> {
                     int cmp = Long.compare(e2.getValue(), e1.getValue());
@@ -167,7 +157,6 @@ public class RecommendCardService {
                     String benefitDesc = benefits.stream()
                             .map(b -> b.getDescription())
                             .collect(Collectors.joining(", "));
-                    // 예를 들어, 추가로 점수를 포함하고 싶다면 benefitDesc에 e.getValue()도 붙일 수 있습니다.
                     return RecommendCardResponseDto.of(card, benefitDesc);
                 })
                 .collect(Collectors.toList());
@@ -177,6 +166,7 @@ public class RecommendCardService {
     /**
      * 체크카드 추천
      */
+    @Cacheable(value = "recommendCheckCardsCache", key = "#email", unless = "#result == null")
     @Transactional
     public List<RecommendCardResponseDto> recommendCheckCards(String email) {
         User user = userRepository.findByEmail(email)
@@ -185,25 +175,22 @@ public class RecommendCardService {
         log.info("체크카드 추천 대상 상위 카테고리: {}", topCategories);
 
         Set<RecommendCard> recommendedCards = new HashSet<>();
-        // budget_category 데이터를 (categoryName -> budgetCategoryId) 맵으로 구성
         Map<String, Integer> budgetCategoryNameToId = budgetCategoryRepository.findAll()
                 .stream()
                 .collect(Collectors.toMap(b -> b.getCategoryName(), b -> b.getBudgetCategoryId()));
 
-        // 각 상위 카테고리별로 BudgetCheckMapping을 조회해서 체크 혜택 ID 집합 구성
         Map<String, Set<Integer>> categoryToCheckBenefitIds = new HashMap<>();
         for (String category : topCategories) {
             Integer budgetCategoryId = budgetCategoryNameToId.get(category);
             if (budgetCategoryId != null) {
                 List<Integer> checkBenefitIds = budgetCheckMappingRepository.findByBudgetCategoryId(budgetCategoryId)
                         .stream()
-                        .map(mapping -> mapping.getBenefitId())  // 여기서 올바른 필드(getBenefitId()) 사용
+                        .map(mapping -> mapping.getBenefitId())
                         .collect(Collectors.toList());
                 categoryToCheckBenefitIds.put(category, new HashSet<>(checkBenefitIds));
             }
         }
 
-        // 각 상위 카테고리별로 추천 카드 조회
         for (String category : topCategories) {
             Integer budgetCategoryId = budgetCategoryNameToId.get(category);
             if (budgetCategoryId != null) {
@@ -212,18 +199,15 @@ public class RecommendCardService {
                         .map(mapping -> mapping.getBenefitId())
                         .collect(Collectors.toList());
                 if (!checkBenefitIds.isEmpty()) {
-                    // 체크카드 전용 매핑 기반 조회 메서드 호출
                     List<RecommendCard> checkCards = recommendCardRepository.findByCheckBenefitIds(checkBenefitIds);
                     recommendedCards.addAll(checkCards);
                     continue;
                 }
             }
-            // 매핑 데이터가 없으면 fallback: 기존 방식으로 조회
             List<RecommendCard> fallbackCards = recommendCardRepository.findByCheckBenefitCategory(category);
             recommendedCards.addAll(fallbackCards);
         }
 
-        // 각 카드에 대해 상위 카테고리와 매핑된 횟수를 점수로 계산
         Map<RecommendCard, Long> cardScoreMap = recommendedCards.stream().collect(Collectors.toMap(
                 card -> card,
                 card -> {
@@ -236,7 +220,6 @@ public class RecommendCardService {
                 }
         ));
 
-        // 점수가 높은 순 내림차순, 동일 시 recoCardId 오름차순 정렬 후 상위 10개 추천
         return cardScoreMap.entrySet().stream()
                 .sorted((e1, e2) -> {
                     int cmp = Long.compare(e2.getValue(), e1.getValue());
