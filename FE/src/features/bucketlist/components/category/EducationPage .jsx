@@ -16,7 +16,7 @@ export default function EducationPage ({title, current_savings, target_amount,co
 
     return(
          <div className="w-full bg-white rounded-2xl shadow-md p-4 flex flex-col gap-3 relative">
-             <img src={MoreIcon} alt="더보기 버튼" className="w-[30px] h-[30px] absolute top-2 right-2" onClick={deleteHandler}/>
+             <img src={MoreIcon} alt="더보기 버튼" className="w-[30px] h-[30px] absolute top-2 right-2" onClick={()=>deleteHandler(bucketListId)}/>
             <div className="w-full flex flex-row">
                 <div className="w-full flex flex-col gap-6">
                     <p className="text-left font-semibold text-xl" style={{color:"#83BF4F"}}>#버킷리스트</p>
@@ -29,7 +29,7 @@ export default function EducationPage ({title, current_savings, target_amount,co
             </div>
             <div className="flex flex-row justify-between w-full">
                 <div>
-                    <span style={{color:color}} className="text-left font-semibold text-xl">{current_savings.toLocaleString()}</span> / <span style={{color:"#83BF4F"}}  className="text-left font-semibold text-xl">{target_amount.toLocaleString()}</span>
+                    <span style={{color:color}} className="text-left font-semibold text-xl">{current_savings}</span> / <span style={{color:"#83BF4F"}}  className="text-left font-semibold text-xl">{target_amount}</span>
                 </div >
                 <p style={{color:color}} className="text-left font-semibold text-xl">{currentProgress.toFixed(1)}%</p>
             </div>
