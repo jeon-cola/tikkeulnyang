@@ -18,42 +18,61 @@ import CustomModal from "../../../components/CustomModal.jsx";
 import ChooseAlertModal from "../../../components/ChooseAlertModal.jsx";
 import AlertModal from "../../../components/AlertModal.jsx";
 import {setPage} from "../../challenge/ChallengeSlice.js"
+import IsLoading from "../../../components/IsLoading.jsx"
 
 export default function MyPageMenu() {
   const dispatch = useDispatch();
   const { nickName, email, profileImg, deposit } = useSelector(
     (state) => state.user
   );
-  const [pendingChallenges, setPendingChallenges] = useState(0);
-  const [activeChallenges, setActiveChallenges] = useState(0);
-  const [completedChallenges, setCompletedChallenges] = useState(0);
+  const [recommendChallenges, setRecommendChallenges] = useState(null);
+  const [activeChallenges, setActiveChallenges] = useState(null);
+  const [completedChallenges, setCompletedChallenges] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   // mode: "charge", "refund", "history" 탭 전환
   const [mode, setMode] = useState("charge");
   const [inputChange, setInputChange] = useState("");
   const [isChooseModal, setIsChooseModal] = useState(false);
   const [isShowModal, setIsShowModal] = useState(false);
+  const [isMessageModal, setIsMessageModal] = useState(false)
+  const [isRefundModal, setIsRefundModal] =useState(false)
   const [transactions, setTransactions] = useState([]);
   const nav = useNavigate();
+  const [isLoading, setIsLoading] = useState(false)
+  const [message , setMessage ] =useState("")
+
+  // 챌린지 조회 성공시 화면 로딩
+  useEffect(()=> {
+    setIsLoading(!(recommendChallenges !== null && activeChallenges !== null && completedChallenges !== null))
+  },[recommendChallenges, activeChallenges, completedChallenges])
+
+  // 충전 모달 닫기
+  function messageModalClose() {
+    setIsMessageModal(false)
+  }
 
   // 예치금 환불
   function refundHandler() {
+    setIsLoading(true)
     const fetchData = async () => {
       try {
         const response = await Api.post("/api/account/refund-deposit", {
           amount: inputChange,
         });
+        setIsMessageModal(true)
         if (response.data === "예치금 환불 요청이 완료되었습니다.") {
-          window.alert("예치금 환불이 완료되었습니다");
+          setMessage("예치금 환불이 완료되었습니다")
           const currentDeposit = parseInt(deposit, 10);
           const subtractionAmount = parseInt(inputChange, 10);
           const newDeposit = (currentDeposit - subtractionAmount).toString();
           dispatch(setDeposit(newDeposit));
         } else if (response.data === "환불 요청 금액이 예치금보다 많습니다.") {
-          window.alert("환불 요청 금액이 예치금보다 많습니다");
+          setMessage("환불 요청 금액이 예치금보다 많습니다")
         }
       } catch (error) {
         console.log(error);
+      } finally {
+        setIsLoading(false)
       }
     };
     fetchData();
@@ -61,22 +80,26 @@ export default function MyPageMenu() {
 
   // 예치금 충전
   function chargeHandler() {
+    setIsLoading(true)
     const fetchData = async () => {
       try {
         const response = await Api.post("/api/account/deposit-charge", {
           amount: inputChange,
         });
         if (response.data === "예치금 충전 요청이 완료되었습니다.") {
-          window.alert("예치금 충전이 완료되었습니다");
+          setIsMessageModal(true)
+          setMessage("예치금 충전이 완료되었습니다다")
           const currentDeposit = parseInt(deposit, 10);
           const additionAmount = parseInt(inputChange, 10);
           const newDeposit = (currentDeposit + additionAmount).toString();
           dispatch(setDeposit(newDeposit));
         } else if (response.data === "계좌잔액이 부족합니다.") {
-          window.alert("계좌잔액이 부족합니다");
+          setMessage("계좌잔액이 부족합니다")
         }
       } catch (error) {
         console.log(error);
+      } finally {
+        setIsLoading(false)
       }
     };
     fetchData();
@@ -104,7 +127,6 @@ export default function MyPageMenu() {
     const fetchTransactions = async () => {
       try {
         const response = await Api.get("/api/account/service-transactions");
-        // response.data가 거래 내역 배열이라 가정
         setTransactions(response.data);
       } catch (error) {
         console.log(error);
@@ -147,6 +169,20 @@ export default function MyPageMenu() {
     fetchChallengeHistory();
   }, []);
 
+  // 추천 챌린지 
+  useEffect(()=> {
+    const fetchData = async () => {
+      try {
+        const response = await Api.get("api/challenge/recommend")
+        const data = response.data.length
+        setRecommendChallenges(data)
+      } catch (error) {
+        
+      }
+    }
+    fetchData()
+  },[])
+
   // 진행 중인 챌린지
   useEffect(() => {
     const fetchActiveChallenge = async () => {
@@ -178,6 +214,7 @@ export default function MyPageMenu() {
 
   // 로그아웃 핸들러
   async function logoutHandler() {
+    setIsLoading(true)
     try {
       const response = await Api.post("api/auth/logout");
       if (response.data.status === "success") {
@@ -187,11 +224,16 @@ export default function MyPageMenu() {
     } catch (error) {
       console.log(error);
       window.alert("에러: 잠시 후 시도해주세요");
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex flex-col items-start p-[0px_0px_82px] gap-3 absolute w-screen min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
+    <>
+    {!isLoading?
+
+      <div className="flex flex-col items-start p-[0px_0px_82px] gap-3 absolute w-screen min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
       <div className="flex flex-col justify-center gap-5 min-w-full mb-[30px]">
         <CustomHeader title="마이 페이지" />
 
@@ -203,7 +245,7 @@ export default function MyPageMenu() {
                 src={profileImg}
                 alt="유저 이미지"
                 className="w-[80px] h-[80px] rounded-full shadow-sm"
-              />
+                />
             </div>
             <div className="flex flex-col gap-1.5">
               <span className="text-left font-semibold">{nickName}</span>
@@ -218,8 +260,8 @@ export default function MyPageMenu() {
             <div className="w-[calc(100%-2rem)] mx-auto bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.15)] rounded-[25px] flex justify-between items-center p-4 mt-2">
               <div className="flex flex-col items-center w-1/3">
                 <Link to="/challenge/" onClick={()=>dispatch(setPage(0))} className="cursor-pointer">
-                  <p className="text-xl font-semibold">{pendingChallenges}</p>
-                  <p className="text-sm text-gray-500">시작 전</p>
+                  <p className="text-xl font-semibold">{recommendChallenges}</p>
+                  <p className="text-sm text-gray-500">추천</p>
                 </Link>
               </div>
 
@@ -241,7 +283,7 @@ export default function MyPageMenu() {
             </div>
             {/* <div className="absolute -top-4 right-4">
           <YellowCat />
-        </div> */}
+          </div> */}
           </div>
 
           {/* 예치금 */}
@@ -251,7 +293,7 @@ export default function MyPageMenu() {
             <div
               className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] p-4 relative"
               onClick={modalHandler}
-            >
+              >
               <div className="flex mx-auto">
                 <p className="font-regular text-gray-600 ">예치금 금액 :</p>
                 <p className="font-regular ml-2 text-gray-600">
@@ -266,37 +308,37 @@ export default function MyPageMenu() {
               title="예치금"
               isOpen={isModalOpen}
               onClose={onCloseModal}
-            >
+              >
               {/* 탭 버튼 영역 */}
               <div className="w-full flex mb-4">
                 <button
                   onClick={() => setMode("charge")}
                   className={
                     mode === "charge"
-                      ? "w-full smallButton"
-                      : "w-full smallWhiteButton"
+                    ? "w-full smallButton"
+                    : "w-full smallWhiteButton"
                   }
-                >
+                  >
                   충전
                 </button>
                 <button
                   onClick={() => setMode("refund")}
                   className={
                     mode === "refund"
-                      ? "w-full smallButton"
-                      : "w-full smallWhiteButton"
+                    ? "w-full smallButton"
+                    : "w-full smallWhiteButton"
                   }
-                >
+                  >
                   환불
                 </button>
                 <button
                   onClick={() => setMode("history")}
                   className={
                     mode === "history"
-                      ? "w-full smallButton"
-                      : "w-full smallWhiteButton"
+                    ? "w-full smallButton"
+                    : "w-full smallWhiteButton"
                   }
-                >
+                  >
                   내역
                 </button>
               </div>
@@ -325,7 +367,7 @@ export default function MyPageMenu() {
                         className="w-full p-2 bg-gray-200 rounded-[6px] shadow-[1px_1px_5px_rgba(0,0,0,0.05)]"
                         value={inputChange}
                         onChange={inputHandler}
-                      />
+                        />
                     </div>
                     <button className="customButton" onClick={chargeHandler}>
                       충전하기
@@ -355,7 +397,7 @@ export default function MyPageMenu() {
                         className="w-full p-2 bg-gray-200 rounded-[6px] shadow-[1px_1px_5px_rgba(0,0,0,0.05)]"
                         value={inputChange}
                         onChange={inputHandler}
-                      />
+                        />
                     </div>
                     <button className="customButton" onClick={refundHandler}>
                       환불하기
@@ -370,7 +412,7 @@ export default function MyPageMenu() {
                       </p>
                     ) : (
                       Object.keys(groupedTransactions)
-                        .sort((a, b) => new Date(b) - new Date(a))
+                      .sort((a, b) => new Date(b) - new Date(a))
                         .map((date) => (
                           <div key={date} className="mb-4">
                             <p className="font-bold text-base text-gray-700 mb-2">
@@ -378,8 +420,8 @@ export default function MyPageMenu() {
                             </p>
                             {groupedTransactions[date].map((item, index) => (
                               <div
-                                key={index}
-                                className="bg-white rounded-[6px] shadow p-3 mb-2"
+                              key={index}
+                              className="bg-white rounded-[6px] shadow p-3 mb-2"
                               >
                                 <div className="flex justify-between items-center mb-1">
                                   <span className="text-sm font-semibold text-blue-500">
@@ -402,7 +444,7 @@ export default function MyPageMenu() {
                             ))}
                           </div>
                         ))
-                    )}
+                      )}
                   </div>
                 )}
               </div>
@@ -440,7 +482,7 @@ export default function MyPageMenu() {
           <div
             className="w-full bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] flex gap-5 items-center p-4"
             onClick={isChooseModaOpenlHandler}
-          >
+            >
             <div className="mr-4">
               <LogoutIcon />
             </div>
@@ -452,7 +494,7 @@ export default function MyPageMenu() {
             isClose={isChooseModalCloseHandler}
             isOpen={isChooseModal}
             isFunctionHandler={logoutHandler}
-          >
+            >
             <p>로그아웃 하시겠습니까?</p>
           </ChooseAlertModal>
           <AlertModal
@@ -460,11 +502,17 @@ export default function MyPageMenu() {
             height={170}
             isClose={closeIsShowModalHandler}
             isOpen={isShowModal}
-          >
+            >
             <p className="text-xl">로그아웃 되었습니다</p>
+          </AlertModal>
+
+          <AlertModal title="충전완료" isOpen={isMessageModal} isClose={messageModalClose} height={170}>
+            <p>{message}</p>
           </AlertModal>
         </div>
       </div>
     </div>
+    :<IsLoading/>}
+    </>
   );
 }
