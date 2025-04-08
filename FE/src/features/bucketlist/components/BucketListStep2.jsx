@@ -39,6 +39,7 @@ export default function BucketListStep2() {
             withdrawl_amount:bank.bankName,
             withdrawl_amount_num: bank.accountNumber
         });
+        setList(list.filter(items=> items.accountNumber !== bank.accountNumber))
         setWithdrawalIsOpen(false);
     }
 
@@ -139,7 +140,7 @@ export default function BucketListStep2() {
                     {stepCheck.saving_account ? (
                         <div className="flex items-center justify-center w-full">
                             <span className="h-6 mr-2">
-                                <BankImg bankName={stepCheck.saving_account} />
+                                <BankImg bankName={stepCheck.saving_account} className="flex justify-center items-center"/>
                             </span>
                             <span>{stepCheck.saving_account}</span>
                         </div>

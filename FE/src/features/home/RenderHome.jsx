@@ -316,7 +316,7 @@ export default function RenderHome() {
             </div>
 
             <div className="flex justify-between w-full h-auto mt-[1px]">
-              <h2 className="ml-[20px] font-semibold text-[14px] leading-[17px] tracking-[0.01em] text-black"></h2>
+              <h2 className="ml-[5px] font-semibold text-xl text-left leading-[17px] tracking-[0.01em] text-black">위젯으로 모아보기</h2>
 
               <div
                 className="flex justify-center items-center px-[5px] py-[3px] bg-white shadow-[1px_1px_4px_rgba(0,0,0,0.1)] rounded-[30px] cursor-pointer"
@@ -352,7 +352,7 @@ export default function RenderHome() {
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...(isEditing ? provided.dragHandleProps : {})}
-                            className={`w-[calc(50%-8px)] m-1`}
+                            className={`w-[calc(50%-8px)] m-1 flex items-center`}
                             style={{
                               ...provided.draggableProps.style,
                               // 스냅샷을 이용해 드래그 중일 때의 스타일을 제어

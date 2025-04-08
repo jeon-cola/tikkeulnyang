@@ -78,6 +78,7 @@ export default function SharedLedger() {
 
   // ✅ 친구 가계부 조회
   const fetchUserLedger = async (userId) => {
+    console.log(userId)
     setBlinkList([])
     setIsOPen(false)
     const year = value.getFullYear();
@@ -88,6 +89,7 @@ export default function SharedLedger() {
       );
       const fetchedData = res.data.data.data;
       const user = userId
+      console.log(res.data)
       setSelectedUserId(user)
       setCalendarData(fetchedData);
       setViewingNickname(res.data.data.ownerNickname); // 🔥 현재 보고 있는 사람 이름 표시

@@ -85,8 +85,8 @@ export default function CardRecommend() {
       {/* 광고 이미지 */}
       <div className="w-full flex flex-row justify-between m-0 bg-[#fff0ba] rounded-2xl shadow-md p-4 ">
         <div className="flex flex-col justify-center text-lg">
-          <p className="text-left font-semibold text-[#3d3d3d]">하나카드 3월 캐시백 이벤트</p>
-          <p className="text-left text-[#3d3d3d]">이벤트 기간 3/1 ~ 3/31</p>
+          <p className="text-left font-semibold text-[#3d3d3d]">삼성카드 최대 27.8만원 혜택</p>
+          <p className="text-left text-[#3d3d3d]">이벤트 기간 4/1 ~ 4/30</p>
         </div>
         <div>
           <img src={CardCat} alt="카드 추천 고양이 이미지" />
