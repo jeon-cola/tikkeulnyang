@@ -1,6 +1,7 @@
 import Realestate from "../../assets/Realestate.png"
+import MoreIcon from "../../assets/MoreIcon.png"
 
-export default function RealEstatePage ({title, current_savings, target_amount,color, onSaving, bucketListId}) {
+export default function RealEstatePage ({title, current_savings, target_amount,color, onSaving, bucketListId, onDelete}) {
     const currentProgress = current_savings > 0 && target_amount > 0 ? Math.min((current_savings / target_amount) * 100, 100) : 0
 
     // 저축 콜백
@@ -8,8 +9,14 @@ export default function RealEstatePage ({title, current_savings, target_amount,c
         onSaving(bucketListId)
     }
 
+    // 삭제
+    function deleteHandler(bucketListId) {
+        onDelete(bucketListId)
+    }
+
     return(
-        <div className="w-full bg-white rounded-2xl shadow-md p-4 flex flex-col gap-3">
+         <div className="w-full bg-white rounded-2xl shadow-md p-4 flex flex-col gap-3 relative">
+             <img src={MoreIcon} alt="더보기 버튼" className="w-[30px] h-[30px] absolute top-2 right-2" onClick={()=>deleteHandler(bucketListId)}/>
             <div className="w-full flex flex-row">
                 <div className="w-full flex flex-col gap-6">
                     <p className="text-left font-semibold text-xl" style={{color:"#5A9821"}}>#버킷리스트</p>

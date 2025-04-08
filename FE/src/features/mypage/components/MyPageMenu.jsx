@@ -17,6 +17,7 @@ import MoreIcon from "../assets/MoreIcon.jsx";
 import CustomModal from "../../../components/CustomModal.jsx";
 import ChooseAlertModal from "../../../components/ChooseAlertModal.jsx";
 import AlertModal from "../../../components/AlertModal.jsx";
+import {setPage} from "../../challenge/ChallengeSlice.js"
 
 export default function MyPageMenu() {
   const dispatch = useDispatch();
@@ -213,20 +214,29 @@ export default function MyPageMenu() {
           {/* 챌린지 현황 */}
           <div className="relative">
             <p className="text-left pl-4 pt-4 font-semibold">챌린지 현황</p>
+
             <div className="w-[calc(100%-2rem)] mx-auto bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.15)] rounded-[25px] flex justify-between items-center p-4 mt-2">
               <div className="flex flex-col items-center w-1/3">
-                <p className="text-xl font-semibold">{pendingChallenges}</p>
-                <p className="text-sm text-gray-500">시작 전</p>
+                <Link to="/challenge/" onClick={()=>dispatch(setPage(0))} className="cursor-pointer">
+                  <p className="text-xl font-semibold">{pendingChallenges}</p>
+                  <p className="text-sm text-gray-500">시작 전</p>
+                </Link>
               </div>
+
               <div className="flex flex-col items-center w-1/3">
+              <Link to="/challenge/" onClick={()=>dispatch(setPage(1))} className="cursor-pointer">
                 <p className="text-xl font-semibold text-red-500">
                   {activeChallenges}
                 </p>
-                <p className="text-sm text-red-500">진행 중</p>
+                <p className="text-sm text-red-500 whitespace-nowrap">진행 중</p>
+              </Link>
               </div>
+              
               <div className="flex flex-col items-center w-1/3">
+              <Link to="/challenge/" onClick={()=>dispatch(setPage(2))} className="cursor-pointer">
                 <p className="text-xl font-semibold">{completedChallenges}</p>
-                <p className="text-sm text-gray-500">완료</p>
+                <p className="text-sm text-gray-500 whitespace-nowrap">완료</p>
+              </Link>
               </div>
             </div>
             {/* <div className="absolute -top-4 right-4">
