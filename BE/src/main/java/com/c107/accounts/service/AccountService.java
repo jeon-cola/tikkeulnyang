@@ -1,9 +1,11 @@
 package com.c107.accounts.service;
 
+import com.c107.accounts.dto.ServiceTransactionDto;
 import com.c107.accounts.entity.Account;
 import com.c107.accounts.entity.ServiceTransaction;
 import com.c107.accounts.repository.AccountRepository;
 import com.c107.accounts.repository.AccountTransactionRepository;
+import com.c107.accounts.repository.ServiceTransactionRepository;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
 import com.c107.user.entity.User;
@@ -15,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -28,14 +31,26 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class AccountService {
+
     @Value("${finance.api.key}")
     private String financeApiKey;
+
+    @Value("${service.account.number}")
+    private String serviceAccount;
+
+    @Value("${service.user.key}")
+    private String serviceUserKey;
+
     private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
 
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
-    private final AccountTransactionRepository accountTransactionRepository; // 내부 거래내역 기록용
-    private final TransactionRepository transactionRepository;               // 가계부 거래내역 기록용
+    private final AccountTransactionRepository accountTransactionRepository;
+    private final TransactionRepository transactionRepository;
+    private final ServiceTransactionRepository serviceTransactionRepository;
+
+    // PasswordEncoder 빈 주입
+    private final PasswordEncoder passwordEncoder;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -133,14 +148,7 @@ public class AccountService {
     }
 
     /**
-     * 거래내역 가져오기: 가계부(거래내역 테이블)에 등록된 마지막 거래일 이후의
-     * 거래내역을 각 계좌별로 Open API를 통해 조회하여 transactions 테이블에 저장.
-     * (사용자가 가져오기 버튼을 누르면 호출됨)
-     *
-     * 입금, 출금 모두 처리하며, 중복된 거래는 삽입하지 않습니다.
-     *
-     * @param loggedInUserId 로그인한 사용자 ID
-     * @param userSelectedCategoryId 사용자가 선택한 기본 카테고리 ID (가져온 거래엔 초기값으로 저장)
+     * 거래내역 가져오기 (생략 - 기존 코드와 동일)
      */
     @Transactional
     public void syncNewTransactions(Integer loggedInUserId, Integer userSelectedCategoryId) {
@@ -268,28 +276,38 @@ public class AccountService {
             }
         }
         logger.info("신규 거래내역 동기화 완료");
+        // 해당 부분은 기존 코드를 그대로 사용합니다.
     }
-
 
     /**
      * 예치금 충전 (대표계좌에서 서비스 계좌로 이체) 처리
+     * 거래 비밀번호를 검증한 후 진행합니다.
      */
     @Transactional
-    public void depositCharge(Integer loggedInUserId, String amount) {
-        String serviceAccountNo = "0018031273647742";
+    public void depositCharge(Integer loggedInUserId, String amount, String transactionPassword) {
+        User user = userRepository.findById(loggedInUserId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
+
+        // 거래 비밀번호 검증
+        if (transactionPassword == null || !passwordEncoder.matches(transactionPassword, user.getTransactionPassword())) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "거래 비밀번호가 올바르지 않습니다.");
+        }
+
         Optional<Account> repOpt = accountRepository.findByUserIdAndRepresentativeTrue(loggedInUserId);
         if (repOpt.isEmpty()) {
             throw new CustomException(ErrorCode.VALIDATION_FAILED, "대표계좌가 설정되어 있지 않습니다.");
         }
         Account representativeAccount = repOpt.get();
         String representativeAccountNo = representativeAccount.getAccountNumber();
-
-        // 충전은 userKey로 로그인한 유저의 값을 사용하므로 isRefund false
-        Map<String, Object> response = transferDeposit(loggedInUserId, serviceAccountNo, representativeAccountNo, amount, false);
-        logger.info("예치금 이체 API 응답: {}", response);
-
         int repBalance = Integer.parseInt(representativeAccount.getBalance());
         int depositAmt = Integer.parseInt(amount);
+        if (depositAmt > repBalance) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "계좌잔액이 부족합니다.");
+        }
+
+        Map<String, Object> response = transferDeposit(loggedInUserId, serviceAccount, representativeAccountNo, amount, false);
+        logger.info("예치금 이체 API 응답: {}", response);
+
         int newRepBalance = repBalance - depositAmt;
         representativeAccount.setBalance(String.valueOf(newRepBalance));
         accountRepository.save(representativeAccount);
@@ -303,14 +321,12 @@ public class AccountService {
                 .transactionType("DEPOSIT")
                 .transactionAccountNo(representativeAccountNo)
                 .transactionBalance(depositAmt)
-                .description("예치금 충전: 대표 계좌 " + representativeAccountNo + " → 서비스 계좌 " + serviceAccountNo)
+                .description("예치금 충전: 대표 계좌 " + representativeAccountNo + " → 서비스 계좌 " + serviceAccount)
                 .transactionAfterBalance(newRepBalance)
                 .build();
         accountTransactionRepository.save(transaction);
         logger.info("예치금 충전 거래내역 기록됨: {}", transaction);
 
-        User user = userRepository.findById(loggedInUserId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
         int currentDeposit = (user.getDeposit() != null ? user.getDeposit() : 0);
         int newDeposit = currentDeposit + depositAmt;
         user.setDeposit(newDeposit);
@@ -322,14 +338,14 @@ public class AccountService {
     }
 
     /**
-     * 예치금 환불 (서비스 계좌에서 사용자 대표계좌로 이체) 처리
+     * 예치금 환불 (생략 - 기존 코드와 동일)
      */
     @Transactional
     public void refundDeposit(Integer loggedInUserId, String amount) {
         User user = userRepository.findById(loggedInUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
         int currentDeposit = (user.getDeposit() != null ? user.getDeposit() : 0);
-        int refundAmt = Integer.parseInt(amount);
+        int refundAmt = (int) Long.parseLong(amount);
         if (refundAmt > currentDeposit) {
             throw new CustomException(ErrorCode.VALIDATION_FAILED, "환불 요청 금액이 예치금보다 많습니다.");
         }
@@ -340,10 +356,8 @@ public class AccountService {
         }
         Account representativeAccount = repOpt.get();
         String representativeAccountNo = representativeAccount.getAccountNumber();
-        String serviceAccountNo = "0018031273647742";
 
-        // 환불은 고정 userKey를 사용하므로 isRefund true
-        Map<String, Object> response = transferDeposit(loggedInUserId, representativeAccountNo, serviceAccountNo, amount, true);
+        Map<String, Object> response = transferDeposit(loggedInUserId, representativeAccountNo, serviceAccount, amount, true);
         logger.info("환불 이체 API 응답: {}", response);
 
         int repBalance = Integer.parseInt(representativeAccount.getBalance());
@@ -360,7 +374,7 @@ public class AccountService {
                 .transactionType("REFUND")
                 .transactionAccountNo(representativeAccountNo)
                 .transactionBalance(refundAmt)
-                .description("예치금 환불: 서비스 계좌 " + serviceAccountNo + " → 대표 계좌 " + representativeAccountNo)
+                .description("예치금 환불: 서비스 계좌 " + serviceAccount + " → 대표 계좌 " + representativeAccountNo)
                 .transactionAfterBalance(newRepBalance)
                 .build();
         accountTransactionRepository.save(transaction);
@@ -373,11 +387,11 @@ public class AccountService {
 
         List<Account> updatedAccounts = refreshAccounts(loggedInUserId);
         logger.info("계좌 잔액 동기화 완료: {}", updatedAccounts);
+        // 예치금 환불 처리 기존 코드를 그대로 사용합니다.
     }
 
     /**
      * 예치금 이체 Open API 호출 (transferDeposit)
-     * isRefund 플래그를 이용해 환불 시 고정 userKey를 사용합니다.
      */
     @Transactional
     public Map<String, Object> transferDeposit(Integer loggedInUserId,
@@ -387,8 +401,9 @@ public class AccountService {
                                                boolean isRefund) {
         User user = userRepository.findById(loggedInUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
-        // 환불인 경우 지정된 userKey, 아니면 로그인한 유저의 userKey 사용
-        String userKey = isRefund ? "c2158201-76d8-4753-b517-bf14056da5e9" : user.getFinanceUserKey();
+        // 환불인 경우 지정된 userKey, 아니면 로그인한 사용자의 userKey 사용
+        String userKey = isRefund ? serviceUserKey : user.getFinanceUserKey();
+        logger.warn("transferDeposit userKey 사용 값: {}", userKey);
 
         LocalDateTime now = LocalDateTime.now();
         String transmissionDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
@@ -421,7 +436,6 @@ public class AccountService {
 
         String url = "https://finopenapi.ssafy.io/ssafy/api/v1/edu/demandDeposit/updateDemandDepositAccountTransfer";
         logger.info("예치금 이체 요청 시작: {}", LocalDateTime.now());
-
         ResponseEntity<Map> responseEntity = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Map.class);
         Map<String, Object> responseMap = responseEntity.getBody();
 
@@ -433,9 +447,8 @@ public class AccountService {
         return responseMap;
     }
 
-
     /**
-     * 등록된 계좌 중 대표계좌를 설정하는 기능
+     * 등록된 계좌 중 대표계좌 설정 기능
      */
     @Transactional
     public void setRepresentativeAccount(Integer loggedInUserId, String accountNo) {
@@ -445,7 +458,6 @@ public class AccountService {
         if (!exists) {
             throw new CustomException(ErrorCode.VALIDATION_FAILED, "해당 계좌번호는 로그인한 사용자의 계좌가 아닙니다.");
         }
-
         for (Account account : accounts) {
             account.setRepresentative(account.getAccountNumber().equals(accountNo));
             accountRepository.save(account);
@@ -454,7 +466,7 @@ public class AccountService {
     }
 
     /**
-     * 서비스 계좌의 ID를 가져오는 헬퍼 메서드
+     * 서비스 계좌 ID 가져오기 헬퍼 메서드
      */
     public Integer getServiceAccountId() {
         Optional<Account> serviceAccount = accountRepository.findByUserIdIsNullAndAccountType("SERVICE");
@@ -464,11 +476,12 @@ public class AccountService {
         throw new CustomException(ErrorCode.NOT_FOUND, "서비스 계좌가 등록되어 있지 않습니다.");
     }
 
-    // 계좌 조회
+    /**
+     * 계좌 조회
+     */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getAccountList(Integer userId) {
         List<Account> accounts = accountRepository.findByUserId(userId);
-
         return accounts.stream()
                 .map(account -> {
                     Map<String, Object> accountMap = new HashMap<>();
@@ -480,6 +493,28 @@ public class AccountService {
                     accountMap.put("representative", account.isRepresentative());
                     return accountMap;
                 })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 내역 조회
+     */
+    @Transactional(readOnly = true)
+    public List<ServiceTransactionDto> getServiceTransactions(Integer userId) {
+        List<String> validCategories = Arrays.asList(
+                "DEPOSIT_CHARGE",
+                "DEPOSIT_REFUND",
+                "CHALLENGE_JOIN",
+                "CHALLENGE_DELETE_REFUND",
+                "CHALLENGE_SETTLE_REFUND"
+        );
+        List<ServiceTransaction> transactions = serviceTransactionRepository.findByUserIdAndCategoryIn(userId, validCategories);
+        return transactions.stream()
+                .map(tx -> ServiceTransactionDto.builder()
+                        .transactionDate(tx.getTransactionDate())
+                        .category(tx.getCategory())
+                        .description(tx.getDescription())
+                        .build())
                 .collect(Collectors.toList());
     }
 }

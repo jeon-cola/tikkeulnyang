@@ -15,36 +15,40 @@ java {
 
 repositories {
 	mavenCentral()
-	// Spring Cloud AWS 관련 아티팩트가 있을 수 있으므로 추가
-	maven { url "https://repo.spring.io/release" }
+	maven { url "https://repo.spring.io/release" } // Spring Cloud AWS용
 }
 
 dependencies {
 	// 기본 스타터 및 공통 의존성
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.674'
+	// Redis 관련 추가
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+
+	// Micrometer Prometheus - ⭐ Prometheus 연동 핵심
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 
 	// Spring Boot Starters
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
 	// Database
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
-	// DevTools (핫 리로드 기능)
+	// DevTools (핫 리로드)
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-	// Lombok (중복 선언 제거 - 버전만 한 번 지정)
+	// Lombok
 	compileOnly 'org.projectlombok:lombok:1.18.30'
 	annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
-	// Testing (중복 선언 제거)
+	// Testing
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
@@ -53,12 +57,18 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.2'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.2'
 
-	// Jakarta Bean Validation API
+	// Jakarta Bean Validation
 	implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
 	implementation 'org.hibernate.validator:hibernate-validator:8.0.0.Final'
 	implementation 'org.glassfish:jakarta.el:4.0.2'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
+	// 로그 연동
 	implementation 'org.slf4j:jul-to-slf4j:2.0.7'
+
+	// Micrometer Prometheus Registry
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {

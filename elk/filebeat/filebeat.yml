@@ -1,0 +1,33 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/spring-boot/*.log
+    fields:
+      type: spring-boot
+    json.keys_under_root: true
+    json.add_error_key: true
+  
+  - type: container
+    enabled: true
+    paths:
+      - /var/lib/docker/containers/*/*.log
+    fields:
+      type: docker
+
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: true
+
+processors:
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+  - add_host_metadata:
+      netinfo.enabled: true
+
+output.logstash:
+  hosts: ["logstash:5044"]
+
+logging.json: true
+logging.metrics.enabled: false

@@ -1,6 +1,7 @@
 package com.c107.accounts.controller;
 
 import com.c107.accounts.dto.DepositChargeRequest;
+import com.c107.accounts.dto.ServiceTransactionDto;
 import com.c107.accounts.service.AccountService;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
@@ -35,7 +36,7 @@ public class AccountController {
         return ResponseEntity.ok(updatedAccounts);
     }
 
-    // 예치금 충전
+    // 예치금 충전 (거래 비밀번호 추가)
     @PostMapping("/deposit-charge")
     public ResponseEntity<String> depositCharge(Authentication authentication,
                                                 @RequestBody DepositChargeRequest depositChargeRequest) {
@@ -44,7 +45,9 @@ public class AccountController {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
         Integer userId = user.getUserId();
 
-        accountService.depositCharge(userId, depositChargeRequest.getAmount());
+        // DepositChargeRequest DTO에 거래 비밀번호가 포함되어 있다고 가정합니다.
+        accountService.depositCharge(userId, depositChargeRequest.getAmount(),
+                depositChargeRequest.getTransactionPassword());
         return ResponseEntity.ok("예치금 충전 요청이 완료되었습니다.");
     }
 
@@ -83,14 +86,6 @@ public class AccountController {
         return ResponseEntity.ok("신규 거래내역 동기화 요청이 완료되었습니다.");
     }
 
-    // 공통 로직: 인증 객체에서 이메일 추출
-    private String getEmailFromAuthentication(Authentication authentication) {
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다.");
-        }
-        return (String) authentication.getPrincipal();
-    }
-
     // 계좌 조회
     @GetMapping("/list")
     public ResponseEntity<Map<String, Object>> getAccountList(Authentication authentication) {
@@ -102,4 +97,25 @@ public class AccountController {
         List<Map<String, Object>> accountList = accountService.getAccountList(userId);
         return ResponseUtil.success("계좌 목록 조회 성공", Map.of("accounts", accountList));
     }
+
+    // 내역 조회
+    @GetMapping("/service-transactions")
+    public ResponseEntity<List<ServiceTransactionDto>> getServiceTransactions(Authentication authentication) {
+        String email = getEmailFromAuthentication(authentication);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
+
+        List<ServiceTransactionDto> dtoList = accountService.getServiceTransactions(user.getUserId());
+        return ResponseEntity.ok(dtoList);
+    }
+
+    // 공통 로직: 인증 객체에서 이메일 추출
+    private String getEmailFromAuthentication(Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
+        return (String) authentication.getPrincipal();
+    }
+
+
 }

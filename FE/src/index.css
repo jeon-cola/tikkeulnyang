@@ -1,5 +1,13 @@
+@font-face {
+  font-family: "Pretendard";
+  src: url("./assets/fonts/pretendard/PretendardVariable.ttf");
+}
+
+* {
+  font-family: "Pretendard";
+}
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* font-family: system-ui, Avenir, Helvetica, Arial, sans-serif; */
   line-height: 1.5;
   font-weight: 400;
 
@@ -38,7 +46,7 @@ a {
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: #ff957a;
 }
 
 body {
@@ -55,31 +63,6 @@ h1 {
   line-height: 1.1;
 }
 
-/* 프리텐다드 폰트 추가 */
-p {
-  font-family: "Pretendard-medium";
-}
-
-/* 일반 버튼 */
-/* button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 23px;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #ff957a;
-  color: white;
-  cursor: pointer;
-  transition: all 0.25s;
-  height: 43px;
-  width: 125px;
-  white-space: nowrap;
-} */
-
 .customButton {
   display: flex;
   justify-content: center;
@@ -93,6 +76,26 @@ p {
   font-family: inherit;
   background-color: #ff957a;
   color: white;
+  cursor: pointer;
+  transition: all 0.25s;
+  height: 43px;
+  width: 125px;
+  white-space: nowrap;
+}
+
+.customWhiteButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border-radius: 100px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 23px;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #f3f4f6;
+  color: #4e5966;
   cursor: pointer;
   transition: all 0.25s;
   height: 43px;
@@ -116,24 +119,6 @@ p {
   border-radius: 100px;
 }
 
-/* 작은 버튼 */
-.blackButton {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  text-align: center;
-  color: white;
-  background: #3d3d3d;
-  border: none;
-  border-radius: 100px;
-  width: auto;
-  height: 25px;
-  font-family: "Pretendard-thin";
-  font-size: 10px;
-  font-weight: 500;
-  padding: 2px 15px;
-}
-
 .smallButton {
   display: flex;
   flex-direction: row;
@@ -150,7 +135,6 @@ p {
   font-weight: 500;
   padding: 2px 15px;
 }
-
 
 .smallWhiteButton {
   display: flex;
@@ -171,34 +155,95 @@ p {
   transition: background-color 0.2s ease;
 }
 
+/* 작은 버튼 */
+.blackButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: white;
+  background: #3d3d3d;
+  border: none;
+  border-radius: 100px;
+  width: auto;
+  height: 27px;
+  font-family: "Pretendard-thin";
+  font-size: 15px;
+  font-weight: 300;
+  padding: 2px 15px;
+}
+
+.blackButton:active {
+  background-color: #242424;
+}
 
 /* 작은 버튼 */
 .whiteButton {
   display: flex;
-  flex-direction: row;
+  justify-content: center;
   align-items: center;
   text-align: center;
   color: #3d3d3d;
   background: white;
   border-radius: 100px;
   width: auto;
-  height: 25px;
+  height: 27px;
   font-family: "Pretendard-thin";
-  font-size: 10px;
+  font-size: 15px !important;
   font-weight: 500;
   padding: 2px 15px;
   /* 그림자효과 */
-  box-shadow: 1px 1px 2px 0px rgba(0, 0, 0, 15%);
+  box-shadow: 2px 2px 2px 0px rgba(0, 0, 0, 20%);
 }
 
+.whiteButton:active {
+  background-color: white;
+}
+
+.greyButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #3d3d3d;
+  background: #d9d9d9;
+  border: none;
+  border-radius: 100px;
+  width: auto;
+  height: 30px;
+  font-family: "Pretendard-thin";
+  font-size: 13px;
+  font-weight: 500;
+  padding: 2px 15px;
+}
+
+.tikkeulButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #3d3d3d;
+  background: #ff957a;
+  border: none;
+  border-radius: 100px;
+  width: auto;
+  height: 30px;
+  font-family: "Pretendard-thin";
+  font-size: 13px;
+  font-weight: 500;
+  padding: 2px 15px;
+}
 button:hover {
   border-color: #646cff;
 }
-button:focus,
-button:focus-visible {
+/* 이 기능이 있으면 달력에서 네모가 생깁니다.. 없앨 수 있을까요? */
+/* button:not(.blackButton):not(.whiteButton):not(.customWhiteButton):focus,
+button:not(.blackButton):not(.whiteButton):not(
+    .customWhiteButton
+  ):focus-visible {
   background-color: #e87c62;
   outline: 4px auto;
-}
+} */
 
 @media (prefers-color-scheme: light) {
   :root {

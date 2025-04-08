@@ -9,6 +9,7 @@ import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
 import com.c107.common.util.ResponseUtil;
 import com.c107.s3.service.S3Service;
+import com.c107.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +46,13 @@ public class ChallangeController {
         }
         challengeService.deleteChallenge(challengeId);
         return ResponseEntity.ok("챌린지가 삭제되었습니다.");
+    }
+
+    // 추천 챌린지 조회 엔드포인트 (소비 내역 기반 추천)
+    @GetMapping("/recommend")
+    public ResponseEntity<List<ChallengeResponseDto>> recommendChallenges() {
+        List<ChallengeResponseDto> recommendations = challengeService.recommendChallengesForUser();
+        return ResponseEntity.ok(recommendations);
     }
 
     // 챌린지 수정 (항상 예외 발생)
@@ -121,6 +129,19 @@ public class ChallangeController {
             e.printStackTrace();
             return ResponseUtil.badRequest("파일 업로드 실패", null);
         }
+    }
+
+    @GetMapping("/settlement-alert")
+    public ResponseEntity<List<PastChallengeResponseDto>> getSettlementAlert() {
+        List<PastChallengeResponseDto> alerts = challengeService.getUnnotifiedResults();
+        return ResponseEntity.ok(alerts);
+    }
+
+    @PatchMapping("/settlement-alert")
+    public ResponseEntity<String> markSettlementAlertAsRead() {
+        User user = challengeService.getAuthenticatedUser();
+        challengeService.markAsNotified(user.getUserId());
+        return ResponseEntity.ok("알림 확인됨");
     }
 
 

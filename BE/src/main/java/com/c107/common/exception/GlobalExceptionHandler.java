@@ -37,22 +37,34 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleBadRequestException(Exception ex) {
         logger.error("BadRequestException 발생", ex);
         Map<String, Object> errors = new HashMap<>();
+        String message = ex.getMessage(); // 💡 핵심!
+
         if (ex instanceof MethodArgumentNotValidException) {
             BindingResult bindingResult = ((MethodArgumentNotValidException) ex).getBindingResult();
             bindingResult.getFieldErrors().forEach(error ->
                     errors.put(error.getField(), error.getDefaultMessage())
             );
+            message = "입력값이 유효하지 않습니다.";
         }
-        return ResponseUtil.badRequest("잘못된 요청입니다.", errors.isEmpty() ? null : errors);
+
+        return ResponseUtil.badRequest(message, errors.isEmpty() ? null : errors);
     }
+
 
     // CustomException 처리
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<Map<String, Object>> handleCustomException(CustomException ex) {
+    public ResponseEntity<String> handleCustomException(CustomException ex) {
         logger.error("CustomException 발생: {}", ex.getMessage(), ex);
         ErrorCode errorCode = ex.getErrorCode();
-        return ResponseUtil.serverError(errorCode.getMessage(), null, errorCode.getHttpStatus());
+        if (errorCode == ErrorCode.VALIDATION_FAILED) {
+            // HTTP 400과 함께 단순 메시지만 반환합니다.
+            return new ResponseEntity<>(ex.getMessage(), errorCode.getHttpStatus());
+        }
+        // 그 외의 경우 기본 처리 (필요에 따라 수정)
+        return new ResponseEntity<>(ex.getMessage(), errorCode.getHttpStatus());
     }
+
+
 
     // 그 외 모든 Exception 처리 (500 Internal Server Error)
     @ExceptionHandler(Exception.class)

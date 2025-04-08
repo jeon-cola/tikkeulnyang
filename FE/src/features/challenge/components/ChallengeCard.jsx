@@ -17,6 +17,8 @@ export default function ChallengeCard({
   startDate,
   endDate,
   challengeId,
+  width = "168px",
+  height = "207px",
 }) {
   const navigate = useNavigate();
 
@@ -27,32 +29,57 @@ export default function ChallengeCard({
   return (
     <div
       onClick={handleClick} // 클릭시 상세 페이지로 넘어간다.
-      className="relative w-[168px] h-[207px] bg-white shadow-[1px_1px_5px_rgba(0,0,0,0.05)] rounded-[6px] overflow-hidden"
+      className={`relative bg-white shadow-md rounded-lg overflow-hidden`}
+      style={{ width, height }}
     >
+      {/**
+       *
+       * Version 1
+       *
       {/* 이미지 영역 */}
-      <div
+      {/* <div
         className="absolute w-[168px] h-[129px] left-0 top-0"
         style={{
           backgroundImage: `url(${thumbnailUrl})`,
           backgroundSize: "cover",
         }}
-      ></div>
+      ></div> */}
 
       {/* 챌린지 타입*/}
-      <div className="absolute w-[48px] h-[13px] left-[7px] top-[134px] font-['Pretendard'] font-normal text-[11px] leading-[13px] text-black">
+      {/* <div className="absolute w-[48px] h-[13px] left-[7px] top-[134px] font-['Pretendard'] font-normal text-[11px] leading-[13px] text-black">
         {type}
-      </div>
+      </div> */}
 
       {/* 카페 방문 줄이기 제목 */}
-      <div className="absolute w-[86px] h-[16px] left-[7px] top-[156px] font-['Pretendard'] font-normal text-[13px] leading-[16px] text-black">
+      {/* <div className="absolute w-[86px] h-[16px] left-[7px] top-[156px] font-['Pretendard'] font-normal text-[13px] leading-[16px] text-black">
         {title}
-      </div>
+      </div> */}
 
       {/* 날짜 표시*/}
-      <div className="absolute w-[67px] h-[11px] left-[94px] top-[188px] bg-[#DFDFDF] shadow-[0px_1px_1.5px_rgba(0,0,0,0.25)] rounded-[6px] flex items-center justify-center">
+      {/* <div className="absolute w-[67px] h-[11px] left-[94px] top-[188px] bg-[#DFDFDF] shadow-[0px_1px_1.5px_rgba(0,0,0,0.25)] rounded-[6px] flex items-center justify-center">
         <span className="font-['Pretendard'] font-normal text-[7px] leading-[8px] text-black">
           {startDate} ~ {endDate}
         </span>
+      </div> */}
+
+      {/**
+       *
+       * Version 2
+       *
+       * */}
+      <div
+        className="w-[168px] h-[65%]"
+        style={{
+          backgroundImage: `url(${thumbnailUrl})`,
+          backgroundSize: "cover",
+        }}
+      ></div>
+      <div className="px-3 py-2 text-left flex-1 flex flex-col gap-1">
+        <div className="text-md font-semibold leading-[16px]">{title}</div>
+
+        <div class="text-xs text-gray-400 font-semibold">
+          {startDate} ~ {endDate}
+        </div>
       </div>
     </div>
   );
