@@ -10,6 +10,8 @@ public class BucketSavingDto {
     @Builder
     public static class Request {
         private Integer bucketId;
+        // 추가: 사용자가 입력하는 6자리 거래 비밀번호 (평문)
+        private String transactionPassword;
     }
 
     @Getter

@@ -3,7 +3,7 @@
   max-width: 100%;
   border: none !important;
   font-family: "Pretendard-Regular";
-  padding-top: 20px;
+  padding-top: 10px;
   padding-bottom: 20px;
   border-radius: 6px;
 }
@@ -67,14 +67,14 @@
   background-color: #ff957a;
 }
 
-.react-calendar__navigation {
-  justify-content: flex-start !important; /* 전체 영역 왼쪽 정렬 */
-}
+/* .react-calendar__navigation {
+  justify-content: flex-start !important;
+} */
 
 .react-calendar__navigation__label {
   font-size: 20px;
   text-align: left !important;
-  flex-grow: 0 !important; /* 자동으로 가운데로 확장되는 걸 방지 */
+  flex-grow: 0 !important;
 }
 
 /* 빨간색 주말 날짜 -> 검정색으로 표시 */
@@ -94,6 +94,11 @@
   color: #ff957a !important;
 }
 
+/* 오늘이 일요일이면서 선택된 경우 텍스트 색상을 흰색으로 설정 */
+.react-calendar__tile--now.react-calendar__tile--active.current-month-sunday {
+  color: white !important;
+}
+
 /*월 화 수 목 금 토 일 밑줄 없애기*/
 .react-calendar__month-view__weekdays__weekday abbr {
   text-decoration: none;
@@ -109,6 +114,7 @@
 
 .react-calendar__tile:hover {
   background-color: transparent !important;
+  border: none !important;
 }
 /* 작았다가 커지는 원 애니메이션 효과 */
 @keyframes growCircle {

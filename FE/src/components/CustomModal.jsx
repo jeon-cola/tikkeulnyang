@@ -30,7 +30,7 @@ export default function CustomModal({isOpen, onClose, title,children}) {
       className="fixed inset-0 z-10 bg-[#525252]/40 flex items-end justify-center"
     >
       <div // 모달 하얀색 박스
-        className={`relative bg-white w-full min-h-[460px] max-w-md p-3 rounded-t-3xl transform transition-transform duration-300 flex flex-col ${animationClass} gap-3`}
+        className={`relative bg-white w-full min-h-[460px] w-full p-3 rounded-t-3xl transform transition-transform duration-300 flex flex-col ${animationClass} gap-3`}
       >
         <div className="w-full flex flex-row justify-center">
             <h2 className="text-2xl font-semibold">{title}</h2>

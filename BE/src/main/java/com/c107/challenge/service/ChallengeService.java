@@ -13,15 +13,21 @@ import com.c107.challenge.repository.ChallengeRepository;
 import com.c107.challenge.repository.UserChallengeRepository;
 import com.c107.common.exception.CustomException;
 import com.c107.common.exception.ErrorCode;
+import com.c107.paymenthistory.entity.CategoryEntity;
+import com.c107.paymenthistory.repository.CategoryRepository;
 import com.c107.s3.entity.S3Entity;
 import com.c107.s3.repository.S3Repository;
+import com.c107.transactions.entity.Transaction;
+import com.c107.transactions.repository.TransactionRepository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
@@ -32,7 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,20 +46,22 @@ import java.util.stream.Collectors;
 public class ChallengeService {
 
     private static final Logger logger = LoggerFactory.getLogger(ChallengeService.class);
-
     private static final String DEFAULT_THUMBNAIL_URL = "https://my-catcat-bucket.s3.us-east-2.amazonaws.com/default/CloseIcon.png";
+
     private final ChallengeRepository challengeRepository;
     private final UserChallengeRepository userChallengeRepository;
     private final UserRepository userRepository;
     private final AccountTransactionRepository accountTransactionRepository;
-    // AccountService 주입 (서비스 계좌 ID를 가져오기 위해)
     private final AccountService accountService;
     private final S3Repository s3Repository;
+    private final TransactionRepository transactionRepository;
+    private final CategoryRepository categoryRepository;
 
     // 챌린지 생성 (로그인한 유저 정보 자동 등록)
     @Transactional
     public ChallengeResponseDto createChallenge(CreateChallengeRequest request) {
         String createdBy = getAuthenticatedUserEmail();
+        User user = getAuthenticatedUser();
         boolean isAdmin = isAdmin();
 
         LocalDateTime now = LocalDateTime.now();
@@ -62,6 +70,14 @@ public class ChallengeService {
             throw new CustomException(ErrorCode.VALIDATION_FAILED,
                     "챌린지는 등록 후 최소 하루 뒤 자정(00:00)부터 시작할 수 있습니다.");
         }
+
+        if (user.getDeposit() < request.getTargetAmount()) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "예치금이 부족하여 챌린지를 생성할 수 없습니다.");
+        }
+
+        // 챌린지 생성 시 예치금 차감
+        user.setDeposit(user.getDeposit() - request.getTargetAmount());
+        userRepository.save(user);
 
         ChallengeEntity entity = ChallengeEntity.builder()
                 .challengeName(request.getChallengeName())
@@ -83,6 +99,34 @@ public class ChallengeService {
                 .build();
 
         ChallengeEntity saved = challengeRepository.save(entity);
+
+        // 생성과 동시에 자동 참여 처리 (상태 "진행중")
+        UserChallengeEntity participation = UserChallengeEntity.builder()
+                .challenge(saved)
+                .challengeName(saved.getChallengeName())
+                .userId(user.getUserId())
+                .depositAmount(request.getTargetAmount())
+                .status("진행중")
+                .createdAt(now)
+                .updatedAt(now)
+                .spendAmount(0)
+                .build();
+        userChallengeRepository.save(participation);
+
+        // 서비스 거래내역 기록
+        ServiceTransaction joinTx = ServiceTransaction.builder()
+                .accountId(accountService.getServiceAccountId())
+                .userId(user.getUserId())
+                .transactionDate(now)
+                .category("CHALLENGE_JOIN")
+                .transactionType("WITHDRAW")
+                .transactionBalance(request.getTargetAmount())
+                .transactionAfterBalance(user.getDeposit())
+                .description("챌린지 참여: " + saved.getChallengeName() + " 참여로 예치금 차감")
+                .build();
+        accountTransactionRepository.save(joinTx);
+        logger.info("챌린지 생성 및 자동 참여 완료: 챌린지 ID = {}, 남은 예치금 = {}", saved.getChallengeId(), user.getDeposit());
+
         return mapToDto(saved);
     }
 
@@ -101,8 +145,37 @@ public class ChallengeService {
             throw new CustomException(ErrorCode.UNAUTHORIZED, "삭제 권한이 없습니다.");
         }
 
+        List<UserChallengeEntity> participations = userChallengeRepository
+                .findByChallenge_ChallengeIdAndStatus(challengeId, "진행중");
+        for (UserChallengeEntity participation : participations) {
+            User user = userRepository.findById(participation.getUserId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보를 찾을 수 없습니다."));
+            int refundAmount = participation.getDepositAmount();
+            user.setDeposit(user.getDeposit() + refundAmount);
+            userRepository.save(user);
+
+            participation.setStatus("취소");
+            participation.setUpdatedAt(LocalDateTime.now());
+            userChallengeRepository.save(participation);
+
+            ServiceTransaction refundTx = ServiceTransaction.builder()
+                    .accountId(accountService.getServiceAccountId())
+                    .userId(user.getUserId())
+                    .transactionDate(LocalDateTime.now())
+                    .category("CHALLENGE_DELETE_REFUND")
+                    .transactionType("REFUND")
+                    .transactionBalance(refundAmount)
+                    .transactionAfterBalance(user.getDeposit())
+                    .description("챌린지 삭제로 인한 예치금 환불")
+                    .build();
+            accountTransactionRepository.save(refundTx);
+            logger.info("환불 거래내역 기록됨: {}", refundTx);
+        }
+
+        // 논리 삭제 처리
         challenge.setDeleted(true);
         challengeRepository.save(challenge);
+        logger.info("챌린지 삭제 완료: ID = {}, Name = {}", challenge.getChallengeId(), challenge.getChallengeName());
     }
 
     // 챌린지 수정은 항상 불가능
@@ -111,17 +184,29 @@ public class ChallengeService {
         throw new CustomException(ErrorCode.UNAUTHORIZED, "챌린지는 수정할 수 없습니다.");
     }
 
+    // 공식 챌린지 조회: soft delete되지 않고, activeFlag가 false이며, 종료일이 오늘 이후(또는 오늘 포함)인 챌린지
     public Page<ChallengeResponseDto> getOfficialChallenges(int page, int size) {
-        Page<ChallengeEntity> challenges = challengeRepository.findByChallengeTypeAndDeleted("공식챌린지", false, PageRequest.of(page, size));
-        return challenges.map(this::mapToDto);
+        Page<ChallengeEntity> challenges = challengeRepository
+                .findByChallengeTypeAndDeletedFalseAndActiveFlagFalseAndEndDateGreaterThanEqual(
+                        "공식챌린지", LocalDate.now(), PageRequest.of(page, size));
+        List<ChallengeResponseDto> dtos = challenges.getContent().stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+        return new PageImpl<>(dtos, challenges.getPageable(), challenges.getTotalElements());
     }
 
+    // 유저 챌린지 조회: 위와 동일 조건 적용
     public Page<ChallengeResponseDto> getUserChallenges(int page, int size) {
-        Page<ChallengeEntity> challenges = challengeRepository.findByChallengeTypeAndDeleted("유저챌린지", false, PageRequest.of(page, size));
-        return challenges.map(this::mapToDto);
+        Page<ChallengeEntity> challenges = challengeRepository
+                .findByChallengeTypeAndDeletedFalseAndActiveFlagFalseAndEndDateGreaterThanEqual(
+                        "유저챌린지", LocalDate.now(), PageRequest.of(page, size));
+        List<ChallengeResponseDto> dtos = challenges.getContent().stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+        return new PageImpl<>(dtos, challenges.getPageable(), challenges.getTotalElements());
     }
 
-    // 인증 정보에서 로그인한 사용자 이메일 조회 (UserDetails 혹은 String으로 처리)
+    // 인증 정보에서 로그인한 사용자 이메일 조회
     private String getAuthenticatedUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal() == null) {
@@ -140,8 +225,9 @@ public class ChallengeService {
         throw new CustomException(ErrorCode.UNAUTHORIZED, "유효하지 않은 사용자 정보입니다.");
     }
 
+    //
     // 로그인한 User 객체 조회
-    private User getAuthenticatedUser() {
+    public User getAuthenticatedUser() {
         String email = getAuthenticatedUserEmail();
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보를 찾을 수 없습니다."));
@@ -178,16 +264,22 @@ public class ChallengeService {
 
     private void activatePendingChallenges() {
         LocalDate today = LocalDate.now();
-        List<ChallengeEntity> challenges = challengeRepository.findByStartDateBeforeAndActiveFlagFalse(today);
+        // startDate가 오늘보다 이후면 아직 시작 안한 것으로 간주: !startDate.isAfter(today)
+        List<ChallengeEntity> challenges = challengeRepository.findByStartDateBeforeAndActiveFlagFalse(today.plusDays(1));
         for (ChallengeEntity challenge : challenges) {
-            challenge.setActiveFlag(true);
-            challengeRepository.save(challenge);
-            logger.debug("챌린지 활성화됨: ID = {}, Name = {}", challenge.getChallengeId(), challenge.getChallengeName());
+            if (!challenge.getDeleted()) { // soft delete된 건 제외
+                // 오늘이 시작일과 같거나 지난 경우 활성화
+                if (!challenge.getStartDate().isAfter(today)) {
+                    challenge.setActiveFlag(true);
+                    challengeRepository.save(challenge);
+                    logger.debug("챌린지 활성화됨: ID = {}, Name = {}", challenge.getChallengeId(), challenge.getChallengeName());
+                }
+            }
         }
     }
 
-    private ChallengeResponseDto mapToDto(ChallengeEntity entity) {
 
+    private ChallengeResponseDto mapToDto(ChallengeEntity entity) {
         String thumbnailUrl = s3Repository
                 .findTopByUsageTypeAndUsageIdOrderByCreatedAtDesc("CHALLENGE", entity.getChallengeId())
                 .map(S3Entity::getUrl)
@@ -213,11 +305,6 @@ public class ChallengeService {
 
     // ------------------ 챌린지 참여/취소 및 결과 처리 ------------------
 
-    /**
-     * 챌린지 참여
-     * 로그인한 사용자가 참여할 챌린지가 아직 시작 전이면,
-     * 챌린지의 targetAmount만큼 예치금이 차감되고 참여 기록과 거래내역이 생성됩니다.
-     */
     @Transactional
     public void joinChallenge(Integer challengeId) {
         User user = getAuthenticatedUser();
@@ -254,7 +341,6 @@ public class ChallengeService {
         userChallengeRepository.save(participation);
         logger.info("챌린지 참여 기록 생성됨: {}", participation);
 
-        // 거래내역 기록 (챌린지 참여) - AccountService의 public getServiceAccountId() 사용
         ServiceTransaction joinTx = ServiceTransaction.builder()
                 .accountId(accountService.getServiceAccountId())
                 .userId(user.getUserId())
@@ -269,10 +355,6 @@ public class ChallengeService {
         logger.info("챌린지 참여 거래내역 기록됨: {}", joinTx);
     }
 
-    /**
-     * 챌린지 참여 취소
-     * 챌린지 시작 전인 경우에만 취소 가능하며, 차감된 예치금을 환불하고 거래내역을 기록합니다.
-     */
     @Transactional
     public void cancelChallengeParticipation(Integer challengeId) {
         User user = getAuthenticatedUser();
@@ -296,7 +378,6 @@ public class ChallengeService {
         userChallengeRepository.save(participation);
         logger.info("챌린지 참여 취소 완료: {}", participation);
 
-        // 거래내역 기록 (챌린지 참여 취소 환불)
         ServiceTransaction cancelTx = ServiceTransaction.builder()
                 .accountId(accountService.getServiceAccountId())
                 .userId(user.getUserId())
@@ -320,76 +401,93 @@ public class ChallengeService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 챌린지 상세조회
-     * - 챌린지 기본 정보
-     * - 참가자 수
-     * - 각 참가자의 과거 챌린지 성공률을 계산하여 아래 구간별 분포 산출:
-     *      100~85%, 84~50%, 49~25%, 24~0%
-     * - 전체 참가자의 평균 성공률 산출
-     */
-    @Transactional(readOnly = true)
+    @Transactional
     public ChallengeDetailResponseDto getChallengeDetail(Integer challengeId) {
-        // 챌린지 기본 정보 조회
         ChallengeEntity challenge = findChallengeById(challengeId);
-        // 현재 이 챌린지에 참가한(참가 상태가 "진행중") 모든 참가자 조회
         List<UserChallengeEntity> participants = userChallengeRepository.findByChallenge_ChallengeIdAndStatus(challengeId, "진행중");
 
-        // 각 참가자의 과거 챌린지 참여 내역(진행중 제외)을 통해 성공률 계산
-        double totalSuccessRateSum = 0.0;
+        // ✅ 로그인한 유저
+        User currentUser = getAuthenticatedUser();
+        Integer myUserId = currentUser.getUserId();
+        int mySpendingAmount;
+
+        logger.debug("📍 challenge.getEndDate()={}, LocalDate.now()={}", challenge.getEndDate(), LocalDate.now());
+
+        // ✅ 챌린지 기간이면 실시간 계산 + DB에 최신화
+        if (challenge.getEndDate().isAfter(LocalDate.now())) {
+            int freshSpending = calculateUserSpendingForChallengeCategory(challenge, myUserId);
+            logger.info("💸 계산된 소비 금액 = {}", freshSpending);
+
+            mySpendingAmount = freshSpending;
+
+            UserChallengeEntity myParticipation = participants.stream()
+                    .filter(p -> p.getUserId() == myUserId)
+                    .findFirst()
+                    .orElse(null);
+            if (myParticipation != null) {
+                myParticipation.setSpendAmount(freshSpending);
+                myParticipation.setUpdatedAt(LocalDateTime.now());
+                userChallengeRepository.save(myParticipation);
+                userChallengeRepository.flush();
+                logger.info("✅ spendAmount 업데이트됨: {}", freshSpending);
+            }
+        } else {
+            // 이미 종료된 경우 DB 값 그대로 사용
+            mySpendingAmount = participants.stream()
+                    .filter(p -> p.getUserId() == myUserId)
+                    .map(UserChallengeEntity::getSpendAmount)
+                    .findFirst()
+                    .orElse(0);
+        }
+
+        // ✅ 아래는 그대로 통계 계산 로직
+        double totalRateSum = 0.0;
         int count = 0;
-        int bucket1 = 0; // 100 ~ 85%
-        int bucket2 = 0; // 84 ~ 50%
-        int bucket3 = 0; // 49 ~ 25%
-        int bucket4 = 0; // 24 ~ 0%
+        int bucketOver100 = 0;
+        int bucket100to85 = 0;
+        int bucket84to50 = 0;
+        int bucket49to25 = 0;
+        int bucket24to0 = 0;
 
         for (UserChallengeEntity participation : participants) {
-            Integer userId = participation.getUserId();
-            // 해당 사용자의 과거 참여 내역 조회(진행중 제외)
-            List<UserChallengeEntity> history = userChallengeRepository.findByUserIdAndStatusNot(userId, "진행중");
-            double successRate = 0.0;
-            if (!history.isEmpty()) {
-                long successCount = history.stream()
-                        .filter(h -> "성공".equals(h.getStatus()))
-                        .count();
-                long total = history.size();
-                successRate = ((double) successCount / total) * 100;
-            }
-            totalSuccessRateSum += successRate;
-            count++;
-            if (successRate >= 85) {
-                bucket1++;
-            } else if (successRate >= 50) {
-                bucket2++;
-            } else if (successRate >= 25) {
-                bucket3++;
-            } else {
-                bucket4++;
-            }
-        }
-        double averageSuccessRate = count > 0 ? totalSuccessRateSum / count : 0.0;
+            int userSpending = participation.getSpendAmount();
+            int limit = challenge.getLimitAmount();
+            double rate = limit > 0 ? ((double) userSpending / limit) * 100.0 : 0.0;
 
-        // 기본 챌린지 DTO로 변환
-        ChallengeResponseDto challengeDto = mapToDto(challenge);
+            totalRateSum += rate;
+            count++;
+
+            if (rate > 100.0) bucketOver100++;
+            else if (rate >= 85.0) bucket100to85++;
+            else if (rate >= 50.0) bucket84to50++;
+            else if (rate >= 25.0) bucket49to25++;
+            else bucket24to0++;
+        }
+
+        double averageRate = count > 0 ? totalRateSum / count : 0.0;
+
         return ChallengeDetailResponseDto.builder()
-                .challenge(challengeDto)
+                .challenge(mapToDto(challenge))
                 .participantCount(participants.size())
-                .bucket100to85(bucket1)
-                .bucket84to50(bucket2)
-                .bucket49to25(bucket3)
-                .bucket24to0(bucket4)
-                .averageSuccessRate(averageSuccessRate)
+                .bucketOver100(bucketOver100)
+                .bucket100to85(bucket100to85)
+                .bucket84to50(bucket84to50)
+                .bucket49to25(bucket49to25)
+                .bucket24to0(bucket24to0)
+                .averageSuccessRate(averageRate)
+                .mySpendingAmount(mySpendingAmount) // ✅ 추가된 필드
                 .build();
     }
+
+
+
 
     @Transactional(readOnly = true)
     public List<PastChallengeResponseDto> getPastParticipatedChallenges() {
         User user = getAuthenticatedUser();
-        // "진행중"과 "취소" 상태를 제외한 참여 내역 조회
         List<UserChallengeEntity> participations = userChallengeRepository.findByUserIdAndStatusNot(user.getUserId(), "진행중");
         LocalDate today = LocalDate.now();
         return participations.stream()
-                // 챌린지 종료일이 오늘 이전이고, 상태가 "취소"가 아닌 경우
                 .filter(participation -> participation.getChallenge().getEndDate().isBefore(today)
                         && !participation.getStatus().equals("취소"))
                 .map(participation -> {
@@ -408,7 +506,6 @@ public class ChallengeService {
                             .challengeCategory(challenge.getChallengeCategory())
                             .createdAt(challenge.getCreatedAt())
                             .limitAmount(challenge.getLimitAmount())
-                            // 참여 결과 상태 (예: "성공" 또는 "실패")
                             .participationStatus(participation.getStatus())
                             .thumbnailUrl(mapToDto(challenge).getThumbnailUrl())
                             .build();
@@ -416,40 +513,33 @@ public class ChallengeService {
                 .collect(Collectors.toList());
     }
 
-    // 챌린지 종료 후, 성공한 참여자에게 환불 처리 (예: 총 예치금 풀을 성공자에게 나눠줌)
+    // 챌린지 종료 후, 성공한 참여자에게 환불 처리 (성공한 참여자에게 총 예치금 풀을 나눠줌)
     @Transactional
     public void settleChallenge(Integer challengeId) {
-        // 챌린지가 종료되었는지 확인
         ChallengeEntity challenge = findChallengeById(challengeId);
         if (!challenge.getEndDate().isBefore(LocalDate.now())) {
             throw new CustomException(ErrorCode.VALIDATION_FAILED, "챌린지가 아직 종료되지 않았습니다.");
         }
-        // 해당 챌린지의 모든 참여 내역(상태 관계없이)
         List<UserChallengeEntity> allParticipants = userChallengeRepository.findByChallenge_ChallengeId(challengeId);
         if (allParticipants.isEmpty()) {
             throw new CustomException(ErrorCode.NOT_FOUND, "참여 기록이 없습니다.");
         }
-        // 성공한 참여자 선별 (상태가 "성공")
         List<UserChallengeEntity> successfulParticipants = allParticipants.stream()
                 .filter(p -> "성공".equals(p.getStatus()))
                 .collect(Collectors.toList());
         if (successfulParticipants.isEmpty()) {
             throw new CustomException(ErrorCode.VALIDATION_FAILED, "성공한 참여자가 없어 환불할 수 없습니다.");
         }
-        // 총 예치금 풀 계산
         int totalPool = allParticipants.stream()
                 .mapToInt(UserChallengeEntity::getDepositAmount)
                 .sum();
-        // 성공자 1인당 환불 금액
         int refundPerParticipant = totalPool / successfulParticipants.size();
 
-        // 각 성공자에게 환불 처리
         for (UserChallengeEntity participation : successfulParticipants) {
             User user = userRepository.findById(participation.getUserId())
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "참여자의 사용자 정보를 찾을 수 없습니다."));
             user.setDeposit(user.getDeposit() + refundPerParticipant);
             userRepository.save(user);
-            // 환불 거래내역 기록
             ServiceTransaction refundTx = ServiceTransaction.builder()
                     .accountId(accountService.getServiceAccountId())
                     .userId(user.getUserId())
@@ -465,5 +555,216 @@ public class ChallengeService {
         }
     }
 
+    // 사용자 소비 내역을 기반으로 챌린지 카테고리 점수를 계산 (예: { "주유"=50000, "쇼핑"=30000, ... })
+    public Map<String, Integer> calculateChallengeCategoryScores(User user) {
+        List<Transaction> transactions = transactionRepository.findByUserId(user.getUserId());
+        Map<String, Integer> categoryScores = new HashMap<>();
+        for (Transaction tx : transactions) {
+            if (tx.getTransactionType() == 2 && tx.getCategoryId() != null) {
+                Optional<CategoryEntity> optCategory = categoryRepository.findById(tx.getCategoryId());
+                if (optCategory.isPresent() && optCategory.get().getChallengeCategoryId() != null) {
+                    String challengeCategory = String.valueOf(optCategory.get().getChallengeCategoryId());
+                    categoryScores.merge(challengeCategory, tx.getAmount(), Integer::sum);
+                }
+            }
+        }
+        return categoryScores;
+    }
+
+    /**
+     * 추천 챌린지 조회
+     * 사용자의 소비 내역을 기반으로 챌린지 카테고리 점수를 계산한 후, 챌린지의 challengeCategory와 매칭하여
+     * 높은 점수 순으로 최대 12개 챌린지를 추천합니다.
+     */
+    @Transactional
+    public List<ChallengeResponseDto> recommendChallengesForUser() {
+        String email = getAuthenticatedUserEmail();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자 정보를 찾을 수 없습니다."));
+        Map<String, Integer> challengeCategoryScores = calculateChallengeCategoryScores(user);
+        logger.info("사용자 소비 기반 챌린지 카테고리 점수: {}", challengeCategoryScores);
+
+        // 추천 대상은 soft delete되지 않았고, 아직 시작되지 않았으며(active_flag false), 종료일이 오늘 이후(또는 오늘 포함)인 챌린지
+        List<ChallengeEntity> allChallenges = challengeRepository.findAll();
+        List<ChallengeEntity> sortedChallenges = allChallenges.stream()
+                .filter(ch -> !ch.getDeleted()
+                        && !ch.getActiveFlag()
+                        && !ch.getEndDate().isBefore(LocalDate.now()))
+                .sorted((c1, c2) -> {
+                    int score1 = challengeCategoryScores.getOrDefault(c1.getChallengeCategory(), 0);
+                    int score2 = challengeCategoryScores.getOrDefault(c2.getChallengeCategory(), 0);
+                    return Integer.compare(score2, score1);
+                })
+                .limit(12)
+                .collect(Collectors.toList());
+
+        return sortedChallenges.stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+
+    /**
+     * 해당 챌린지에 참여한 유저의, 챌린지 기간 동안 해당 챌린지 카테고리에 대해 소비한 금액을 계산합니다.
+     */
+    @Transactional(readOnly = true)
+    public int calculateUserSpendingForChallengeCategory(ChallengeEntity challenge, Integer userId) {
+        LocalDateTime challengeStart = challenge.getStartDate().atStartOfDay();
+        LocalDateTime challengeEnd = challenge.getEndDate().atTime(23, 59, 59);
+
+        logger.debug("📅 챌린지 기간: {} ~ {}", challengeStart, challengeEnd);
+        logger.debug("🎯 챌린지 카테고리 (문자열): {}", challenge.getChallengeCategory());
+
+        List<Transaction> transactions = transactionRepository.findByUserId(userId);
+        logger.debug("💾 사용자 거래내역 총 개수: {}", transactions.size());
+
+        int totalSpending = 0;
+
+        for (Transaction tx : transactions) {
+            LocalDateTime txDate = tx.getTransactionDate();
+            if (txDate == null) {
+                logger.warn("❗ 거래 날짜가 null: txId={}, amount={}", tx.getTransactionId(), tx.getAmount());
+                continue;
+            }
+
+            if (txDate.isBefore(challengeStart) || txDate.isAfter(challengeEnd)) {
+                logger.debug("⛔ 날짜 범위 밖 거래: txId={}, txDate={}", tx.getTransactionId(), txDate);
+                continue;
+            }
+
+            if (tx.getTransactionType() != 2) {
+                logger.debug("❌ 출금 아님: txId={}, txType={}", tx.getTransactionId(), tx.getTransactionType());
+                continue;
+            }
+
+            if (tx.getCategoryId() == null) {
+                logger.debug("❌ 카테고리 없음: txId={}", tx.getTransactionId());
+                continue;
+            }
+
+            Optional<CategoryEntity> optCategory = categoryRepository.findById(tx.getCategoryId());
+            if (optCategory.isEmpty()) {
+                logger.warn("❓ 존재하지 않는 카테고리 ID: txId={}, categoryId={}", tx.getTransactionId(), tx.getCategoryId());
+                continue;
+            }
+
+            CategoryEntity category = optCategory.get();
+            if (category.getChallengeCategoryId() == null) {
+                logger.debug("🚨 조건 테스트: txId={}, type={}, catId={}, catChallengeId={}, challengeCat={}, amount={}",
+                        tx.getTransactionId(),
+                        tx.getTransactionType(),
+                        tx.getCategoryId(),
+                        category.getChallengeCategoryId(),
+                        challenge.getChallengeCategory(),
+                        tx.getAmount());
+                logger.debug("❌ challengeCategoryId가 null: categoryId={}", category.getCategoryId());
+                continue;
+            }
+
+            String txChallengeCategoryName = category.getCategoryName(); // "택시"
+            String challengeCategory = challenge.getChallengeCategory(); // "택시"
+
+            if (!txChallengeCategoryName.equals(challengeCategory)) {
+                logger.debug("❌ 챌린지 카테고리 불일치 (이름 기준): txCategoryName={}, challengeCategory={}, txId={}",
+                        txChallengeCategoryName, challengeCategory, tx.getTransactionId());
+                continue;
+            }
+
+
+            // ✅ 최종 소비 인정
+            logger.info("✅ 소비 인정: txId={}, amount={}, 카테고리={}", tx.getTransactionId(), tx.getAmount(), txChallengeCategoryName);
+            totalSpending += tx.getAmount();
+        }
+
+        logger.info("💰 최종 소비 금액 = {}", totalSpending);
+        return totalSpending;
+    }
+
+
+
+
+    /**
+     * 챌린지 종료 시점에, 참여 유저별로 해당 챌린지 카테고리 소비 금액을 산출하여,
+     * 챌린지의 limit_amount 이하이면 "성공", 초과하면 "실패"로 참여 상태를 업데이트합니다.
+     * (챌린지 종료일이 지난 경우에만 실행)
+     */
+    @Transactional
+    public void evaluateChallengeOutcome(Integer challengeId) {
+        ChallengeEntity challenge = findChallengeById(challengeId);
+        if (!challenge.getEndDate().isBefore(LocalDate.now())) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "챌린지가 아직 종료되지 않았습니다.");
+        }
+        List<UserChallengeEntity> participants = userChallengeRepository
+                .findByChallenge_ChallengeIdAndStatus(challengeId, "진행중");
+        for (UserChallengeEntity participation : participants) {
+            int spending = calculateUserSpendingForChallengeCategory(challenge, participation.getUserId());
+            participation.setSpendAmount(spending);
+            if (spending <= challenge.getLimitAmount()) {
+                participation.setStatus("성공");
+            } else {
+                participation.setStatus("실패");
+            }
+            participation.setUpdatedAt(LocalDateTime.now());
+            userChallengeRepository.save(participation);
+        }
+    }
+
+    /**
+     * 자정에 실행되어 종료된 챌린지에 대해 평가 및 환불 정산을 진행합니다.
+     * soft delete된 챌린지는 제외하고, active_flag가 true인 챌린지 중에서 처리합니다.
+     * 처리 후 active_flag를 false로 업데이트하여 조회에서 제외되도록 합니다.
+     */
+    @Scheduled(cron = "0 0 0 * * *")
+    public void processEndedChallenges() {
+        // soft delete되지 않았고, active_flag가 true이며, 종료일이 오늘 이전인 챌린지 조회
+        List<ChallengeEntity> endedChallenges = challengeRepository
+                .findByEndDateBeforeAndDeletedFalseAndActiveFlagTrue(LocalDate.now());
+        for (ChallengeEntity challenge : endedChallenges) {
+            try {
+                evaluateChallengeOutcome(challenge.getChallengeId());
+                settleChallenge(challenge.getChallengeId());
+                // 종료 후 active_flag를 false로 전환
+                challenge.setActiveFlag(false);
+                challengeRepository.save(challenge);
+                logger.info("챌린지 {} 평가 및 환불 정산 완료", challenge.getChallengeId());
+            } catch (Exception e) {
+                logger.error("챌린지 {} 처리 중 오류 발생: {}", challenge.getChallengeId(), e.getMessage());
+            }
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<PastChallengeResponseDto> getUnnotifiedResults() {
+        User user = getAuthenticatedUser();
+        List<UserChallengeEntity> results = userChallengeRepository
+                .findByUserIdAndStatusInAndNotified(user.getUserId(), List.of("성공", "실패"), false);
+
+        return results.stream()
+                .map(participation -> {
+                    ChallengeEntity challenge = participation.getChallenge();
+                    return PastChallengeResponseDto.builder()
+                            .challengeId(challenge.getChallengeId())
+                            .challengeName(challenge.getChallengeName())
+                            .challengeType(challenge.getChallengeType())
+                            .startDate(challenge.getStartDate())
+                            .endDate(challenge.getEndDate())
+                            .description(challenge.getDescription())
+                            .participationStatus(participation.getStatus())
+                            .thumbnailUrl(mapToDto(challenge).getThumbnailUrl())
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void markAsNotified(Integer userId) {
+        List<UserChallengeEntity> results = userChallengeRepository
+                .findByUserIdAndStatusInAndNotified(userId, List.of("성공", "실패"), false);
+        for (UserChallengeEntity result : results) {
+            result.setNotified(true);
+            result.setUpdatedAt(LocalDateTime.now());
+            userChallengeRepository.save(result);
+        }
+    }
 
 }

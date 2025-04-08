@@ -16,15 +16,18 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import org.springframework.http.HttpHeaders;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -43,13 +46,19 @@ public class BucketService {
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
 
+    // PasswordEncoder 빈 주입 (예: BCryptPasswordEncoder)
+    private final PasswordEncoder passwordEncoder;
+
     @Value("${finance.api.key}")
     private String financeApiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // 카테고리 목록 조회 메서드
+    /**
+     * 카테고리 목록 조회 (캐시: bucketCategories)
+     */
     @Transactional(readOnly = true)
+    @Cacheable(value = "bucketCategories")
     public List<BucketCategoryResponseDto> getAllCategories() {
         List<BucketCategoryEntity> categories = bucketCategoryRepository.findAll();
         return categories.stream()
@@ -57,8 +66,11 @@ public class BucketService {
                 .collect(Collectors.toList());
     }
 
-    // 버킷리스트 생성 기능
+    /**
+     * 버킷리스트 생성 기능 (캐시: bucketLists 무효화)
+     */
     @Transactional
+    @CacheEvict(value = "bucketLists", key = "#email")
     public BucketResponseDto.Response createBucket(String email, BucketResponseDto.Request request) {
 
         User user = userRepository.findByEmail(email)
@@ -81,8 +93,11 @@ public class BucketService {
         return BucketResponseDto.Response.fromEntity(savedBucket, category.getCategoryName());
     }
 
-    // 저축 날짜와 금액 설정
+    /**
+     * 저축 날짜와 금액 설정 (캐시: bucketLists 무효화)
+     */
     @Transactional
+    @CacheEvict(value = "bucketLists", key = "#email")
     public BucketDateDto.Response setBucketSavingConfig(String email, BucketDateDto.Request request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
@@ -97,7 +112,7 @@ public class BucketService {
         bucket.setSavingAmount(request.getSaving_amount());
         bucket.setSavingDays(request.getSaving_days());
         bucket.setStatus("시작중");
-        bucket.setIsCompleted(true); // is_completed 필드를 true로 설정
+        bucket.setIsCompleted(true);
 
         BucketEntity updatedBucket = bucketRepository.save(bucket);
         logger.info("버킷리스트 저축 설정 완료: {}", updatedBucket.getBucketId());
@@ -110,24 +125,20 @@ public class BucketService {
                 .build();
     }
 
-    //
     private void validateDaysOfWeek(String savingDays) {
         if (savingDays == null || savingDays.isEmpty()) {
-            return; // 빈 값 허용 시
+            return;
         }
-
         List<String> validDays = DayOfWeek.getAllKoreanNames();
         List<String> selectedDays = Arrays.asList(savingDays.split(","));
-
-//        for (String day : selectedDays) {
-//            if (!validDays.contains(day.trim())) {
-//                throw new CustomException(ErrorCode.INVALID_REQUEST, "유효하지 않은 요일이 포함되어 있습니다: " + day);
-//            }
-//        }
+        // 필요 시 유효성 검증 코드 추가
     }
 
-
+    /**
+     * 버킷리스트에 계좌 설정 (캐시: bucketLists 무효화)
+     */
     @Transactional
+    @CacheEvict(value = "bucketLists", key = "#email")
     public BucketAccountDto.Response setBucketAccounts(String email, BucketAccountDto.Request request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
@@ -143,7 +154,6 @@ public class BucketService {
         // 저축통장 정보 가져오기
         Account savingAccount = accountRepository.findByAccountNumber(savingAccountNo)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "저축통장 정보를 찾을 수 없습니다."));
-
         // 출금통장 정보 가져오기
         Account withdrawalAccount = accountRepository.findByAccountNumber(withdrawalAccountNo)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "출금통장 정보를 찾을 수 없습니다."));
@@ -153,11 +163,10 @@ public class BucketService {
             throw new CustomException(ErrorCode.UNAUTHORIZED, "해당 계좌에 대한 권한이 없습니다.");
         }
 
-        // 은행명 추가 유효성 검사 (선택적)
+        // 은행명 유효성 검사 (선택)
         if (!savingAccount.getBankName().equals(request.getSaving_account().getBank_name())) {
             logger.warn("요청된 저축계좌 은행명과 실제 은행명이 일치하지 않습니다");
         }
-
         if (!withdrawalAccount.getBankName().equals(request.getWithdrawal_account().getBank_name())) {
             logger.warn("요청된 출금계좌 은행명과 실제 은행명이 일치하지 않습니다");
         }
@@ -186,8 +195,11 @@ public class BucketService {
                 .build();
     }
 
-    // 버킷리스트 조회 기능
+    /**
+     * 버킷리스트 조회 기능 (캐시: bucketLists, 키: email)
+     */
     @Transactional(readOnly = true)
+    @Cacheable(value = "bucketLists", key = "#email")
     public List<BucketListResponseDto> getBucketLists(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
@@ -199,32 +211,40 @@ public class BucketService {
                     String categoryName = bucketCategoryRepository.findById(bucket.getBucketCategoryId())
                             .map(BucketCategoryEntity::getCategoryName)
                             .orElse("미분류");
-
                     return BucketListResponseDto.fromEntity(bucket, categoryName);
                 })
                 .collect(Collectors.toList());
     }
 
-    // 버킷리스트 삭제
+    /**
+     * 버킷리스트 삭제 (캐시: bucketLists 무효화)
+     */
     @Transactional
+    @CacheEvict(value = "bucketLists", key = "#email")
     public void deleteBucket(String email, Integer bucketId) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
-
         BucketEntity bucket = bucketRepository.findByBucketIdAndUserId(bucketId, user.getUserId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "버킷리스트를 찾을 수 없습니다."));
-
         bucketRepository.delete(bucket);
         logger.info("버킷리스트 삭제 완료: {}", bucketId);
     }
 
-
-    // 계좌이체
+    /**
+     * 계좌이체 및 저축 진행
+     * (요청 DTO에 거래 비밀번호(transactionPassword)가 포함되어 있다고 가정)
+     */
     @Transactional
+    @CacheEvict(value = "bucketLists", key = "#email")
     public BucketSavingDto.Response processBucketSaving(String email, BucketSavingDto.Request request) {
 
+        // 사용자 조회 및 거래 비밀번호 검증
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+        if (request.getTransactionPassword() == null ||
+                !passwordEncoder.matches(request.getTransactionPassword(), user.getTransactionPassword())) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "거래 비밀번호가 올바르지 않습니다.");
+        }
 
         BucketEntity bucket = bucketRepository.findByBucketIdAndUserId(request.getBucketId(), user.getUserId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "버킷리스트를 찾을 수 없습니다."));
@@ -236,14 +256,12 @@ public class BucketService {
 
         String withdrawalAccountNo = bucket.getWithdrawalAccount();
         String savingAccountNo = bucket.getSavingAccount();
-
         if (withdrawalAccountNo == null || savingAccountNo == null) {
             throw new CustomException(ErrorCode.VALIDATION_FAILED, "출금계좌 또는 저축계좌가 설정되어 있지 않습니다.");
         }
 
-        // 계좌 이체 API 호출
-        transferMoney(user.getFinanceUserKey(), withdrawalAccountNo, savingAccountNo,
-                String.valueOf(savingAmount));
+        // 계좌이체 API 호출 (거래 비밀번호 검증 후 진행)
+        transferMoney(user.getFinanceUserKey(), withdrawalAccountNo, savingAccountNo, String.valueOf(savingAmount));
 
         Integer currentSavedAmount = bucket.getSavedAmount() != null ? bucket.getSavedAmount() : 0;
         Integer newSavedAmount = currentSavedAmount + savingAmount;
@@ -276,7 +294,7 @@ public class BucketService {
                 .build();
     }
 
-    // 계좌 이체 API 호출
+    // 계좌이체 API 호출 메서드
     private void transferMoney(String userKey, String withdrawalAccountNo, String savingAccountNo, String amount) {
         String url = "https://finopenapi.ssafy.io/ssafy/api/v1/edu/demandDeposit/updateDemandDepositAccountTransfer";
         LocalDateTime now = LocalDateTime.now();
@@ -319,35 +337,25 @@ public class BucketService {
         logger.info("계좌 이체 완료: {}", responseMap);
     }
 
-    // 예상 완료일 계산 메서드
+    /**
+     * 예상 완료일 계산 메서드
+     */
     private LocalDate calculateExpectedCompletionDate(BucketEntity bucket) {
         Integer savedAmount = bucket.getSavedAmount() != null ? bucket.getSavedAmount() : 0;
         Integer count = bucket.getCount() != null ? bucket.getCount() : 0;
         Integer targetAmount = bucket.getAmount();
 
-        // 저축 기록이 없는 경우
         if (count == 0) {
-            // 기본값으로 3개월 후를 반환
             return LocalDate.now().plusMonths(3);
         }
-
-        // 평균 저축 금액 계산
         double avgSavingAmount = (double) savedAmount / count;
-
-        // 목표까지 남은 금액
         double remainingAmount = targetAmount - savedAmount;
-
-        // 목표 달성까지 필요한 저축 횟수
         double requiredSavings = remainingAmount / avgSavingAmount;
 
-        // 평균 저축 주기 계산 (첫 저축일로부터 지금까지 평균)
         LocalDateTime firstSavingDate = bucket.getCreatedAt(); // 첫 저축일을 생성일로 가정
         long daysSinceFirstSaving = ChronoUnit.DAYS.between(firstSavingDate.toLocalDate(), LocalDate.now());
-        double avgSavingInterval = count > 1 ? (double) daysSinceFirstSaving / (count - 1) : 7; // 최소 일주일 간격으로 가정
-
-        // 예상 완료일 계산
+        double avgSavingInterval = count > 1 ? (double) daysSinceFirstSaving / (count - 1) : 7;
         long daysToCompletion = (long) Math.ceil(requiredSavings * avgSavingInterval);
-
         return LocalDate.now().plusDays(daysToCompletion);
     }
 }

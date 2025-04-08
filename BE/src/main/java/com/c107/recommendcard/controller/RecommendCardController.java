@@ -1,36 +1,58 @@
 package com.c107.recommendcard.controller;
 
-import com.c107.recommendcard.entity.RecommendCard;
+import com.c107.recommendcard.dto.RecommendCardDetailResponseDto;
+import com.c107.recommendcard.dto.RecommendCardResponseDto;
 import com.c107.recommendcard.service.RecommendCardService;
+import com.c107.common.util.ResponseUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/recommend-cards")
+@RequestMapping("/api/recommend/cards")
 @RequiredArgsConstructor
+@Slf4j
 public class RecommendCardController {
 
     private final RecommendCardService recommendCardService;
 
-    // 전체 추천 카드 조회 또는 카드 타입으로 필터링하여 조회
-    @GetMapping
-    public ResponseEntity<List<RecommendCard>> getRecommendedCards(
-            @RequestParam(required = false) String cardType) {
-        List<RecommendCard> cards;
-        if (cardType != null && !cardType.isEmpty()) {
-            cards = recommendCardService.getRecommendedCardsByType(cardType);
-        } else {
-            cards = recommendCardService.getAllRecommendedCards();
+    /**
+     * 체크카드 추천 조회 엔드포인트
+     * GET /api/recommend/cards/check
+     */
+    @GetMapping("/check")
+    public ResponseEntity<?> getRecommendedCheckCards(@AuthenticationPrincipal String email) {
+        try {
+            List<RecommendCardResponseDto> recommendedCards = recommendCardService.recommendCheckCards(email);
+            return ResponseUtil.success("체크카드 추천 조회에 성공했습니다.", recommendedCards);
+        } catch (Exception e) {
+            log.error("체크카드 추천 조회 중 오류 발생", e);
+            return ResponseUtil.badRequest("체크카드 추천 조회에 실패했습니다.",null);
         }
-        return ResponseEntity.ok(cards);
     }
 
-    // 특정 추천 카드 상세 조회
-    @GetMapping("/{id}")
-    public ResponseEntity<RecommendCard> getRecommendCardById(@PathVariable Integer id) {
-        RecommendCard card = recommendCardService.getRecommendCardById(id);
-        return ResponseEntity.ok(card);
+    /**
+     * 신용카드 추천 조회 엔드포인트
+     * GET /api/recommend/cards/credit
+     */
+    @GetMapping("/credit")
+    public ResponseEntity<?> getRecommendedCreditCards(@AuthenticationPrincipal String email) {
+        try {
+            List<RecommendCardResponseDto> recommendedCards = recommendCardService.recommendCreditCards(email);
+            return ResponseUtil.success("신용카드 추천 조회에 성공했습니다.", recommendedCards);
+        } catch (Exception e) {
+            log.error("신용카드 추천 조회 중 오류 발생", e);
+            return ResponseUtil.badRequest("신용카드 추천 조회에 실패했습니다.",null);
+        }
     }
+
+    @GetMapping("/{cardId}")
+    public ResponseEntity<RecommendCardDetailResponseDto> getCardDetail(@PathVariable int cardId) {
+        return ResponseEntity.ok(recommendCardService.getCardDetail(cardId));
+    }
+
 }

@@ -1,26 +1,10 @@
 import { useEffect, useState } from "react";
 import Api from "../../../services/Api";
-import EntertainmentIcon from "../assets/category/entertainment_icon.png";
-import FoodIcon from "../assets/category/food_icon.png";
-import GoodsIcon from "../assets/category/goods_icon.png";
-import HousingIcon from "../assets/category/housing_icon.png";
-import MedicalIcon from "../assets/category/medical_icon.png";
-import ShoppingIcon from "../assets/category/shopping_icon.png";
-import TransportationIcon from "../assets/category/transportation_icon.png";
-import IncomeIcon from "../assets/category/income_icon.png";
-import SpenseIcon from "../assets/category/spense_icon.png";
+import CategoryList from "./CategoryList";
+import Comment from "./Comment";
 
-const categories = [
-  { id: "식비", Icon: FoodIcon },
-  { id: "주거/통신", Icon: HousingIcon },
-  { id: "잡화", Icon: GoodsIcon },
-  { id: "병원/약국", Icon: MedicalIcon },
-  { id: "쇼핑/미용", Icon: ShoppingIcon },
-  { id: "교통/차량", Icon: TransportationIcon },
-  { id: "문화/여가", Icon: EntertainmentIcon },
-  { id: "수입", Icon: IncomeIcon },
-  { id: "결제", Icon: SpenseIcon },
-];
+// 카테고리 아이콘 관련 컴포넌트
+const categories = CategoryList();
 
 const formatKoreanDate = (dateStr) => {
   const date = new Date(dateStr);
@@ -28,56 +12,236 @@ const formatKoreanDate = (dateStr) => {
   const weekday = date.toLocaleDateString("ko-KR", { weekday: "long" }); // 화요일
   return `${day}일 ${weekday}`;
 };
-console.log(new Date());
-export default function PaymentDetails({ date }) {
-  const [paymentData, setPaymentData] = useState(null);
 
-  useEffect(() => {
-    const fetchedPaymentData = async () => {
+export default function PaymentDetails({ date, type, userId = null, onUse }) {
+  const [paymentData, setPaymentData] = useState(null);
+  const [isOpen, setIsOPen] = useState(false);
+  const [blinkList, setBlinkList] = useState([]);
+
+  // 알람 지우기
+  function cancleAlamHandler() {
+    const fetchData = async () => {
       try {
-        const response = await Api.get(`api/payment/consumption/daily/${date}`);
-        console.log("일별 세부내역 데이터:", response.data.data);
-        setPaymentData(response.data.data); // 여기서 저장
+        const response = await Api.post(
+          `api/share/notification/date/read/${date}`
+        );
+        console.log(response.data);
+        if (response.data.status === "success") {
+          alamHandler();
+        }
       } catch (error) {
-        console.error("월별 세부내역조회 실패", error);
+        console.log(error);
       }
     };
+    fetchData();
+  }
+
+  //모달 닫기
+  function onCloseModalHandler() {
+    onUse();
+    setIsOPen(false);
+  }
+
+  // 상세 내역 조회
+  const fetchedPaymentData = async () => {
+    try {
+      // 상대방 아이디가 있고 공유일때만
+      if (type === "share" && userId) {
+        if (userId) {
+          console.log(date);
+          const response = await Api.get(
+            `api/share/ledger/user/${userId}/daily/${date}`
+          );
+          if (response.data.status === "success") {
+            setPaymentData(response.data.data);
+          }
+        }
+      } else {
+        const response = await Api.get(`api/payment/consumption/daily/${date}`);
+        setPaymentData(response.data);
+      }
+    } catch (error) {
+      console.error("일별 세부내역조회 실패", error);
+    }
+  };
+
+  // 알림 조회
+  function alamHandler() {
+    let year, month, day;
+    if (typeof date === "string") {
+      [year, month, day] = date.split("-");
+    } else if (date instanceof Date) {
+      year = date.getFullYear();
+      month = date.getMonth() + 1;
+      day = date.getDate();
+    } else {
+      console.error("지원되지 않는 날짜 형식:", date);
+    }
+    const fetchData = async () => {
+      try {
+        const response = await Api.get(
+          `api/share/notification/dates?year=${year}&month=${month}`
+        );
+        if (response.data.status === "success") {
+          const data = response.data.data.dates;
+          setBlinkList(data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchData();
+  }
+
+  useEffect(() => {
     if (date) {
+      console.log(date);
       fetchedPaymentData();
+      alamHandler();
     }
   }, [date]); //data가 바뀔 때마다 다시 요청
 
-  if (!paymentData) return <div>로딩 중...</div>;
+  if (!paymentData) return <div>소비내역이 없습니다</div>;
+
+  const match = blinkList.some((item) => item === date);
 
   return (
     <div className="bg-white w-full p-[10px] text-black">
-      <p className="flex flex-start pb-[10px]">
-        {formatKoreanDate(paymentData.date)}
-      </p>
+      {type === "personal" ? (
+        <p className="flex flex-start text-lg mt-2">
+          {formatKoreanDate(paymentData?.data?.date)}
+        </p>
+      ) : (
+        <div className="flex justify-between">
+          <p className="flex flex-start pb-[10px]">
+            {formatKoreanDate(
+              !userId ? paymentData?.data?.date : paymentData?.date
+            )}
+          </p>
+          {match ? (
+            <div
+              onClick={async () => {
+                await cancleAlamHandler(), setIsOPen(true);
+              }}
+              className="relative"
+            >
+              <span className=" bg-red-500 absolute top-0 right-0 w-[8px] h-[8px] rounded-full" />
+              <Comment
+                title="댓글"
+                isOpen={isOpen}
+                onClose={onCloseModalHandler}
+                userId={userId}
+                date={!userId ? paymentData?.data?.date : paymentData?.date}
+              />
+            </div>
+          ) : (
+            <div onClick={() => setIsOPen(true)}>
+              <Comment
+                title="댓글"
+                isOpen={isOpen}
+                onClose={onCloseModalHandler}
+                userId={userId}
+                date={!userId ? paymentData?.data?.date : paymentData?.date}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
-      <ul className="space-y-2">
-        {paymentData.transactions.map((item, index) => {
-          const matchedCategory = categories.find(
-            (cat) => cat.id === item.category
-          );
-          const Icon = matchedCategory ? matchedCategory.Icon : null;
+      {/* <ul className="space-y-2 m"> */}
+      <ul className="h-auto">
+        {type === "personal"
+          ? // 개인 가계부 데이터
+            paymentData?.data?.transactions?.map((item, index) => {
+              const matchedCategory = categories.find(
+                (cat) => cat.name === item.category
+              );
+              const Icon = matchedCategory ? matchedCategory.Icon : null;
 
-          return (
-            <li key={index} className="flex items-center gap-2 text-sm">
-              {Icon && (
-                <img src={Icon} alt={item.category} className="w-8 h-auto" />
-              )}
-              <span className="ml-[20px]">{item.category}</span>
-              <span className="relative left-30px">{item.matchedName}</span>
-              <span>{item.description}</span>
-              <span className="ml-auto">
-                {item.amount != null
-                  ? `${item.amount.toLocaleString()}`
-                  : "금액 없음"}
-              </span>
-            </li>
-          );
-        })}
+              return (
+                <li
+                  key={index}
+                  className="flex items-center gap-2 text-lg pt-4"
+                >
+                  {Icon && (
+                    <img
+                      src={Icon}
+                      alt={item.category}
+                      className="w-10 h-auto"
+                    />
+                  )}
+                  <span className="ml-[20px]">{item.category}</span>
+                  <span className="relative left-30px">{item.matchedName}</span>
+                  <span>{item.description}</span>
+                  <span className="ml-auto">
+                    {item.amount != null
+                      ? `${item.amount.toLocaleString()}`
+                      : "금액 없음"}
+                  </span>
+                </li>
+              );
+            })
+          : !userId
+          ? // 본인 공유 가계부 데이터
+            paymentData?.data?.transactions?.map((item, index) => {
+              const matchedCategory = categories.find(
+                (cat) => cat.name === item.category
+              );
+              const Icon = matchedCategory ? matchedCategory.Icon : null;
+
+              return (
+                <li
+                  key={index}
+                  className="flex items-center gap-2 text-lg pt-4"
+                >
+                  {Icon && (
+                    <img
+                      src={Icon}
+                      alt={item.category}
+                      className="w-10 h-auto"
+                    />
+                  )}
+                  <span className="ml-[20px]">{item.category}</span>
+                  <span className="relative left-30px">{item.matchedName}</span>
+                  <span>{item.description}</span>
+                  <span className="ml-auto">
+                    {item.amount != null
+                      ? `${item.amount.toLocaleString()}`
+                      : "금액 없음"}
+                  </span>
+                </li>
+              );
+            })
+          : // 타인 공유 가계부 데이터
+            paymentData?.transactions?.map((item, index) => {
+              const matchedCategory = categories.find(
+                (cat) => cat.name === item.category
+              );
+              const Icon = matchedCategory ? matchedCategory.Icon : null;
+
+              return (
+                <li
+                  key={index}
+                  className="flex items-center gap-2 text-lg pt-4"
+                >
+                  {Icon && (
+                    <img
+                      src={Icon}
+                      alt={item.category}
+                      className="w-10 h-auto"
+                    />
+                  )}
+                  <span className="ml-[20px]">{item.category}</span>
+                  <span className="relative left-30px">{item.matchedName}</span>
+                  <span>{item.description}</span>
+                  <span className="ml-auto">
+                    {item.amount != null
+                      ? `${item.amount.toLocaleString()}`
+                      : "금액 없음"}
+                  </span>
+                </li>
+              );
+            })}
       </ul>
     </div>
   );

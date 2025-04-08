@@ -1,0 +1,11 @@
+cluster.name: "finance-monitoring"
+node.name: "single-node"
+network.host: 0.0.0.0
+discovery.type: single-node
+
+# 시스템 안정성 설정
+bootstrap.memory_lock: true
+xpack.security.enabled: false
+
+# 인덱스 설정
+action.auto_create_index: .monitoring*,.watches,.triggered_watches,.watcher-history*,.ml*

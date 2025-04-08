@@ -39,10 +39,51 @@ npm install -D vite-plugin-pwa
 
 ```
 npm install chart.js react-chartjs-2
+npm install chartjs-plugin-datalabels
+
+
 ```
 
 ### axios 설치
 
 ```
 npm install axios
+```
+
+### react-slick
+
+```
+npm install react-slick --save
+npm install slick-carousel --save
+```
+
+### @hello-pangea/dnd
+
+```
+npm install @hello-pangea/dnd --save
+### Framer Motion 설치
+```
+
+#### framer-motion
+
+```
+npm install framer-motion
+
+```
+
+### fontawesome
+
+```
+npm install @fortawesome/fontawesome-free
+```
+
+### pretendard
+
+```
+npm i pretendard
+```
+
+### lucide-react
+```
+npm install lucide-react
 ```

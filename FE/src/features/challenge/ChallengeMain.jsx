@@ -5,16 +5,19 @@ import ChallengeCard from "@/features/challenge/components/ChallengeCard";
 import ChallengeNav from "@/features/challenge/components/ChallengeNav";
 import ViewMoreButton from "@/features/challenge/components/ViewMoreButton";
 import ChallengeDesc from "@/features/challenge/components/ChallengeDesc";
-import CustomHeader from "@/components/CustomHeader";
+import CustomBackHeader from "@/components/CustomBackHeader";
 import { ChallengeService } from "@/features/challenge/services/ChallengeService";
 import { useSelector, useDispatch } from "react-redux";
 import { addOfficialChallenge } from "@/features/challenge/ChallengeSlice";
 import RenderList from "@/features/challenge/components/RenderList";
 import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
+import CreateButton from "./components/CreateButton";
+import CustomHeader from "@/components/CustomHeader";
 
 export default function ChallengeMain() {
   const [officialChallenges, setOfficialChallenges] = useState([]);
   const [userChallenges, setUserChallenges] = useState([]);
+  const [recommendChallenges, setRecommendChallenges] = useState([]);
 
   // 페이지 저장할 State
   const [officialPageCnt, setOfficialPageCnt] = useState(0);
@@ -52,6 +55,20 @@ export default function ChallengeMain() {
     setUserChallenges([...userChallenges, ...formattedChallenges]);
   };
 
+  const fetchRecommendChallenge = async (page, size) => {
+    const response = await ChallengeService.getRecommend(page, size);
+    console.log(response.data);
+
+    // 날짜 형식 변경
+    const formattedChallenges = response.data.map((challenge) => ({
+      ...challenge,
+      startDate: ChallengeUtils.formatDate(challenge.startDate),
+      endDate: ChallengeUtils.formatDate(challenge.endDate),
+    }));
+
+    setRecommendChallenges([...recommendChallenges, ...formattedChallenges]);
+  };
+
   // 페이지가 실행되자마자 우선 추천, 공식, 유저 챌린지를 4개씩 불러온다.
 
   useEffect(() => {
@@ -63,6 +80,10 @@ export default function ChallengeMain() {
     fetchUserChallenge(userPageCnt, 4);
     console.log(userPageCnt, userChallenges);
   }, [userPageCnt]);
+
+  useEffect(() => {
+    fetchRecommendChallenge(0, 4);
+  }, []);
 
   // 공식 챌린지 목록 렌더링
   const renderOfficialChallenge = () => {
@@ -114,6 +135,28 @@ export default function ChallengeMain() {
     return cardElements;
   };
 
+  // 추천 챌린지 조회
+  const renderRecommendChallenge = () => {
+    return (
+      <div className="flex pt-[5px] pl-[16px] overflow-x-auto gap-7 pb-4 w-full">
+        {recommendChallenges.map((challenge) => (
+          <div key={challenge.challengeId} className="flex-shrink-0 w-fill">
+            <ChallengeCard
+              thumbnailUrl={challenge.thumbnailUrl}
+              type="추천챌린지"
+              title={challenge.challengeName}
+              startDate={challenge.startDate}
+              endDate={challenge.endDate}
+              challengeId={challenge.challengeId}
+              width="150px"
+              height="185px"
+            />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   // 전체 챌린지 선택시
   const renderPage = () => {
     switch (challengeType) {
@@ -124,10 +167,7 @@ export default function ChallengeMain() {
             <BasicContainer>
               <ChallengeDesc type="추천 챌린지" button="전체보기 >" />
 
-              {/* {renderOfficialChallenge()}
-              <ViewMoreButton
-                onIncrease={() => setOfficialPageCnt(officialPageCnt + 1)}
-              /> */}
+              {renderRecommendChallenge()}
             </BasicContainer>
 
             {/* 공식 챌린지 목록 4개씩 렌더링 */}
@@ -167,8 +207,10 @@ export default function ChallengeMain() {
   };
   return (
     <>
-      <CustomHeader title="챌린지" showCreateButton="true" />
-      <div className="flex flex-col items-start p-[30px_10px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
+      <CustomHeader title="챌린지" />
+      <CreateButton />
+      {/* <CustomBackHeader title="챌린지" /> */}
+      <div className="flex flex-col items-start p-[0px_0px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
         <ChallengeNav />
         {renderPage()}
       </div>
