@@ -5,6 +5,7 @@ import MapCategory from "./category/MapCategory";
 import AlertModal from "../../../components/AlertModal";
 import ChooseAlertModal from "../../../components/ChooseAlertModal";
 import CustomBackHeader from "../../../components/CustomBackHeader";
+import Password from "../../../components/Password"
 
 export default function List() {
   const [userData, setUserData] = useState([]);
@@ -146,6 +147,7 @@ export default function List() {
           </div>
         </AlertModal>
       </div>
+      <Password/>
     </div>
   )
 }
