@@ -24,13 +24,13 @@ export default function ChallengeTotal() {
     let response = null;
     try {
       if (type == "official") {
-        response = await ChallengeService.getOfficial(1, 10);
+        response = await ChallengeService.getOfficial(0, 10);
         setChallengeType("공식챌린지");
       } else if (type == "user") {
-        response = await ChallengeService.getUser(1, 10);
+        response = await ChallengeService.getUser(0, 10);
         setChallengeType("유저챌린지");
       } else if (type == "recommend") {
-        response = await ChallengeService.getUser(1, 10); // 추후에 recommend로 바꿀것
+        response = await ChallengeService.getUser(0, 10); // 추후에 recommend로 바꿀것
         setChallengeType("추천챌린지");
       }
       console.log(response.data.content);
