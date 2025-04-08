@@ -5,8 +5,8 @@
 }
 
 export default function MyCurrentStatus({
-  deposit = 5000,
-  currentProgress = 50,
+  mySpendingAmount = 3300,
+  targetAmount = 5000,
 }) {
   return (
     <>
@@ -22,22 +22,22 @@ export default function MyCurrentStatus({
 
           {/* 달성률 그룹 */}
           <div className="relative flex flex-row justify-between">
-            <div className="absolute left-[15px] top-[38px] text-left flex flex-col">
+            <div className="absolute left-[9px] top-[38px] text-left flex flex-col">
               <span className="text-black text-[15px] font-normal leading-[23px] font-['Prompt']">
-                달성률
+                나의 소비
               </span>
               <span className="text-black text-[15px] font-normal leading-[23px] font-['Prompt']">
-                {currentProgress}%
+                {mySpendingAmount}원
               </span>
             </div>
 
             {/* 예치금 그룹 */}
             <div className="text-black text-right absolute right-[15px] top-[38px] flex flex-col items-end">
               <span className="text-[15px] font-normal leading-[23px] font-['Prompt']">
-                예치금
+                한계금액
               </span>
               <span className="text-[15px] font-normal leading-[23px] font-['Prompt']">
-                {deposit}원
+                {targetAmount}원
               </span>
             </div>
           </div>
@@ -47,7 +47,7 @@ export default function MyCurrentStatus({
             {/* 프로그레스 바 채움 */}
             <div
               className="h-full bg-[#FF957A] rounded-[70px]"
-              style={{ width: `${currentProgress}%` }}
+              style={{ width: `${mySpendingAmount / targetAmount}%` }}
             ></div>
           </div>
         </div>
