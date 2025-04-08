@@ -185,7 +185,6 @@ public class ChallengeService {
     }
 
     // 공식 챌린지 조회: soft delete되지 않고, activeFlag가 false이며, 종료일이 오늘 이후(또는 오늘 포함)인 챌린지
-    @Cacheable(value = "officialChallenges", key = "#page + '-' + #size")
     public Page<ChallengeResponseDto> getOfficialChallenges(int page, int size) {
         Page<ChallengeEntity> challenges = challengeRepository
                 .findByChallengeTypeAndDeletedFalseAndActiveFlagFalseAndEndDateGreaterThanEqual(
@@ -197,7 +196,6 @@ public class ChallengeService {
     }
 
     // 유저 챌린지 조회: 위와 동일 조건 적용
-    @Cacheable(value = "userChallenges", key = "#page + '-' + #size")
     public Page<ChallengeResponseDto> getUserChallenges(int page, int size) {
         Page<ChallengeEntity> challenges = challengeRepository
                 .findByChallengeTypeAndDeletedFalseAndActiveFlagFalseAndEndDateGreaterThanEqual(
