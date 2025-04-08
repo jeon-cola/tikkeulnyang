@@ -20,7 +20,9 @@ import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -134,6 +136,10 @@ public class ShareService {
                 .build();
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "sharedLedgerCache", allEntries = true)
+    })
+    @Transactional
     public String generateInvitationLink(String email) {
         String token = UUID.randomUUID().toString();
         String invitationLink = url + "/" + token;
@@ -151,35 +157,23 @@ public class ShareService {
                 .build();
 
         shareRepository.save(shareEntity);
-
         return invitationLink;
     }
 
     @Cacheable(value = "sharedLedgerCache", key = "#token + ':' + #year + '-' + #month", unless = "#result == null")
     @Transactional(readOnly = true)
     public ShareLedgerResponseDto getSharedLedger(String token, String requesterEmail, Integer year, Integer month) {
-        // 초대 링크 토큰으로 ShareEntity 조회
         ShareEntity shareEntity = shareRepository.findByInvitationLinkEndingWith(token)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 링크입니다."));
-
-        // 요청한 사용자 정보 조회
         User requester = userRepository.findByEmail(requesterEmail)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        // 요청한 사용자가 가계부 소유자(owner) 또는 초대받은 사용자(sharedUser)여야 함
         if (!requester.getUserId().equals(shareEntity.getOwnerId()) &&
                 !requester.getUserId().equals(shareEntity.getSharedUserId())) {
             throw new IllegalArgumentException("접근 권한이 없습니다.");
         }
-
-        // 가계부 소유자 정보 조회
         User owner = userRepository.findById(shareEntity.getOwnerId())
                 .orElseThrow(() -> new IllegalArgumentException("가계부 소유자를 찾을 수 없습니다."));
-
-        // 원래 가계부 데이터 조회
         ShareLedgerResponseDto baseDto = getMyLedger(owner.getEmail(), year, month);
-
-        // 공유 응답 DTO에 추가 정보 포함시켜 새로 빌드
         return ShareLedgerResponseDto.builder()
                 .year(baseDto.getYear())
                 .month(baseDto.getMonth())
@@ -231,23 +225,25 @@ public class ShareService {
     }
 
     //
+    @Caching(evict = {
+            @CacheEvict(value = "sharedLedgerCache", allEntries = true),
+            @CacheEvict(value = "myLedgerCache", allEntries = true)
+    })
     @Transactional
     public void unsharePartner(String myEmail, Long partnerUserId) {
-        // 내 정보 조회
         User me = userRepository.findByEmail(myEmail)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         Integer myId = me.getUserId();
-
-        // 공유 중인 관계 찾기 (내가 소유자이거나 초대받은 사용자일 수 있음)
         ShareEntity share = shareRepository.findActiveShareByUsers(myId, partnerUserId.intValue())
                 .orElseThrow(() -> new IllegalArgumentException("공유 중인 관계가 없습니다."));
-
-        // 공유 해제
-        share.setStatus(2); // 2 = 공유 해제 상태
+        share.setStatus(2); // 공유 해제 상태
         shareRepository.save(share);
     }
 
     // 매일 새벽 3시에 실행 (cron: 초 분 시 일 월 요일)
+    @Caching(evict = {
+            @CacheEvict(value = "sharedLedgerCache", allEntries = true)
+    })
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
     public void deleteExpiredInvitationLinks() {
@@ -405,51 +401,33 @@ public class ShareService {
     }
 
     // 타인의 가계부에 댓글 및 이모지 등록
+    @Caching(evict = {
+            @CacheEvict(value = "sharedLedgerCache", allEntries = true),
+            @CacheEvict(value = "myLedgerCache", allEntries = true)
+    })
     @Transactional
     public ShareCommentDto.CommentResponse addComment(Long targetUserId, String dateStr, ShareCommentDto.CommentRequest request, String email) {
         User requester = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("요청자 정보를 찾을 수 없습니다."));
-
-        // 대상 사용자 정보 조회
         User targetUser = userRepository.findById(targetUserId.intValue())
                 .orElseThrow(() -> new IllegalArgumentException("대상 사용자를 찾을 수 없습니다."));
-
-        // 공유 중인 관계 확인 (요청자와 targetUserId 간의 공유 관계)
         ShareEntity shared = shareRepository.findActiveShareByUsers(requester.getUserId(), targetUserId.intValue())
                 .orElseThrow(() -> new IllegalArgumentException("공유 중인 관계가 없습니다."));
-
         LocalDate date;
         try {
             date = LocalDate.parse(dateStr);
         } catch (Exception e) {
             throw new IllegalArgumentException("잘못된 날짜 형식입니다. YYYY-MM-DD 형식이어야 합니다.");
         }
-
-        // 이미 댓글/이모지를 남겼는지 확인
         boolean alreadyCommented = shareInteractionRepository.existsByUserIdAndShareIdAndTargetDate(
                 requester.getUserId(), shared.getShareId(), date);
-
         if (alreadyCommented) {
             throw new IllegalArgumentException("이미 해당 날짜에 댓글 또는 이모지를 등록했습니다.");
         }
-
-        // 이모지 값 검증
         if (request.getEmoji() != null && (request.getEmoji() < 0 || request.getEmoji() > 2)) {
             throw new IllegalArgumentException("유효하지 않은 이모지 값입니다. 0, 1, 2 중 하나여야 합니다.");
         }
-
-        // 댓글 및 이모지 저장
         LocalDateTime now = LocalDateTime.now();
-//        ShareInteractionEntity interaction = ShareInteractionEntity.builder()
-//                .shareId(shared.getShareId())
-//                .userId(requester.getUserId())
-//                .targetDate(date)
-//                .commentContent(request.getComment())
-//                .emoji(request.getEmoji())
-//                .createdAt(now)
-//                .updatedAt(now)
-//                .build();
-        // 댓글 및 이모지 저장
         ShareInteractionEntity interaction = ShareInteractionEntity.builder()
                 .shareId(shared.getShareId())
                 .userId(requester.getUserId())
@@ -459,19 +437,9 @@ public class ShareService {
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
-
         ShareInteractionEntity savedInteraction = shareInteractionRepository.save(interaction);
-
-        // 알림 생성 (대상 사용자에게)
-        createNotification(
-                shared.getShareId(),
-                targetUser.getUserId(),
-                savedInteraction.getInteractionId(),
-                date);
-
-        // 프로필 이미지 URL 가져오기
+        createNotification(shared.getShareId(), targetUser.getUserId(), savedInteraction.getInteractionId(), date);
         String profileImageUrl = getProfileImageForUser(requester.getUserId());
-
         return ShareCommentDto.CommentResponse.builder()
                 .commentId(savedInteraction.getInteractionId().longValue())
                 .userId(requester.getUserId())
@@ -481,7 +449,6 @@ public class ShareService {
                 .emoji(savedInteraction.getEmoji())
                 .createdAt(savedInteraction.getCreatedAt())
                 .build();
-
     }
 
     // 알림이 있는 날짜 목록 월별 조회(빨간 점)
@@ -545,43 +512,32 @@ public class ShareService {
         shareNotificationRepository.save(notification);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "sharedLedgerCache", allEntries = true)
+    })
     @Transactional
     public String acceptInvitation(String token, String invitedEmail) {
-        // 1) 초대 링크로 ShareEntity 찾기
         ShareEntity shareEntity = shareRepository.findByInvitationLinkEndingWith(token)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 링크입니다."));
-
-        // 2) 초대 링크 만료 여부 확인
         if (shareEntity.getLinkExpire().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("초대 링크가 만료되었습니다.");
         }
-
-        // 3) 초대받은 사용자 조회
         User invitedUser = userRepository.findByEmail(invitedEmail)
                 .orElseThrow(() -> new IllegalArgumentException("초대받은 사용자를 찾을 수 없습니다."));
-
-        // 3-1) **자기 자신 초대 불가** (ownerId == 초대받은 userId)
         if (shareEntity.getOwnerId().equals(invitedUser.getUserId())) {
             throw new IllegalArgumentException("자기 자신에게는 초대할 수 없습니다.");
         }
-
-        // 4) 이미 이 ShareEntity가 수락된 상태인지 확인
         if (shareEntity.getSharedUserId() != null) {
             throw new IllegalArgumentException("이미 초대가 수락된 링크입니다.");
         }
-
-        // 4-1) **이미 두 사용자간 공유 관계(status=1)가 있는지 확인**
         boolean existsActive = shareRepository.existsActiveShareBetween(
                 shareEntity.getOwnerId(), invitedUser.getUserId());
         if (existsActive) {
             throw new IllegalArgumentException("이미 공유 관계가 맺어진 사용자입니다.");
         }
-
-        // 5) 초대 수락 처리
         shareEntity.setSharedUserId(invitedUser.getUserId());
         shareEntity.setStatus(1); // 공유 중
         shareRepository.save(shareEntity);
-
         return "초대가 수락되었습니다.";
     }
 
