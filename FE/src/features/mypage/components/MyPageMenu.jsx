@@ -19,6 +19,7 @@ import ChooseAlertModal from "../../../components/ChooseAlertModal.jsx";
 import AlertModal from "../../../components/AlertModal.jsx";
 import {setPage} from "../../challenge/ChallengeSlice.js"
 import IsLoading from "../../../components/IsLoading.jsx"
+import Password from "../../../components/Password"
 
 export default function MyPageMenu() {
   const dispatch = useDispatch();
@@ -511,6 +512,7 @@ export default function MyPageMenu() {
           </AlertModal>
         </div>
       </div>
+      <Password/>
     </div>
     :<IsLoading/>}
     </>

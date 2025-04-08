@@ -26,7 +26,6 @@ export default function AnimatedLoading() {
       setTimeout(() => setActiveIcons([false, false, false, false]), 2100);
     };
 
-    // 초기 실행
     animateIcons();
     
     // 지속적인 애니메이션을 위한 인터벌 설정
