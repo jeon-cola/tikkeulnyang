@@ -230,7 +230,8 @@ export default function MyPageMenu() {
   }
 
   return (
-    <>{!isLoading?
+    <>
+    {!isLoading?
 
       <div className="flex flex-col items-start p-[0px_0px_82px] gap-3 absolute w-screen min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
       <div className="flex flex-col justify-center gap-5 min-w-full mb-[30px]">

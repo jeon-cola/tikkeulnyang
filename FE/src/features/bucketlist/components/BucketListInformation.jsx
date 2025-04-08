@@ -35,7 +35,6 @@ export default function BucketListInformation() {
                 <img src="/Furniture.png" alt="방" className="w-25 h-25" />
             </div>
             <div>
-                <p className="font-semibold text-2xl">출석으로</p>
                 <p className="font-semibold text-2xl">목표달성을 한눈에 보기기</p>
             </div>
             <div>
