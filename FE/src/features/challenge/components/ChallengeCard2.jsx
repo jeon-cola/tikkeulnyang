@@ -29,7 +29,7 @@ export default function ChallengeCard2({
     <>
       <div
         onClick={handleClick}
-        className="flex flex-col items-start px-3 py-5 pl-4 gap-2.5 w-full rounded-lg shadow-md max-w-sm ml-3 mb-1.5 mt-1.5 bg-white ] "
+        className="flex flex-col items-start px-3 py-5 pl-4 gap-2.5 w-[calc(100%-1.5rem)] rounded-lg shadow-md max-w-sm ml-3 mb-1.5 mt-1.5 bg-white"
       >
         {/* 내부 컨텐츠 영역 - 상대적 위치 지정으로 레이아웃 구성 */}
         <div className="relative w-full h-[74px]">
