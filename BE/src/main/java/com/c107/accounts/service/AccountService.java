@@ -152,6 +152,130 @@ public class AccountService {
      */
     @Transactional
     public void syncNewTransactions(Integer loggedInUserId, Integer userSelectedCategoryId) {
+        logger.info("신규 거래내역 동기화 시작: {}", LocalDateTime.now());
+
+        // 사용자 정보 조회 (금융 API용 userKey)
+        User user = userRepository.findById(loggedInUserId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
+        String userKey = user.getFinanceUserKey();
+
+        // 해당 유저의 모든 등록된 계좌 조회
+        List<Account> accounts = accountRepository.findByUserId(loggedInUserId);
+        if (accounts.isEmpty()) {
+            throw new CustomException(ErrorCode.NOT_FOUND, "등록된 계좌가 없습니다.");
+        }
+
+        // 각 계좌마다 진행
+        for (Account account : accounts) {
+            String accountNo = account.getAccountNumber();
+
+            // 각 계좌의 transactions 테이블에서 마지막 거래일 조회
+            Optional<Transaction> lastTxOpt = transactionRepository.findTopByAccountIdOrderByTransactionDateDesc(accountNo);
+            LocalDate startDate;
+            if (lastTxOpt.isPresent()) {
+                // 마지막 거래일 이후 날짜(예: 다음날)로 설정
+                startDate = lastTxOpt.get().getTransactionDate().toLocalDate().plusDays(1);
+            } else {
+                // 거래내역이 없는 경우, 기본 조회 시작일 (예: 최근 7일 전)
+                startDate = LocalDate.now().minusDays(7);
+            }
+            // yyyyMMdd 형식 문자열로 변환
+            String startDateStr = startDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+            String endDateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+            // Open API 호출 준비
+            String url = "https://finopenapi.ssafy.io/ssafy/api/v1/edu/demandDeposit/inquireTransactionHistoryList";
+            LocalDateTime now = LocalDateTime.now();
+            String transmissionDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+            String transmissionTime = now.format(DateTimeFormatter.ofPattern("HHmmss"));
+            String institutionTransactionUniqueNo = transmissionDate + transmissionTime
+                    + String.format("%06d", new Random().nextInt(1000000));
+
+            Map<String, Object> header = new HashMap<>();
+            header.put("apiName", "inquireTransactionHistoryList");
+            header.put("transmissionDate", transmissionDate);
+            header.put("transmissionTime", transmissionTime);
+            header.put("institutionCode", "00100");
+            header.put("fintechAppNo", "001");
+            header.put("apiServiceCode", "inquireTransactionHistoryList");
+            header.put("institutionTransactionUniqueNo", institutionTransactionUniqueNo);
+            header.put("apiKey", financeApiKey);
+            header.put("userKey", userKey);
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("Header", header);
+            requestBody.put("accountNo", accountNo);
+            requestBody.put("startDate", startDateStr);
+            requestBody.put("endDate", endDateStr);
+            // 거래 유형 및 정렬 방식은 고정값("A", "ASC")로 가정
+            requestBody.put("transactionType", "A");
+            requestBody.put("orderByType", "ASC");
+
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(requestBody, httpHeaders);
+
+            ResponseEntity<Map> responseEntity = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Map.class);
+            Map<String, Object> responseMap = responseEntity.getBody();
+            if (responseMap == null || !responseMap.containsKey("REC")) {
+                logger.error("계좌 {}에 대한 거래내역 조회 결과가 비어 있음", accountNo);
+                continue;
+            }
+
+            // 응답 데이터 파싱 (REC 내부의 list 필드)
+            Map<String, Object> rec = (Map<String, Object>) responseMap.get("REC");
+            List<Map<String, Object>> transactionList = (List<Map<String, Object>>) rec.get("list");
+
+            // 각 거래내역에 대해 transactions 테이블에 저장 (입금, 출금 모두 처리)
+            for (Map<String, Object> tx : transactionList) {
+                try {
+                    // 거래 데이터를 파싱
+                    String txDate = (String) tx.get("transactionDate"); // yyyyMMdd
+                    String txTime = (String) tx.get("transactionTime");   // HHmmss
+                    String txTypeCode = (String) tx.get("transactionType"); // "1" 또는 "2"
+                    String txAccountNo = (String) tx.get("transactionAccountNo");
+                    String txBalanceStr = (String) tx.get("transactionBalance");
+                    String txAfterBalanceStr = (String) tx.get("transactionAfterBalance");
+
+                    LocalDateTime txDateTime = LocalDateTime.parse(txDate + txTime,
+                            DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+                    int txBalance = Integer.parseInt(txBalanceStr);
+                    int txAfterBalance = Integer.parseInt(txAfterBalanceStr);
+                    int beforeBalance = txAfterBalance - txBalance;
+
+                    // 중복 거래 체크: 이미 같은 account_id, transaction_date, transaction_type, amount인 거래가 존재하면 건너뜁니다.
+                    Optional<Transaction> existingTx = transactionRepository.findTopByAccountIdAndTransactionDateAndTransactionTypeAndAmount(
+                            String.valueOf(account.getAccountId()), txDateTime, Integer.parseInt(txTypeCode), txBalance);
+                    if (existingTx.isPresent()) {
+                        continue;
+                    }
+
+                    Transaction transaction = Transaction.builder()
+                            .cardId(0) // 카드 관련 정보 없음
+                            .transactionDate(txDateTime)
+                            .categoryId(userSelectedCategoryId)
+                            .amount(txBalance)
+                            .accountId(String.valueOf(account.getAccountId()))
+                            // user_id 추가
+                            .userId(loggedInUserId)
+                            .transactionAccountNo(txAccountNo)
+                            .transactionType(Integer.parseInt(txTypeCode))
+                            .accountBeforeTransaction(beforeBalance)
+                            .accountAfterTransaction(txAfterBalance)
+                            .isWaste(0)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .deleted(0)
+                            .build();
+                    transactionRepository.save(transaction);
+                    logger.info("Transaction 저장됨, 계좌: {}, 거래일시: {}, 금액: {}",
+                            accountNo, txDateTime, txBalance);
+                } catch (Exception e) {
+                    logger.error("계좌 {}의 거래내역 동기화 중 오류 발생: {}", accountNo, e.getMessage(), e);
+                }
+            }
+        }
+        logger.info("신규 거래내역 동기화 완료");
         // 해당 부분은 기존 코드를 그대로 사용합니다.
     }
 
@@ -218,6 +342,51 @@ public class AccountService {
      */
     @Transactional
     public void refundDeposit(Integer loggedInUserId, String amount) {
+        User user = userRepository.findById(loggedInUserId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보가 존재하지 않습니다."));
+        int currentDeposit = (user.getDeposit() != null ? user.getDeposit() : 0);
+        int refundAmt = (int) Long.parseLong(amount);
+        if (refundAmt > currentDeposit) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "환불 요청 금액이 예치금보다 많습니다.");
+        }
+
+        Optional<Account> repOpt = accountRepository.findByUserIdAndRepresentativeTrue(loggedInUserId);
+        if (repOpt.isEmpty()) {
+            throw new CustomException(ErrorCode.VALIDATION_FAILED, "대표계좌가 설정되어 있지 않습니다.");
+        }
+        Account representativeAccount = repOpt.get();
+        String representativeAccountNo = representativeAccount.getAccountNumber();
+
+        Map<String, Object> response = transferDeposit(loggedInUserId, representativeAccountNo, serviceAccount, amount, true);
+        logger.info("환불 이체 API 응답: {}", response);
+
+        int repBalance = Integer.parseInt(representativeAccount.getBalance());
+        int newRepBalance = repBalance + refundAmt;
+        representativeAccount.setBalance(String.valueOf(newRepBalance));
+        accountRepository.save(representativeAccount);
+        logger.info("대표계좌 잔액 업데이트 완료: {} → {}", repBalance, newRepBalance);
+
+        ServiceTransaction transaction = ServiceTransaction.builder()
+                .accountId(getServiceAccountId())
+                .userId(loggedInUserId)
+                .transactionDate(LocalDateTime.now())
+                .category("DEPOSIT_REFUND")
+                .transactionType("REFUND")
+                .transactionAccountNo(representativeAccountNo)
+                .transactionBalance(refundAmt)
+                .description("예치금 환불: 서비스 계좌 " + serviceAccount + " → 대표 계좌 " + representativeAccountNo)
+                .transactionAfterBalance(newRepBalance)
+                .build();
+        accountTransactionRepository.save(transaction);
+        logger.info("예치금 환불 거래내역 기록됨: {}", transaction);
+
+        int newDeposit = currentDeposit - refundAmt;
+        user.setDeposit(newDeposit);
+        userRepository.save(user);
+        logger.info("사용자 예치금 환불 후 업데이트 완료: {}", newDeposit);
+
+        List<Account> updatedAccounts = refreshAccounts(loggedInUserId);
+        logger.info("계좌 잔액 동기화 완료: {}", updatedAccounts);
         // 예치금 환불 처리 기존 코드를 그대로 사용합니다.
     }
 
