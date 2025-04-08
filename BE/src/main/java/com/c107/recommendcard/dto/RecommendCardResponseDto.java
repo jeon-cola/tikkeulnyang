@@ -1,11 +1,15 @@
 package com.c107.recommendcard.dto;
 
 import com.c107.recommendcard.entity.RecommendCard;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
+@NoArgsConstructor // ✅ Redis 캐싱 역직렬화를 위해 꼭 필요
+@AllArgsConstructor // Builder를 사용했으니 같이 추가
 public class RecommendCardResponseDto {
     private Long recoCardId;
     private String recoCardName;
