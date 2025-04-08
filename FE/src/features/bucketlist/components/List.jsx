@@ -11,6 +11,9 @@ export default function List() {
   const [isAlertModal, setIsAlertModal] = useState(false)
   const [savingCheck, setSavingCheck] = useState(false)
   const [selectBucketListId, setSelectBucketListID] = useState(null)
+  const [isDeleteModal, setIsDeleteModal] = useState(false)
+  const [delteCheck, setDeleteCheck] = useState(false)
+
 
   // 버킷리스트 리스트 가져오기
   useEffect(()=> {
@@ -29,7 +32,6 @@ export default function List() {
 
   // 저축 통신
   function saveHandler(bucketListId) {
-    console.log(bucketListId)
     const fetchData = async () => {
       try {
         const response = await Api.post("api/bucket/saving",{"bucketId":bucketListId})
@@ -42,6 +44,38 @@ export default function List() {
       }
     }
     fetchData()
+  }
+
+    // 삭제 통신
+    function deleteHandler(bucketListId) {
+      console.log(bucketListId)
+      const fetchData = async () => {
+        try {
+          const response = await Api.delete(`api/bucket/delete/${bucketListId}`)
+          if (response.data.status) {
+            setDeleteCheck(true)
+            refreshList()
+          }
+        } catch (error) {
+          console.log(error)
+        }
+      }
+      fetchData()
+    }
+    // 삭제 확인 닫기
+    function deleteCheckClose() {
+      setDeleteCheck(false)
+    }
+
+  // 삭제모달 열기
+  function deleteModalOpen(bucketListId) {
+    setSelectBucketListID(bucketListId)
+    setIsDeleteModal(true)
+  }
+
+  // 삭제 모달 닫기
+  function deleteModalClose() {
+    setIsDeleteModal(false)
   }
 
   // 리스트 새로고침
@@ -82,7 +116,7 @@ export default function List() {
       <CustomBackHeader title="버킷 리스트 조회" showCreateButton={true} navigate="/bucketlist"/>
       <div className="mt-[37px] flex flex-col gap-3">
         {userData.map((data,index)=>(
-          <MapCategory key={index} list={data} onSaving={checkAlertModalOpen}/>
+          <MapCategory key={index} list={data} onSaving={checkAlertModalOpen} onDelete={deleteModalOpen}/>
         ))}
         <ChooseAlertModal title="저축하기" isClose={checkAlertModalClose} isOpen={savingCheck} isFunctionHandler={()=>saveHandler(selectBucketListId)}>
           <div>
@@ -92,9 +126,23 @@ export default function List() {
           </div>
         </ChooseAlertModal>
 
+        <ChooseAlertModal title="삭제하기" isClose={deleteModalClose} isOpen={isDeleteModal} isFunctionHandler={()=>deleteHandler(selectBucketListId)}>
+          <div>
+            <p>확인 버튼을 누르면</p>
+            <p>해당 버킷리스트가 삭제됩니다</p>
+            <p>정말 삭제하시겠습니까?</p>
+          </div>
+        </ChooseAlertModal>
+
         <AlertModal title="저축 완료" isOpen={isAlertModal} isClose={AlertModalClose} height={170}>
           <div>
             <p>저축이 완료되었습니다다</p>
+          </div>
+        </AlertModal>
+
+        <AlertModal title="삭제 완료" isClose={deleteCheckClose} isOpen={delteCheck} height={170}>
+          <div>
+            <p>삭제가 완료되었습니다</p>
           </div>
         </AlertModal>
       </div>
