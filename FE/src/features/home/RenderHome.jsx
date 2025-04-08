@@ -277,6 +277,7 @@ export default function RenderHome() {
 
             <div
               className="relative w-full h-[130px] rounded-[6px] overflow-hidden flex items-center justify-center"
+              onClick={() => navigate("/card")}
             >
               {/* 배경 이미지 & blur */}
               <img
