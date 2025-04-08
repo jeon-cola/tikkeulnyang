@@ -65,6 +65,7 @@ export default function SubScribe() {
             try {
                 const response = await Api.delete(`api/subscribe/${id}`)
                 if (response.data.status === "success") {
+                    setIsLoading(true)
                     setCheckmodal(true)
                     const updateList = subScribeList.filter(item => item.subscribeId !== id)
                     setSubScribeList(updateList)
@@ -75,7 +76,6 @@ export default function SubScribe() {
                     const newSwipedItems = { ...swipedItems };
                     delete newSwipedItems[id];
                     setSwipedItems(newSwipedItems);
-                    setIsLoading(true)
                 }
             } catch (error) {
                 console.log(error)
@@ -215,7 +215,7 @@ export default function SubScribe() {
                             <span >의</span>
                         </div>
                         <p className="text-left"> 구독정보를 알려드릴께요</p>
-                        <p className="text-left">잘 사용하지 않는 서비스는 혜지해보세요</p>
+                        <p className="text-left">잘 사용하지 않는 서비스는 해지해보세요</p>
                     </div>
                     <div>
                         <span className="text-xl">총 금액 </span>
