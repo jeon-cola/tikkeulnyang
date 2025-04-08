@@ -23,14 +23,7 @@ export default function LedgerHeader({
     <div className="w-full item-center flex flex-col gap-3">
       {!isDetailPage && (
         <>
-          <Box
-            text={
-              isSharePage
-                ? `${userInfo.nickName}님의 공유 가계부`
-                : `${userInfo.nickName}님의 가계부`
-            }
-            variant="title"
-          >
+          <Box text={`${userInfo.nickName}님의 가계부`} variant="title">
             {" "}
             <div className="flex flex-row gap-2">
               <button
@@ -53,17 +46,19 @@ export default function LedgerHeader({
           </Box>
 
           {/* 두번재 박스 : 예산생성 */}
-          <Box
-            text="예산을 설정하세요"
-            variant="highlight"
-            onClick={() => navigate("/ledger/budget")}
-          >
-            <img
-              src={PurseImg}
-              alt="돈주머니 사진"
-              className="w-auto max-w-[45px] h-auto"
-            />
-          </Box>
+          {!isSharePage && (
+            <Box
+              text="예산을 설정하세요"
+              variant="highlight"
+              onClick={() => navigate("/ledger/budget")}
+            >
+              <img
+                src={PurseImg}
+                alt="돈주머니 사진"
+                className="w-auto max-w-[45px] h-auto"
+              />
+            </Box>
+          )}
         </>
       )}
 
