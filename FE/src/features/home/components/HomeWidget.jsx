@@ -40,8 +40,8 @@ export default function Homewidget({ title, content }) {
     dotsClass: "slick-dots custom-dots",
   };
 
-  const [widgetColor, setWidgetColor] = useState("bg-[#FFFEF7]"); // 위젯 색상
-  const [icon, setIcon] = useState();
+  const [icon, setIcon] = useState(null);
+  const [message, setMessage] = useState(null)
 
   useEffect(() => {
     console.log("HomeWidget", content);
@@ -50,32 +50,36 @@ export default function Homewidget({ title, content }) {
   useEffect(() => {
     if (title === "남은예산") {
       setIcon(BudgetWidget);
-      setWidgetColor("bg-white");
+      setMessage("현명한 지출 관리!");
     } else if (title === "구독 결제 예정") {
       setIcon(ScheduleWidget);
+      setMessage("다가오는 결제 확인");
     } else if (title === "지난달 통계") {
       setIcon(GraphWidget);
+      setMessage("소비 패턴 분석");
     } else if (title === "현재 소비 금액") {
       setIcon(CreditCycleWidget);
-      setWidgetColor("bg-white");
+      setMessage("소비 현황 한눈에");
     } else if (title === "남은 카드 실적") {
       setIcon(CreditWidget);
-      setWidgetColor("bg-white");
+      setMessage("실적 달성 확인");
     } else if (title === "버킷리스트") {
       setIcon(BucketWidget);
+      setMessage("목표를 향한 발걸음");
     }
   }, []);
 
   return (
     <>
       <div
-        className={`flex flex-col items-start mt-[10px] mb-[10px] p-[18px] gap-[4px] w-[176px] h-[177px] shadow-md rounded-lg ${widgetColor}`}
+        className={`flex flex-col p-[18px] w-full h-full shadow-md rounded-lg bg-white`}
       >
         <div className="slider-container relative w-full h-full">
           <div>
             <h3 className="absolute top-0 left-0 right-0 text-left font-normal text-[20px] leading-[30px] text-black">
               {title}
             </h3>
+            <p className="absolute top-7 left-0 text-left text-[#A7A7A7]">{message}</p>
             <img
               src={icon}
               alt={icon}
