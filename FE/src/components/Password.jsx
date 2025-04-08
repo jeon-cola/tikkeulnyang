@@ -1,11 +1,22 @@
-import { transform } from "framer-motion"
-import { use, useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 
-export default function Password() {
-  const [Password, setPassword] = useState("")
+export default function Password({isFail, isFunction}) {
+  const [password, setPassword] = useState("")
   const [buttonNumbers, setButtonNumbers] = useState("")
-  const [isFail, setIsFail] = useState(false)
   const [pressButton, setPressButton] = useState([])
+
+  useEffect(()=>{
+    console.log(isFail)
+    if(isFail) {
+      setPassword("")
+    }
+  },[isFail])
+
+  useEffect(() => {
+    if (password.length === 6) {
+      isFunction(password)
+    }
+  }, [password, isFunction])
 
   // 지우기
   function deleteHandler() {
@@ -16,7 +27,7 @@ export default function Password() {
 
   // 숫자 추가
   function numberClickHandler(number, index) {
-    if (Password.length <6) {
+    if (password.length <6) {
       setPassword(prev=> prev+number)
       let otherButtonNumbers = Array.from({length:10},(_,i)=>i).filter(i=> i !== index)
       const randomNumber = otherButtonNumbers[Math.floor(Math.random()*otherButtonNumbers.length)]
@@ -65,7 +76,7 @@ export default function Password() {
 
         <div className="flex w-full justify-center gap-2 mt-10">
           {[...Array(6)].map((_,index) => (
-            <span key={index} className={`rounded-full w-[10px] h-[10px] ${index < Password.length? "bg-black" : "bg-[#D9D9D9]"}`}/>
+            <span key={index} className={`rounded-full w-[10px] h-[10px] ${index < password.length? "bg-black" : "bg-[#D9D9D9]"}`}/>
           ))}
         </div>
         {isFail?<p className="text-red-400 mt-1">비밀번호가 틀렸습니다</p> : ""}
