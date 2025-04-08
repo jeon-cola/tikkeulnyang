@@ -12,6 +12,9 @@ import com.c107.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.c107.s3.entity.S3Entity;
@@ -19,7 +22,6 @@ import com.c107.s3.entity.S3Entity;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
 
 @Service
 @RequiredArgsConstructor
@@ -32,13 +34,11 @@ public class UserService {
     @Value("${default.profile.image.url}")
     private String defaultProfileImageUrl;
 
-
     public String getProfileImageUrl(Integer userId) {
         return s3Repository.findTopByUsageTypeAndUsageIdOrderByCreatedAtDesc("PROFILE", userId)
                 .map(S3Entity::getUrl)
                 .orElse(defaultProfileImageUrl);
     }
-
 
     public ResponseEntity<?> registerUser(UserRegistrationRequestDto request) {
         // 1. DB에서 유저 존재 여부 확인
@@ -49,11 +49,10 @@ public class UserService {
             user = User.builder()
                     .email(request.getEmail())
                     .nickname(request.getNickname())
-                    .name(request.getName())                  // ✅ 이름 저장
-                    .birthDate(request.getBirthDate())        // ✅ 생년월일 저장
+                    .name(request.getName())
+                    .birthDate(request.getBirthDate())
                     .role("USER")
                     .build();
-
         } else {
             // 기존 유저 -> 닉네임 업데이트
             user.setNickname(request.getNickname());
@@ -73,6 +72,8 @@ public class UserService {
         return ResponseUtil.success("회원가입 완료", user.getEmail());
     }
 
+    // 사용자 정보 조회: 캐시 적용 (읽기 전용)
+    @Cacheable(value = "userInfoCache", key = "#email", unless = "#result == null")
     public Map<String, Object> getUserInfo(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보를 찾을 수 없습니다."));
@@ -85,11 +86,15 @@ public class UserService {
         userInfo.put("birthDate", user.getBirthDate());
         userInfo.put("role", user.getRole());
         userInfo.put("deposit", user.getDeposit());
-        userInfo.put("profileImage", getProfileImageUrl(user.getUserId())); // 프로필은 기존 메서드 재사용
+        userInfo.put("profileImage", getProfileImageUrl(user.getUserId()));
 
         return userInfo;
     }
 
+    // 사용자 정보 수정 시, 캐시 무효화 적용 (수정된 정보가 바로 반영되어야 함)
+    @Caching(evict = {
+            @CacheEvict(value = "userInfoCache", key = "#email")
+    })
     public Map<String, Object> updateUserInfo(String email, UserUpdateRequestDto request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자 정보를 찾을 수 없습니다."));
@@ -116,17 +121,19 @@ public class UserService {
         updatedUserInfo.put("birthDate", user.getBirthDate());
         updatedUserInfo.put("role", user.getRole());
         updatedUserInfo.put("deposit", user.getDeposit());
-        updatedUserInfo.put("profileImage", getProfileImageUrl(user.getUserId())); // 기존 이미지도 포함
+        updatedUserInfo.put("profileImage", getProfileImageUrl(user.getUserId()));
 
         return updatedUserInfo;
     }
 
+    // 회원 탈퇴 시, 캐시 무효화 적용
+    @Caching(evict = {
+            @CacheEvict(value = "userInfoCache", key = "#email")
+    })
     public ResponseEntity<?> deleteUser(String email) {
         System.out.println("🔍 이메일로 유저 조회: " + email);
         Optional<User> userOpt = userRepository.findByEmail(email);
-
         System.out.println("찾았다");
-
         if (userOpt.isEmpty()) {
             return ResponseUtil.badRequest("사용자 정보를 찾을 수 없습니다.", null);
         }
@@ -141,8 +148,4 @@ public class UserService {
         System.out.println("✅ 탈퇴 완료");
         return ResponseUtil.success("회원 탈퇴가 완료되었습니다.", null);
     }
-
-
-
-
 }

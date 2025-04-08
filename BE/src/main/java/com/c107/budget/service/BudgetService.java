@@ -1,6 +1,5 @@
 package com.c107.budget.service;
 
-
 import com.c107.budget.dto.BudgetRemainResponseDto;
 import com.c107.budget.dto.BudgetRequestDto;
 import com.c107.budget.dto.BudgetResponseDto;
@@ -18,9 +17,11 @@ import com.c107.transactions.entity.Transaction;
 import com.c107.transactions.repository.TransactionRepository;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,7 +40,11 @@ public class BudgetService {
     private final BudgetCategoryRepository budgetCategoryRepository;
     private final TransactionRepository transactionRepository;
 
+    /**
+     * 예산 생성(또는 업데이트) 시 관련 캐시를 모두 무효화합니다.
+     */
     @Transactional
+    @CacheEvict(value = {"budgetPlan", "budgetRemain", "wasteMoney", "categories", "totalBudget", "currentConsumption"}, allEntries = true)
     public BudgetResponseDto createBudget(String email, BudgetRequestDto requestDto, int year, int month) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -94,8 +99,10 @@ public class BudgetService {
 
     /**
      * 이전 달의 예산을 현재 달로 복사
+     * 복사 시 관련 캐시를 무효화합니다.
      */
     @Transactional
+    @CacheEvict(value = {"budgetPlan", "budgetRemain", "wasteMoney", "categories", "totalBudget", "currentConsumption"}, allEntries = true)
     public void copyPreviousMonthBudget(String email, int year, int month) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -154,8 +161,10 @@ public class BudgetService {
     }
 
     /**
-     * 특정 연/월에 대한 예산 계획 조회 (예산이 없으면 이전 달 예산 복사)
+     * 특정 연/월에 대한 예산 계획 조회(예산이 없으면 이전 달 예산 복사)
+     * 결과는 캐싱됩니다.
      */
+    @Cacheable(value = "budgetPlan", key = "#email + '-' + #year + '-' + #month")
     public BudgetResponseDto getBudgetPlan(String email, int year, int month) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -248,6 +257,11 @@ public class BudgetService {
                 .build();
     }
 
+    /**
+     * 현재 달의 예산 잔액 조회
+     * 캐싱 키에 현재 연도와 월을 포함하여 캐시 업데이트 시점을 구분합니다.
+     */
+    @Cacheable(value = "budgetRemain", key = "#email + '-' + T(java.time.LocalDate).now().getYear() + '-' + T(java.time.LocalDate).now().getMonthValue()")
     public BudgetRemainResponseDto getBudgetRemain(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -315,7 +329,11 @@ public class BudgetService {
                 .build();
     }
 
-    // 낭비 금액 계산
+    /**
+     * 낭비 금액 계산
+     * 캐싱 키: email, 연도, 월
+     */
+    @Cacheable(value = "wasteMoney", key = "#email + '-' + #year + '-' + #month")
     public BudgetResponseDto.BudgetWaste getWasteMoney(String email, Integer year, Integer month) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -345,6 +363,11 @@ public class BudgetService {
                 .build();
     }
 
+    /**
+     * 사용자 설정 카테고리별 예산 및 실제 소비 내역 조회
+     * 캐싱 키: email, 연도, 월
+     */
+    @Cacheable(value = "categories", key = "#email + '-' + #year + '-' + #month")
     public CategoryResponseDto getAllCategories(String email, int year, int month) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -383,14 +406,11 @@ public class BudgetService {
         // 카테고리별 실제 소비 금액 계산
         Map<Integer, Integer> categorySpending = new HashMap<>();
 
-        // 트랜잭션 내역에서 카테고리별 지출 합산
         for (Transaction transaction : transactions) {
             try {
-                // 입금 제외
-                if (transaction.getTransactionType() != 1) {
+                if (transaction.getTransactionType() != 1) { // 입금 제외
                     Integer categoryId = transaction.getCategoryId();
                     int amount = transaction.getAmount();
-
                     if (categoryId != null) {
                         categorySpending.put(
                                 categoryId,
@@ -415,18 +435,15 @@ public class BudgetService {
                     BudgetEntity budget = budgetMap.get(categoryId);
                     boolean hasBudget = budget != null;
 
-                    // 기본값 설정
                     int amount = 0;
-                    int spendingAmount = categorySpending.getOrDefault(categoryId, 0); // 실제 소비 금액
+                    int spendingAmount = categorySpending.getOrDefault(categoryId, 0);
                     int remainingAmount = 0;
                     int isExceed = 0;
                     String createdAt = null;
                     String updatedAt = null;
 
-                    // 예산이 설정된 경우 실제 값으로 업데이트
                     if (hasBudget) {
                         amount = budget.getAmount() != null ? budget.getAmount() : 0;
-                        // spendingAmount는 위에서 계산한 실제 소비 금액 사용
                         remainingAmount = amount - spendingAmount;
                         isExceed = (spendingAmount > amount && amount > 0) ? 1 : 0;
                         createdAt = budget.getCreatedAt() != null ? budget.getCreatedAt().toString() : null;
@@ -435,17 +452,13 @@ public class BudgetService {
                         totalAmountArr[0] += amount;
                         totalSpendingAmountArr[0] += spendingAmount;
                         totalRemainingAmountArr[0] += remainingAmount;
-
                         if (isExceed == 1) {
                             totalIsExceedArr[0] = true;
                         }
                     } else {
-                        // 예산이 없어도 지출이 있는 경우, 지출 정보는 유지
-                        remainingAmount = -spendingAmount; // 예산 없이 지출했으므로 마이너스 표시
-
-                        // 총합에 지출 금액만 추가
+                        remainingAmount = -spendingAmount;
                         totalSpendingAmountArr[0] += spendingAmount;
-                        totalRemainingAmountArr[0] -= spendingAmount; // 남은 예산에서 차감
+                        totalRemainingAmountArr[0] -= spendingAmount;
                     }
 
                     return CategoryResponseDto.Category.builder()
@@ -479,7 +492,12 @@ public class BudgetService {
                 .build();
     }
 
+    /**
+     * 현재 달의 총 예산 조회
+     * 캐싱 키: email-연도-월
+     */
     @Transactional(readOnly = true)
+    @Cacheable(value = "totalBudget", key = "#email + '-' + T(java.time.LocalDate).now().getYear() + '-' + T(java.time.LocalDate).now().getMonthValue()")
     public Integer getTotalBudget(String email) {
         LocalDate now = LocalDate.now();
         LocalDate startDate = now.withDayOfMonth(1);
@@ -492,7 +510,12 @@ public class BudgetService {
         return totalBudget;
     }
 
+    /**
+     * 현재 달의 총 소비 금액 조회
+     * 캐싱 키: email-연도-월
+     */
     @Transactional(readOnly = true)
+    @Cacheable(value = "currentConsumption", key = "#email + '-' + T(java.time.LocalDate).now().getYear() + '-' + T(java.time.LocalDate).now().getMonthValue()")
     public Integer getCurrentConsumption(String email) {
         LocalDate now = LocalDate.now();
         LocalDate startDate = now.withDayOfMonth(1);
@@ -504,5 +527,4 @@ public class BudgetService {
                 .sum();
         return totalConsumption;
     }
-
 }
