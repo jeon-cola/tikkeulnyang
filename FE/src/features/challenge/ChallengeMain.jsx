@@ -138,12 +138,9 @@ export default function ChallengeMain() {
   // 추천 챌린지 조회
   const renderRecommendChallenge = () => {
     return (
-      <div className="flex pt-[5px] pl-[16px] overflow-x-auto gap-0.7 pb-4 w-full">
+      <div className="flex pt-[5px] pl-[16px] overflow-x-auto gap-7 pb-4 w-full">
         {recommendChallenges.map((challenge) => (
-          <div
-            key={challenge.challengeId}
-            className="flex-shrink-0 w-[calc(50%-8px)]"
-          >
+          <div key={challenge.challengeId} className="flex-shrink-0 w-fill">
             <ChallengeCard
               thumbnailUrl={challenge.thumbnailUrl}
               type="추천챌린지"
