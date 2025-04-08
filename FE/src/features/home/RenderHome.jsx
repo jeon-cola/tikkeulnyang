@@ -275,24 +275,24 @@ export default function RenderHome() {
                 ))}
             </Slider>
 
-            <div className="flex flex-col pt-5 pb-9 p-[12px_11px_15px] gap-2 relative w-full h-auto bg-white rounded-[6px]">
-              <div className="text-left font-semibold text-sm leading-[12px] tracking-[0.07em] text-[#D0D0D0]">
-                이번달 카드 추천
-              </div>
+            <div
+              className="relative w-full h-[130px] rounded-[6px] overflow-hidden flex items-center justify-center"
+            >
+              {/* 배경 이미지 & blur */}
+              <img
+                src="/card_images/card_2826.png"
+                alt="추천카드 배경"
+                className="absolute inset-0 w-full h-full object-cover filter blur-sm brightness-50"
+              />
 
-              <div className="text-left pt-3 font-semibold text-lg leading-[13px] tracking-[0.07em] text-black">
-                카드 혜택으로 절약하기
+              {/* 텍스트 콘텐츠 - 중앙 정렬 */}
+              <div className="relative z-10 flex flex-col items-center justify-center text-white">
+                <p className="text-sm text-gray-200">이번달 카드 추천</p>
+                <h3 className="text-lg font-semibold">카드 혜택으로 절약하기</h3>
               </div>
-
-              {/* <div className="absolute flex flex-row justify-center items-center pt-2 pb-2 pl-2 pr-2 gap-[10px] right-4 bottom-2 bg-[rgba(8,8,8,0.46)] rounded-[30px]">
-                <span
-                  className="font-semibold text-xs leading-[6px] tracking-[0.07em] text-white"
-                  onClick={() => navigate(`/card`)}
-                >
-                  자세히 보기
-                </span>
-              </div> */}
             </div>
+
+
 
             <div
               className="flex flex-col p-[12px_20px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]"
