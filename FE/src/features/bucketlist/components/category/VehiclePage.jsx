@@ -17,7 +17,7 @@ export default function VehiclePage({title, current_savings, target_amount ,colo
 
     return(
          <div className="w-full bg-white rounded-2xl shadow-md p-4 flex flex-col gap-3 relative">
-             <img src={MoreIcon} alt="더보기 버튼" className="w-[30px] h-[30px] absolute top-2 right-2" onClick={deleteHandler}/>
+             <img src={MoreIcon} alt="더보기 버튼" className="w-[30px] h-[30px] absolute top-2 right-2" onClick={()=>deleteHandler(bucketListId)}/>
             <div className="w-full flex flex-row">
                 <div className="w-full flex flex-col gap-6">
                     <p className="text-left font-semibold text-xl" style={{color:"#FF7452"}}>#버킷리스트</p>
