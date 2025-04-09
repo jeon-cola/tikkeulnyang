@@ -341,19 +341,28 @@ public class BudgetService {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
-        List<Integer> userCardIds = cardRepository.findByUserId(user.getUserId())
-                .stream()
-                .map(CardEntity::getCardId)
-                .collect(Collectors.toList());
-
-        List<PaymentHistoryEntity> wastePayments = paymentHistoryRepository
-                .findByCardIdInAndTransactionDateBetweenAndIsWaste(
-                        userCardIds, startDate, endDate, 1);
+        // transactions 테이블에서 데이터 조회
+        List<Transaction> transactions = transactionRepository.findByUserIdAndTransactionDateBetween(
+                user.getUserId(),
+                startDate.atStartOfDay(),
+                endDate.atTime(23, 59, 59)
+        );
 
         int totalWasteAmount = 0;
-        for (PaymentHistoryEntity payment : wastePayments) {
-            int amount = Math.abs(Integer.parseInt(payment.getTransactionBalance().trim().replace(",", "")));
-            totalWasteAmount += amount;
+
+        // 낭비로 표시된 거래(isWaste=1)만 필터링하여 합계 계산
+        for (Transaction transaction : transactions) {
+            try {
+                // 입금(수입)은 제외하고 지출만 고려
+                if (transaction.getTransactionType() != 1) {
+                    Integer isWaste = transaction.getIsWaste();
+                    // isWaste가 1인 경우에만 낭비 금액으로 계산
+                    if (isWaste != null && isWaste == 1) {
+                        totalWasteAmount += transaction.getAmount();
+                    }
+                }
+            } catch (Exception e) {
+            }
         }
 
         return BudgetResponseDto.BudgetWaste.builder()
