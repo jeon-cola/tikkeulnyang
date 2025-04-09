@@ -7,7 +7,7 @@ filebeat.inputs:
       type: spring-boot
     json.keys_under_root: true
     json.add_error_key: true
-  
+
   - type: container
     enabled: true
     paths:
@@ -15,6 +15,7 @@ filebeat.inputs:
     fields:
       type: docker
 
+# Docker autodiscover를 통해 컨테이너 로그도 자동 인식
 filebeat.autodiscover:
   providers:
     - type: docker
