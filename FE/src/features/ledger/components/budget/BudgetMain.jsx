@@ -5,8 +5,24 @@ import Api from "../../../../services/Api";
 import CustomBackHeader from "@/components/CustomBackHeader";
 import CategoryList from "../CategoryList";
 import WasteBlackIcon from "../../assets/waste_black.png";
+// import Buz from "../../assets/buz-124000.png";
+// import Watch from "../../assetswatch_7_214000.png";
+// import Ring from "../../assets/ring_499400.png";
+// import Tab from "../../assets/tab_9_8700000.png";
+
+import Buz from "../../assets/buz-124000.png";
+import Ring from "../../assets/ring_499400.png";
+import Tab from "../../assets/tab_9_870000.png";
+import Watch from "../../assets/watch_7_214000.png";
 
 const categories = CategoryList();
+
+const wasteProduct = {
+  0: Buz,
+  1: Ring,
+  2: Tab,
+  3: Watch,
+};
 
 const getDaysLeftInMonth = (date) => {
   const year = date.getFullYear();
@@ -16,12 +32,42 @@ const getDaysLeftInMonth = (date) => {
   return lastDay - today + 1;
 };
 
+// const samsungDevices = {
+//   0: Buz,
+//   1: Watch,
+//   2: Ring,
+//   3: Tab,
+// };
+
 export default function BudgetMain() {
   const [activeDate, setActiveDate] = useState(new Date());
   const [budgetData, setBudgetData] = useState(null);
+  const [totalWaste, setTotalWaste] = useState(null);
 
   const year = activeDate.getFullYear();
   const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
+
+  // 낭비 금액 조회
+  useEffect(() => {
+    const fetchWasteData = async () => {
+      try {
+        const res = await Api.get(
+          `api/budget/waste/money?year=${year}&month=${month}`
+        );
+        console.log("낭비 데이터 조회", res.data.data);
+        // const wasteAmount = res.data.data.total_waste_amount;
+        console.log(wasteAmount); // 출력됨됨
+        if (res.status === "success") {
+          const wasteAmount = res.data.data.total_waste_amount;
+          setTotalWaste(wasteAmount);
+          console.log("총 낭비금액:", totalWaste); //출력안됨
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchWasteData();
+  }, [year, month]);
 
   // 항목별 예산 조회
   useEffect(() => {
@@ -39,6 +85,8 @@ export default function BudgetMain() {
     fetchData();
   }, [year, month]);
 
+  // 낭비금액 조회
+
   // response값 가져옴
   const total = budgetData?.totals?.total_amount || 0;
   const remaining = budgetData?.totals?.total_remaining_amount || 0;
@@ -46,7 +94,6 @@ export default function BudgetMain() {
   const isExceed = budgetData?.totals?.total_is_exceed || false;
   const daysLeft = getDaysLeftInMonth(activeDate);
   const dailyAvailable = daysLeft > 0 ? Math.floor(remaining / daysLeft) : 0;
-
   const percent = Math.min((remaining / total) * 100, 100);
   const exceedPercent = Math.abs((remaining / total) * 100);
 
@@ -64,6 +111,7 @@ export default function BudgetMain() {
             }}
           />
         </div>
+
         {/* 예산 정보 */}
         <div className="relative w-full h-auto bg-white rounded-md shadow-sm px-[10px] py-2">
           <div className="flex justify-between items-center mt-4 mb-4">
@@ -111,67 +159,73 @@ export default function BudgetMain() {
           </div>
         </div>
         {/* 카테고리별 막대 차트 */}
-        <div className="relative w-full h-auto bg-white rounded-md shadow-sm min-h-screen">
-          <div className="mt-6 space-y-4">
-            {budgetData?.categories?.map((item) => {
-              const category = categories.find((c) => c.id === item.categoryId);
-              const used = item.spendingAmount || 0;
-              const budget = item.amount || 0;
-              const remaining = item.remainingAmount;
-              const exceed = item.isExceed === 1;
-              const percent =
-                budget > 0 ? Math.min((used / budget) * 100, 100) : 0;
+        <div className="relative w-full h-auto bg-white rounded-md shadow-sm mt-4 space-y-4">
+          {budgetData?.categories?.map((item) => {
+            const category = categories.find((c) => c.id === item.categoryId);
+            const used = item.spendingAmount || 0;
+            const budget = item.amount || 0;
+            const remaining = item.remainingAmount;
+            const exceed = item.isExceed === 1;
+            const percent =
+              budget > 0 ? Math.min((used / budget) * 100, 100) : 0;
 
-              return (
-                <div
-                  key={item.categoryId}
-                  className="flex items-center gap-3 px-3 py-2"
-                >
-                  <div className="flex items-center gap-2  min-w-[140px]">
-                    {category?.Icon && (
-                      <img
-                        src={category.Icon}
-                        alt={item.categoryName}
-                        className="w-12 h-auto object-contain"
-                      />
-                    )}
-                    <div>
-                      <p>{category?.name || "기타"}</p>
-                      <p>{budget.toLocaleString()}원</p>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between text-sm font-medium mb-1">
-                      <span>{item.name}</span>
-                    </div>
-
-                    <div className="relative w-full h-[25px] bg-[#ECECEC] rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${
-                          exceed ? "bg-[#FF957A]" : "bg-[#AAE1FE]"
-                        } rounded-full`}
-                        style={{ width: `${percent}%` }}
-                      >
-                        {" "}
-                        <span className="text-right!">
-                          {percent.toFixed(0)}%
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between">
-                      <span className="text-right text-[12px] text-gray-500 mt-1">
-                        {used.toLocaleString()}
-                      </span>
-                      <span className="text-right text-[12px] text-gray-500 mt-1">
-                        {remaining.toLocaleString()}
-                      </span>
-                    </div>
+            return (
+              <div
+                key={item.categoryId}
+                className="flex items-center gap-3 px-3 py-2"
+              >
+                <div className="flex items-center gap-2 min-w-[140px]">
+                  {category?.Icon && (
+                    <img
+                      src={category.Icon}
+                      alt={item.categoryName}
+                      className="w-12 h-auto object-contain"
+                    />
+                  )}
+                  <div className="text-left">
+                    <p>{category?.name || "기타"}</p>
+                    <p>{budget.toLocaleString()}원</p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+                <div className="flex-1">
+                  <div className="flex justify-between text-sm font-medium mb-1">
+                    <span>{item.name}</span>
+                  </div>
+
+                  <div className="relative w-full h-[25px] bg-[#ECECEC] rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${
+                        exceed ? "bg-[#FF957A]" : "bg-[#AAE1FE]"
+                      } rounded-full`}
+                      style={{ width: `${percent}%` }}
+                    >
+                      {" "}
+                      <span className="text-right!">{percent.toFixed(0)}%</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="text-right text-[12px] text-gray-500 mt-1">
+                      {used.toLocaleString()}
+                    </span>
+                    <span className="text-right text-[12px] text-gray-500 mt-1">
+                      {remaining.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 낭비 비용관련 물건 */}
+        <div className="relative w-full h-auto bg-white rounded-md shadow-sm min-h-screen mt-4">
+          <p>낭비내역</p>
+        </div>
+
+        {/* 낭비항목 */}
+        <div className="relative w-full h-auto bg-white rounded-md shadow-sm min-h-screen">
+          <img src="" alt="" />
         </div>
       </div>
     </>

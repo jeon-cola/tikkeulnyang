@@ -8,6 +8,14 @@ export default function MyCurrentStatus({
   mySpendingAmount = 3300,
   targetAmount = 5000,
 }) {
+  // 100% 제한 및 숫자 포맷팅 적용
+  const progressPercentage = Math.min(
+    (mySpendingAmount / targetAmount) * 100,
+    100
+  );
+  const formattedSpending = mySpendingAmount.toLocaleString("ko-KR");
+  const formattedTarget = targetAmount.toLocaleString("ko-KR");
+
   return (
     <>
       {/* 나의 현황 */}
@@ -27,7 +35,7 @@ export default function MyCurrentStatus({
                 나의 소비
               </span>
               <span className="text-black text-[15px] font-normal leading-[23px] font-['Prompt']">
-                {mySpendingAmount}원
+                {formattedSpending}원
               </span>
             </div>
 
@@ -37,7 +45,7 @@ export default function MyCurrentStatus({
                 한계금액
               </span>
               <span className="text-[15px] font-normal leading-[23px] font-['Prompt']">
-                {targetAmount}원
+                {formattedTarget}원
               </span>
             </div>
           </div>
@@ -47,7 +55,7 @@ export default function MyCurrentStatus({
             {/* 프로그레스 바 채움 */}
             <div
               className="h-full bg-[#FF957A] rounded-[70px]"
-              style={{ width: `${mySpendingAmount / targetAmount}%` }}
+              style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
         </div>
