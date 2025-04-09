@@ -14,11 +14,10 @@
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
                 <timestamp/>
-                <message/>
                 <logLevel/>
                 <threadName/>
                 <loggerName/>
-                <mdc/>
+                <mdc/> <!-- JSON 필드로 보낼 핵심 부분 -->
                 <contextName/>
                 <stackTrace/>
             </providers>

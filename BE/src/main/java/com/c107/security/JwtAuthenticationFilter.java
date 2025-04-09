@@ -16,7 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
+import org.slf4j.MDC;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -109,15 +109,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (logIfFirstLogin && !alreadyLogged) {
                 logger.info("[자동 로그인] 최초 인증 성공 - email: {}, role: {}", email, role);
 
-                Map<String, Object> logEntry = new HashMap<>();
-                logEntry.put("event_type", "auto_login");
-                logEntry.put("email", email);
-                logEntry.put("role", role);
-                logEntry.put("ip", request.getRemoteAddr());
-                logEntry.put("user_agent", request.getHeader("User-Agent"));
+                // MDC로 JSON 필드 분해 설정
+                MDC.put("event_type", "auto_login");
+                MDC.put("email", email);
+                MDC.put("role", role);
+                MDC.put("ip", request.getRemoteAddr());
+                MDC.put("user_agent", request.getHeader("User-Agent"));
 
-                securityLogger.info(objectMapper.writeValueAsString(logEntry));
+// 로그 출력 (메시지는 아무거나 괜찮음, 실제로는 MDC만 Logstash에 전송됨)
+                securityLogger.info("Security auto login");
 
+// MDC 초기화 (중요!)
+                MDC.clear();
                 // ✅ 세션에 플래그 저장 → 이후 중복 로그 방지
                 request.getSession().setAttribute("alreadyAutoLoggedIn", true);
             }
