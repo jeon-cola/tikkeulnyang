@@ -4,7 +4,7 @@ import CustomCalendar from "@/components/CustomCalendar";
 import PaymentDetails from "./PaymentDetails";
 import Api from "../../../services/Api";
 
-export default function PersonalLedgerCalendar() {
+export default function PersonalLedgerCalendar({ refreshTrigger }) {
   const navigate = useNavigate();
   const [value, setValue] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
@@ -51,7 +51,7 @@ export default function PersonalLedgerCalendar() {
     };
 
     fetchCalendarData();
-  }, [value]);
+  }, [value, refreshTrigger]);
 
   const tileContent = useCallback(
     ({ date, view }) => {

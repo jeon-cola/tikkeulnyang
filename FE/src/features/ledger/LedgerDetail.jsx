@@ -31,8 +31,6 @@ export default function LedgerDetail() {
   const [wasteStates, setWasteStates] = useState({});
   // 낭비 항목만 보여줄지 여부
   const [showWasteOnly, setShowWasteOnly] = useState(false);
-  // 생성 모드
-  const [isCreateModeOn, setIsCreateModeOn] = useState(false);
   // 수정 모드 상태
   const [isEditMode, setIsEditMode] = useState(false);
   // 삭제 모드 상태 추가
@@ -99,9 +97,9 @@ export default function LedgerDetail() {
             // ✅ 낭비 여부를 transactionId 기준으로 저장
             const wasteMap = {};
             data.transactionsMap.forEach((item) => {
-             // API가 snake_case 로 주면 is_waste, camelCase 면 isWaste
-             const flag = item.isWaste ?? item.is_waste;
-             wasteMap[item.transactionId] = Boolean(flag);
+              // API가 snake_case 로 주면 is_waste, camelCase 면 isWaste
+              const flag = item.isWaste ?? item.is_waste;
+              wasteMap[item.transactionId] = Boolean(flag);
             });
             setWasteStates(wasteMap);
             setSelectedMonth(data);
@@ -260,6 +258,8 @@ export default function LedgerDetail() {
       }
     } catch (error) {
       console.error("데이터 새로고침 실패:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -353,14 +353,6 @@ export default function LedgerDetail() {
     }));
   };
 
-  // 카테고리 변경 핸들러 - 추가용
-  const handleAddCategoryChange = (categoryId) => {
-    setCreateData((prev) => ({
-      ...prev,
-      categoryId: categoryId,
-    }));
-  };
-
   // 날짜 변경 핸들러 (월) - 수정용
   const handleMonthChange = (month) => {
     setEditData((prev) => ({
@@ -369,25 +361,9 @@ export default function LedgerDetail() {
     }));
   };
 
-  // 날짜 변경 핸들러 (월) - 추가용
-  const handleAddMonthChange = (month) => {
-    setCreateData((prev) => ({
-      ...prev,
-      selectedMonth: parseInt(month),
-    }));
-  };
-
   // 날짜 변경 핸들러 (일) - 수정용
   const handleDayChange = (day) => {
     setEditData((prev) => ({
-      ...prev,
-      selectedDay: parseInt(day),
-    }));
-  };
-
-  // 날짜 변경 핸들러 (일) - 추가용
-  const handleAddDayChange = (day) => {
-    setCreateData((prev) => ({
       ...prev,
       selectedDay: parseInt(day),
     }));
@@ -431,7 +407,6 @@ export default function LedgerDetail() {
 
     // 추가 모달 열기
     setIsAddModalOpen(true);
-    setIsCreateModeOn(true);
   };
 
   // 내역 추가 실행 함수
@@ -531,7 +506,6 @@ export default function LedgerDetail() {
               onAdd={startAddTransaction}
               onEdit={toggleEditMode}
               onDelete={toggleDeleteMode}
-              isCreateModeOn={isCreateModeOn}
               isEditModeOn={isEditMode}
               isDeleteModeOn={isDeleteMode}
             />
@@ -808,154 +782,6 @@ export default function LedgerDetail() {
                     className="flex-1 py-4 bg-blue-500 text-white rounded-lg font-medium text-lg"
                   >
                     저장
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 내역 추가 모달 */}
-          {isAddModalOpen && (
-            <div className="fixed inset-0 bg-[#525252]/40 flex items-end justify-center z-50 pb-8">
-              <div className="bg-white w-full rounded-t-xl p-4 animate-slide-up h-[650px] overflow-y-auto mb-safe">
-                <h3 className="text-xl font-bold mb-4 mt-2">내역 추가</h3>
-
-                {/* 카테고리 선택 */}
-                <div className="mb-4">
-                  {/* <p className="text-gray-600 mb-2">카테고리</p> */}
-                  <div className="grid grid-cols-5 gap-2">
-                    {categories.map((category) => (
-                      <div
-                        key={category.id}
-                        onClick={() => handleAddCategoryChange(category.id)}
-                        className={`flex flex-col items-center p-2 rounded-lg cursor-pointer ${
-                          createData.categoryId === category.id
-                            ? "bg-green-100 border border-green-400"
-                            : "bg-gray-50"
-                        }`}
-                      >
-                        <img
-                          src={category.Icon}
-                          alt={category.name}
-                          className="w-10 h-10 mb-1"
-                        />
-                        <span className="text-[10px] text-center">
-                          {category.name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 상호명 입력 */}
-                <div className="mb-4">
-                  <label className="block text-gray-600 mb-1">상호명</label>
-                  <input
-                    type="text"
-                    value={createData.merchantName}
-                    onChange={(e) =>
-                      setCreateData({
-                        ...createData,
-                        merchantName: e.target.value,
-                      })
-                    }
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="상호명 입력"
-                  />
-                </div>
-
-                {/* 금액 입력 */}
-                <div className="mb-4">
-                  <label className="block text-gray-600 mb-1">금액</label>
-                  <input
-                    type="text"
-                    value={
-                      createData.amount === 0
-                        ? "0"
-                        : String(createData.amount).replace(/^0+/, "")
-                    }
-                    onChange={(e) => {
-                      // 입력값이 빈 문자열이면 0으로 설정
-                      if (e.target.value === "") {
-                        setCreateData({ ...createData, amount: 0 });
-                        return;
-                      }
-
-                      // 숫자만 입력 허용
-                      if (/^\d*$/.test(e.target.value)) {
-                        // 앞에 오는 0 제거 (예: "0123" -> "123")
-                        const cleanValue = e.target.value.replace(
-                          /^0+(\d)/,
-                          "$1"
-                        );
-                        setCreateData({
-                          ...createData,
-                          amount: Number(cleanValue),
-                        });
-                      }
-                    }}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="금액 입력"
-                  />
-                </div>
-
-                {/* 거래일자 선택 (월/일 선택) */}
-                <div className="mb-6">
-                  <label className="block text-gray-600 mb-1">거래일자</label>
-                  <div className="flex gap-2">
-                    {/* 월 선택 */}
-                    <div className="flex-1">
-                      <select
-                        value={createData.selectedMonth}
-                        onChange={(e) => handleAddMonthChange(e.target.value)}
-                        className="w-full p-2 border rounded-lg appearance-none bg-white"
-                      >
-                        {monthOptions.map((month) => (
-                          <option key={month} value={month}>
-                            {month}월
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* 일 선택 */}
-                    <div className="flex-1">
-                      <select
-                        value={createData.selectedDay}
-                        onChange={(e) => handleAddDayChange(e.target.value)}
-                        className="w-full p-2 border rounded-lg appearance-none bg-white"
-                      >
-                        {Array.from(
-                          {
-                            length: getDaysInMonth(createData.selectedMonth),
-                          },
-                          (_, i) => i + 1
-                        ).map((day) => (
-                          <option key={day} value={day}>
-                            {day}일
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 버튼 영역 */}
-                <div className="flex gap-2 mt-8 pb-4">
-                  <button
-                    onClick={() => {
-                      setIsAddModalOpen(false);
-                      setIsCreateModeOn(false);
-                    }}
-                    className="flex-1 py-4 bg-gray-200! rounded-lg font-medium text-lg"
-                  >
-                    취소
-                  </button>
-                  <button
-                    onClick={executeAddTransaction}
-                    className="flex-1 py-4 bg-green-500 text-white rounded-lg font-medium text-lg"
-                  >
-                    추가
                   </button>
                 </div>
               </div>

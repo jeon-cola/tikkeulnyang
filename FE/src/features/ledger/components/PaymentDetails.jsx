@@ -125,7 +125,11 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
   const match = blinkList.some((item) => item === date);
 
   return (
-    <div className="bg-white w-full p-[10px] text-black">
+    <div
+      className={`bg-white w-full p-[10px] text-black ${
+        type === "personal" ? "mb-10" : ""
+      }`}
+    >
       {type === "personal" ? (
         <div className="flex items-center justify-between text-lg mt-2">
           <p>{formatKoreanDate(paymentData?.data?.date)}</p>
@@ -142,7 +146,6 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
               티끌냥의 리포트
             </button>
           )}
-
         </div>
       ) : (
         <div className="flex justify-between">
@@ -238,45 +241,10 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
         </div>
       )}
 
-
-
-
-
       {/* <ul className="space-y-2 m"> */}
       <ul className="h-auto">
         {type === "personal"
           ? // 개인 가계부 데이터
-          paymentData?.data?.transactions?.map((item, index) => {
-            const matchedCategory = categories.find(
-              (cat) => cat.name === item.category
-            );
-            const Icon = matchedCategory ? matchedCategory.Icon : null;
-
-            return (
-              <li
-                key={index}
-                className="flex items-center gap-2 text-lg pt-4"
-              >
-                {Icon && (
-                  <img
-                    src={Icon}
-                    alt={item.category}
-                    className="w-10 h-auto"
-                  />
-                )}
-                <span className="ml-[20px]">{item.category}</span>
-                <span className="relative left-30px">{item.matchedName}</span>
-                <span>{item.description}</span>
-                <span className="ml-auto">
-                  {item.amount != null
-                    ? `${item.amount.toLocaleString()}`
-                    : "금액 없음"}
-                </span>
-              </li>
-            );
-          })
-          : !userId
-            ? // 본인 공유 가계부 데이터
             paymentData?.data?.transactions?.map((item, index) => {
               const matchedCategory = categories.find(
                 (cat) => cat.name === item.category
@@ -306,7 +274,38 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
                 </li>
               );
             })
-            : // 타인 공유 가계부 데이터
+          : !userId
+          ? // 본인 공유 가계부 데이터
+            paymentData?.data?.transactions?.map((item, index) => {
+              const matchedCategory = categories.find(
+                (cat) => cat.name === item.category
+              );
+              const Icon = matchedCategory ? matchedCategory.Icon : null;
+
+              return (
+                <li
+                  key={index}
+                  className="flex items-center gap-2 text-lg pt-4"
+                >
+                  {Icon && (
+                    <img
+                      src={Icon}
+                      alt={item.category}
+                      className="w-10 h-auto"
+                    />
+                  )}
+                  <span className="ml-[20px]">{item.category}</span>
+                  <span className="relative left-30px">{item.matchedName}</span>
+                  <span>{item.description}</span>
+                  <span className="ml-auto">
+                    {item.amount != null
+                      ? `${item.amount.toLocaleString()}`
+                      : "금액 없음"}
+                  </span>
+                </li>
+              );
+            })
+          : // 타인 공유 가계부 데이터
             paymentData?.transactions?.map((item, index) => {
               const matchedCategory = categories.find(
                 (cat) => cat.name === item.category

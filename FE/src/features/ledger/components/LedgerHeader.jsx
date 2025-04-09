@@ -9,7 +9,7 @@ export default function LedgerHeader({
   onAdd,
   onEdit,
   onDelete,
-  isCreateModeOn,
+  // isCreateModeOn,
   isEditModeOn,
   isDeleteModeOn,
 }) {
@@ -84,14 +84,14 @@ export default function LedgerHeader({
             {isEditMode && (
               <div className="pt-1">
                 <div className="grid grid-cols-3 gap-2">
-                  <button
+                  {/* <button
                     className={`py-3 rounded transition-colors text-sm md:text-base ${
                       isCreateModeOn ? "tikkeulButton" : "greyButton"
                     }`}
                     onClick={onAdd}
                   >
                     {isCreateModeOn ? "추가 완료" : "내역 추가"}
-                  </button>
+                  </button> */}
                   <button
                     className={`py-3 rounded transition-colors text-sm md:text-base ${
                       isEditModeOn ? "tikkeulButton" : "greyButton"
