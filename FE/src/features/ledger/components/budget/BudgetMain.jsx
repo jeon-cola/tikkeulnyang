@@ -5,6 +5,10 @@ import Api from "../../../../services/Api";
 import CustomBackHeader from "@/components/CustomBackHeader";
 import CategoryList from "../CategoryList";
 import WasteBlackIcon from "../../assets/waste_black.png";
+// import Buz from "../../assets/buz-124000.png";
+// import Watch from "../../assetswatch_7_214000.png";
+// import Ring from "../../assets/ring_499400.png";
+// import Tab from "../../assets/tab_9_8700000.png";
 
 import Buz from "../../assets/buz-124000.png";
 import Ring from "../../assets/ring_499400.png";
@@ -27,6 +31,13 @@ const getDaysLeftInMonth = (date) => {
   const lastDay = new Date(year, month, 0).getDate();
   return lastDay - today + 1;
 };
+
+// const samsungDevices = {
+//   0: Buz,
+//   1: Watch,
+//   2: Ring,
+//   3: Tab,
+// };
 
 export default function BudgetMain() {
   const [activeDate, setActiveDate] = useState(new Date());
@@ -73,6 +84,8 @@ export default function BudgetMain() {
     };
     fetchData();
   }, [year, month]);
+
+  // 낭비금액 조회
 
   // response값 가져옴
   const total = budgetData?.totals?.total_amount || 0;
@@ -208,6 +221,11 @@ export default function BudgetMain() {
         {/* 낭비 비용관련 물건 */}
         <div className="relative w-full h-auto bg-white rounded-md shadow-sm min-h-screen mt-4">
           <p>낭비내역</p>
+        </div>
+
+        {/* 낭비항목 */}
+        <div className="relative w-full h-auto bg-white rounded-md shadow-sm min-h-screen">
+          <img src="" alt="" />
         </div>
       </div>
     </>

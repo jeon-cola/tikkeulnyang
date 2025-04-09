@@ -104,8 +104,9 @@ services:
       - "5000:5000"
     volumes:
       - ./elk/logstash/pipeline:/usr/share/logstash/pipeline
+      - ./elk/logstash/logs:/usr/share/logstash/logs
     environment:
-      - "LS_JAVA_OPTS=-Xms256m -Xmx512m"
+      - "LS_JAVA_OPTS=-Xms256m -Xmx512m -Djava.io.tmpdir=/tmp"
     depends_on:
       - elasticsearch
     networks:
@@ -131,7 +132,7 @@ services:
     user: root
     volumes:
       - ./elk/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - ./logs:/var/log/spring-boot:ro
+      - /var/log/spring-boot:/var/log/spring-boot:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock
     command: filebeat -e -strict.perms=false
@@ -150,7 +151,6 @@ services:
     restart: always
     networks:
       - app_network
-
 
 networks:
   app_network:
