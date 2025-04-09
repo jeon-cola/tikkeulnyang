@@ -1,12 +1,15 @@
 package com.c107.security;
 
 import com.c107.common.util.JwtUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,13 +18,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    private static final Logger securityLogger = LoggerFactory.getLogger("SECURITY_MONITOR");
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public JwtAuthenticationFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService) {
         this.jwtUtil = jwtUtil;
@@ -34,7 +42,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain chain) throws ServletException, IOException {
 
         try {
-            // 쿠키에서 Access Token / Refresh Token 추출
             String accessToken = null;
             String refreshToken = null;
             Cookie[] cookies = request.getCookies();
@@ -49,63 +56,74 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
 
-            // 1. Access Token이 유효한지 체크
             if (accessToken != null && jwtUtil.validateToken(accessToken)) {
-                setAuthentication(accessToken, request);
-            }
-            // 2. Access Token 만료됐고, Refresh Token이 유효하면 새로운 Access Token 발급
-            else if (refreshToken != null && jwtUtil.validateToken(refreshToken)) {
+                if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                    setAuthentication(accessToken, request, true);
+                }
+            } else if (refreshToken != null && jwtUtil.validateToken(refreshToken)) {
                 Claims claims = jwtUtil.parseClaims(refreshToken);
                 String email = claims.getSubject();
                 String role = claims.get("role", String.class);
                 String nickname = claims.get("nickname", String.class);
 
-                // 새 Access Token 생성
                 String newAccessToken = jwtUtil.generateAccessToken(role, email, nickname);
 
-                // 재발급된 Access Token을 쿠키로 내려주기
                 Cookie newAccessTokenCookie = new Cookie("accessToken", newAccessToken);
                 newAccessTokenCookie.setHttpOnly(true);
                 newAccessTokenCookie.setSecure(true);
                 newAccessTokenCookie.setPath("/");
-                // accessToken 유효시간만큼
-                newAccessTokenCookie.setMaxAge( (int)(/*accessTokenExpiration*/3600L ) );
+                newAccessTokenCookie.setMaxAge(3600); // 1시간
                 response.addCookie(newAccessTokenCookie);
 
-                // 다시 SecurityContext 세팅
-                setAuthentication(newAccessToken, request);
+                if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                    setAuthentication(newAccessToken, request, true);
+                }
             }
 
-            // Access Token과 Refresh Token 둘 다 없거나 유효하지 않으면 -> 그냥 지나감(에러 핸들링은 Security 쪽에서)
-
         } catch (Exception e) {
-            logger.warn("JWT 인증 처리 중 예외 발생: " + e.getMessage());
+            logger.warn("JWT 인증 처리 중 예외 발생: {}", e.getMessage());
         }
 
         chain.doFilter(request, response);
     }
 
-
     /**
-     * SecurityContextHolder에 인증 정보 저장
-     * - 유저가 없을 경우 예외 발생하지만, 조용히 무시하고 필터 계속 진행
+     * 최초 자동 로그인 감지 시 보안 로그 남기기
      */
-    private void setAuthentication(String token, HttpServletRequest request) {
+    private void setAuthentication(String token, HttpServletRequest request, boolean logIfFirstLogin) {
         try {
             Claims claims = jwtUtil.parseClaims(token);
             String email = claims.getSubject();
+            String role = claims.get("role", String.class);
 
-            // 🔥 UserDetails 객체를 가져옴 (유저 없으면 예외 발생)
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(email, null, userDetails.getAuthorities());
-
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
+            // ✅ 최초 자동 로그인 여부 체크 (세션)
+            boolean alreadyLogged = Boolean.TRUE.equals(
+                    request.getSession().getAttribute("alreadyAutoLoggedIn"));
+
+            if (logIfFirstLogin && !alreadyLogged) {
+                logger.info("[자동 로그인] 최초 인증 성공 - email: {}, role: {}", email, role);
+
+                Map<String, Object> logEntry = new HashMap<>();
+                logEntry.put("event_type", "auto_login");
+                logEntry.put("email", email);
+                logEntry.put("role", role);
+                logEntry.put("ip", request.getRemoteAddr());
+                logEntry.put("user_agent", request.getHeader("User-Agent"));
+
+                securityLogger.info(objectMapper.writeValueAsString(logEntry));
+
+                // ✅ 세션에 플래그 저장 → 이후 중복 로그 방지
+                request.getSession().setAttribute("alreadyAutoLoggedIn", true);
+            }
+
         } catch (Exception e) {
-            logger.warn("setAuthentication 실패 - 사용자 없음 또는 오류: " + e.getMessage());
+            logger.warn("setAuthentication 실패: {}", e.getMessage());
         }
     }
 }
