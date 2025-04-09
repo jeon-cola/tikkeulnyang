@@ -137,7 +137,7 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
               <img
                 src="/icons/white_cat.png"
                 alt="고양이 아이콘"
-                className="w-6 h-6 mr-1.5"
+                className="w-6 h-auto mr-1.5"
               />
               티끌냥의 리포트
             </button>
@@ -197,13 +197,13 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
               <img
                 src="/icons/cream_cat.png"
                 alt="cat icon"
-                className="w-6 h-6"
+                className="w-6 h-auto"
               />
               <h2 className="text-lg font-bold">티끌냥 리포트</h2>
               <img
                 src="/icons/cream_cat.png"
                 alt="cat icon"
-                className="w-6 h-6"
+                className="w-6 h-auto"
               />
             </div>
             <p className="text-gray-800 whitespace-pre-line">
@@ -212,17 +212,17 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
                 <img
                   src="/icons/cream_cat.png"
                   alt="cat icon"
-                  className="w-4 h-4 inline-block align-text-bottom"
+                  className="w-4 h-auto inline-block align-text-bottom"
                 />
                 <img
                   src="/icons/cream_cat.png"
                   alt="cat icon"
-                  className="w-4 h-4 inline-block align-text-bottom ml-1"
+                  className="w-4 h-auto inline-block align-text-bottom ml-1"
                 />
                 <img
                   src="/icons/cream_cat.png"
                   alt="cat icon"
-                  className="w-4 h-4 inline-block align-text-bottom ml-1"
+                  className="w-4 h-auto inline-block align-text-bottom ml-1"
                 />
               </span>
             </p>
