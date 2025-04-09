@@ -127,22 +127,22 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
   return (
     <div className="bg-white w-full p-[10px] text-black">
       {type === "personal" ? (
-        <div className="flex items-center justify-between text-lg mt-2">
-          <p>{formatKoreanDate(paymentData?.data?.date)}</p>
-          <button
-  onClick={handleMemoButtonClick}
-  className="flex items-center bg-[#FF987A] hover:bg-[#ff8461] text-white text-sm font-medium px-3 py-1.5 rounded-full shadow"
->
-  <img
-    src="/icons/white_cat.png"
-    alt="고양이 아이콘"
-    className="w-6 h-6 mr-1.5"
-  />
-  티끌냥의 리포트
-</button>
-
-
-        </div>
+  <div className="flex items-center justify-between text-lg mt-2">
+    <p>{formatKoreanDate(paymentData?.data?.date)}</p>
+    {new Date(date) <= new Date() && ( // 오늘 이하일 때만 버튼 표시
+      <button
+        onClick={handleMemoButtonClick}
+        className="flex items-center bg-[#FF987A] hover:bg-[#ff8461] text-white text-sm font-medium px-3 py-1.5 rounded-full shadow"
+      >
+        <img
+          src="/icons/white_cat.png"
+          alt="고양이 아이콘"
+          className="w-6 h-6 mr-1.5"
+        />
+        티끌냥의 리포트
+      </button>
+    )}
+  </div>
       ) : (
         <div className="flex justify-between">
           <p className="flex flex-start pb-[10px]">
