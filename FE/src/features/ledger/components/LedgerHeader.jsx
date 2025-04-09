@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import Box from "./Box";
 import PurseImg from "../assets/money_purse.png";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 export default function LedgerHeader({
   onEditClick,
@@ -17,7 +17,6 @@ export default function LedgerHeader({
   const isSharePage = location.pathname.includes("share");
   const isDetailPage = location.pathname.includes("detail");
   const userInfo = useSelector((state) => state.user);
-  const dispatch = useDispatch();
 
   return (
     <div className="w-full item-center flex flex-col gap-3">
@@ -68,7 +67,7 @@ export default function LedgerHeader({
           <div className="w-full bg-white rounded-lg shadow-md p-4 flex flex-col gap-3">
             {/* 상단 타이틀 영역 */}
             <div className="flex justify-between items-center">
-              <p className="text-base md:text-lg font-semibold text-gray-800">
+              <p className="text-[18px] md:text-lg font-semibold text-gray-800">
                 {userInfo.nickName}의 가계부 세부내역
               </p>
               <button
