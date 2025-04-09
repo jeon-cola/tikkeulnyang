@@ -99,7 +99,9 @@ export default function LedgerDetail() {
             // ✅ 낭비 여부를 transactionId 기준으로 저장
             const wasteMap = {};
             data.transactionsMap.forEach((item) => {
-              wasteMap[item.transactionId] = Boolean(item.isWaste);
+             // API가 snake_case 로 주면 is_waste, camelCase 면 isWaste
+             const flag = item.isWaste ?? item.is_waste;
+             wasteMap[item.transactionId] = Boolean(flag);
             });
             setWasteStates(wasteMap);
             setSelectedMonth(data);
@@ -247,8 +249,8 @@ export default function LedgerDetail() {
         // 낭비 상태 업데이트
         const wasteMap = {};
         transactionsMapArray.forEach((item) => {
-          console.log("🔥 isWaste 상태:", item.transactionId, item.isWaste);
-          wasteMap[item.transactionId] = Boolean(item.isWaste);
+          const flag = item.isWaste ?? item.is_waste;
+          wasteMap[item.transactionId] = Boolean(flag);
         });
         setWasteStates(wasteMap);
         setSelectedMonth(data);
