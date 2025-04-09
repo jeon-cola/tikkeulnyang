@@ -96,7 +96,7 @@ services:
         soft: -1
         hard: -1
 
-    logstash:
+  logstash:
     image: docker.elastic.co/logstash/logstash:7.17.13
     container_name: logstash
     ports:
@@ -104,15 +104,14 @@ services:
       - "5000:5000"
     volumes:
       - ./elk/logstash/pipeline:/usr/share/logstash/pipeline
-      - ./elk/logstash/logs:/usr/share/logstash/logs   # 로그 데이터 보존을 위한 볼륨 마운트
+      - ./elk/logstash/logs:/usr/share/logstash/logs
     environment:
-      - "LS_JAVA_OPTS=-Xms256m -Xmx512m -Djava.io.tmpdir=/tmp"  # 임시 디렉토리는 내부 기본 값 사용 (변경하지 않음)
+      - "LS_JAVA_OPTS=-Xms256m -Xmx512m -Djava.io.tmpdir=/tmp"
     depends_on:
       - elasticsearch
     networks:
       - app_network
     restart: always
-
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.17.13
@@ -152,7 +151,6 @@ services:
     restart: always
     networks:
       - app_network
-
 
 networks:
   app_network:
