@@ -6,7 +6,6 @@ import com.c107.common.util.ResponseUtil;
 import com.c107.user.entity.User;
 import com.c107.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -58,8 +58,7 @@ public class AuthService {
     private String baseUrl;
 
     // 로그인 시도 추적을 위한 메모리 기반 저장소
-    private static final Map<String, LoginAttemptTracker> loginAttempts = new ConcurrentHashMap<>();
-
+    private final Map<String, LoginAttemptTracker> loginAttempts = new ConcurrentHashMap<>();
     // 로그인 시도 추적 클래스
     private static class LoginAttemptTracker {
         List<LoginAttempt> attempts = new ArrayList<>();
@@ -68,7 +67,8 @@ public class AuthService {
 
         void addAttempt(LoginAttempt attempt) {
             attempts.add(attempt);
-            if (!attempt.isSuccess) {
+            // 기존 로직에 맞춰 수정
+            if (attempt.timestamp != null && !attempt.isSuccess) {
                 failedAttempts++;
             } else {
                 failedAttempts = 0;
@@ -102,7 +102,20 @@ public class AuthService {
         }
     }
 
-    // 보안 로그 헬퍼 메서드
+    // ===================== 보안 로그 헬퍼 메서드 =====================
+    private void logSecurityEvent(String eventType, Map<String, Object> details) {
+        try {
+            Map<String, Object> logEntry = new HashMap<>();
+            logEntry.put("timestamp", LocalDateTime.now());
+            logEntry.put("event_type", eventType);
+            logEntry.putAll(details);
+            String jsonLog = objectMapper.writeValueAsString(logEntry);
+            securityLogger.info(jsonLog);
+        } catch (Exception e) {
+            securityLogger.error("보안 로그 생성 실패: " + eventType, e);
+        }
+    }
+
     private void logSecurityEvent(String eventType, Map<String, Object> details, HttpServletRequest request) {
         try {
             Map<String, Object> logEntry = new HashMap<>();
@@ -227,20 +240,141 @@ public class AuthService {
         }
     }
 
-    // 기존 메서드들은 동일하게 유지...
-    // (authenticateWithKakaoAndRedirect, logout 등)
+    // =================================================================
 
-    // 기존의 checkMultipleLoginAttempts 메서드
+    public void redirectToKakaoLogin(HttpServletResponse response) throws IOException {
+        String loginUrl = "https://kauth.kakao.com/oauth/authorize"
+                + "?client_id=" + kakaoClientId
+                + "&redirect_uri=" + kakaoRedirectUri
+                + "&response_type=code";
+        response.sendRedirect(loginUrl);
+    }
+
+    public KakaoTokenResponseDto getKakaoAccessToken(String code) {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("grant_type", "authorization_code");
+        params.add("client_id", kakaoClientId);
+        params.add("redirect_uri", kakaoRedirectUri);
+        params.add("code", code);
+        if (kakaoClientSecret != null && !kakaoClientSecret.isBlank()) {
+            params.add("client_secret", kakaoClientSecret);
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        HttpEntity<MultiValueMap<String, String>> tokenRequestEntity = new HttpEntity<>(params, headers);
+
+        ResponseEntity<KakaoTokenResponseDto> response =
+                restTemplate.postForEntity(kakaoTokenUri, tokenRequestEntity, KakaoTokenResponseDto.class);
+
+        return response.getBody();
+    }
+
+    public Map<String, Object> getKakaoUserInfo(String accessToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        HttpEntity<?> request = new HttpEntity<>(headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                kakaoUserInfoUri,
+                HttpMethod.GET,
+                request,
+                Map.class
+        );
+        return response.getBody();
+    }
+
+    public void authenticateWithKakaoAndRedirect(String code, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        logger.debug("엘라스틱 서치 이 메서드 들어옴");
+
+        try {
+            // MDC 컨텍스트 설정
+            MDC.put("event_type", "login_attempt");
+            MDC.put("auth_method", "kakao_oauth");
+
+            // 로그인 시도 보안 로그 JSON으로 기록
+            logSecurityEvent("login_attempt", Map.of("auth_method", "kakao_oauth"));
+
+            KakaoTokenResponseDto tokenResponse = getKakaoAccessToken(code);
+            Map<String, Object> kakaoUser = getKakaoUserInfo(tokenResponse.getAccessToken());
+
+            // 비정상 접근 탐지
+            if (kakaoUser == null || !kakaoUser.containsKey("kakao_account")) {
+                logSecurityEvent("login_anomaly", Map.of("reason", "incomplete_user_info"));
+                response.sendRedirect(baseUrl + "/login?error=kakaoUserNotFound");
+                return;
+            }
+
+            Map<String, Object> kakaoAccount = (Map<String, Object>) kakaoUser.get("kakao_account");
+            String email = (String) kakaoAccount.get("email");
+
+            // 이메일 없음 감지
+            if (email == null || email.isBlank()) {
+                logSecurityEvent("login_risk", Map.of(
+                        "reason", "missing_email",
+                        "oauth_provider", "kakao"
+                ));
+                response.sendRedirect(baseUrl + "/login?error=emailNotFound");
+                return;
+            }
+
+            // 로그인 시도 기록
+            recordLoginAttempt(email);
+
+            // 다중 로그인 시도 감지
+            if (checkMultipleLoginAttempts(email)) {
+                logSecurityEvent("login_flood", Map.of(
+                        "email", email,
+                        "risk_level", "high"
+                ));
+                response.sendRedirect(baseUrl + "/login?error=tooManyAttempts");
+                return;
+            }
+
+            Optional<User> existingUserOpt = loginUserRepository.findByEmail(email);
+            if (existingUserOpt.isPresent()) {
+                User user = existingUserOpt.get();
+                // 로그인 성공 보안 로그 남기기
+                logSecurityEvent("login_success", Map.of(
+                        "email", email,
+                        "user_role", user.getRole()
+                ));
+
+                String accessTokenJwt = jwtUtil.generateAccessToken(user.getRole(), user.getEmail(), user.getNickname());
+                String refreshTokenJwt = jwtUtil.generateRefreshToken(user.getRole(), user.getEmail(), user.getNickname());
+
+                setAccessTokenCookie(accessTokenJwt, response);
+                setRefreshTokenCookie(refreshTokenJwt, response);
+
+                response.sendRedirect(baseUrl + "/home/");
+            } else {
+                logSecurityEvent("new_user_detected", Map.of(
+                        "email", email,
+                        "oauth_provider", "kakao"
+                ));
+                response.sendRedirect(baseUrl + "/user/signup?email=" + email);
+            }
+        } catch (Exception e) {
+            logSecurityEvent("login_error", Map.of(
+                    "error_type", e.getClass().getSimpleName(),
+                    "error_message", e.getMessage()
+            ));
+            response.sendRedirect(baseUrl + "/login?error=systemError");
+        } finally {
+            MDC.clear();
+        }
+    }
+
     private boolean checkMultipleLoginAttempts(String email) {
         LoginAttemptTracker tracker = loginAttempts.getOrDefault(email, new LoginAttemptTracker());
         LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
         long recentAttempts = tracker.attempts.stream()
-                .filter(attempt -> attempt.timestamp.isAfter(oneHourAgo))
+                .filter(attempt -> attempt.timestamp != null && attempt.timestamp.isAfter(oneHourAgo))
                 .count();
         return recentAttempts > 10;
     }
 
-    // 기존 코드와의 호환성을 위한 메서드
+//
     private void recordLoginAttempt(String email) {
         LoginAttempt attempt = new LoginAttempt(LocalDateTime.now());
 
@@ -249,7 +383,7 @@ public class AuthService {
 
         // 오래된 시도 제거 (1일)
         LocalDateTime dayAgo = LocalDateTime.now().minusDays(1);
-        tracker.attempts.removeIf(a -> a.timestamp.isBefore(dayAgo));
+        tracker.attempts.removeIf(a -> a.timestamp != null && a.timestamp.isBefore(dayAgo));
     }
 
     private void setAccessTokenCookie(String accessToken, HttpServletResponse response) {
@@ -334,37 +468,7 @@ public class AuthService {
                 .body(Map.of("accessToken", accessTokenJwt));
     }
 
-    public KakaoTokenResponseDto getKakaoAccessToken(String code) {
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", "authorization_code");
-        params.add("client_id", kakaoClientId);
-        params.add("redirect_uri", kakaoRedirectUri);
-        params.add("code", code);
-        if (kakaoClientSecret != null && !kakaoClientSecret.isBlank()) {
-            params.add("client_secret", kakaoClientSecret);
-        }
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        HttpEntity<MultiValueMap<String, String>> tokenRequestEntity = new HttpEntity<>(params, headers);
-
-        ResponseEntity<KakaoTokenResponseDto> response =
-                restTemplate.postForEntity(kakaoTokenUri, tokenRequestEntity, KakaoTokenResponseDto.class);
-
-        return response.getBody();
-    }
-
-    public Map<String, Object> getKakaoUserInfo(String accessToken) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
-        HttpEntity<?> request = new HttpEntity<>(headers);
-
-        ResponseEntity<Map> response = restTemplate.exchange(
-                kakaoUserInfoUri,
-                HttpMethod.GET,
-                request,
-                Map.class
-        );
-        return response.getBody();
+    public void authenticateWithKakaoAndRedirect(String code, HttpServletResponse response) throws IOException {
+        authenticateWithKakaoAndRedirect(code, null, response);
     }
 }
