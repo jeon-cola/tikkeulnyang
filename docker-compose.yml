@@ -112,6 +112,7 @@ services:
     networks:
       - app_network
     restart: always
+    
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.17.13
