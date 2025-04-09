@@ -47,5 +47,6 @@
     <logger name="SECURITY_MONITOR" level="INFO" additivity="false">
         <appender-ref ref="SECURITY_FILE"/>
         <appender-ref ref="LOGSTASH"/>
+        <appender-ref ref="CONSOLE"/>
     </logger>
 </configuration>
