@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -83,13 +84,21 @@ public class AuthService {
         String userAgent;
         boolean isSuccess;
         String eventType;
+        String sessionId;
 
-        LoginAttempt(LocalDateTime timestamp, String ipAddress, String userAgent, boolean isSuccess, String eventType) {
+        LoginAttempt(LocalDateTime timestamp, String ipAddress, String userAgent, boolean isSuccess, String eventType, String sessionId) {
             this.timestamp = timestamp;
             this.ipAddress = ipAddress;
             this.userAgent = userAgent;
             this.isSuccess = isSuccess;
             this.eventType = eventType;
+            this.sessionId = sessionId;
+        }
+
+        // 호환성을 위한 생성자
+        LoginAttempt(LocalDateTime timestamp, String ipAddress, String userAgent,
+                     boolean isSuccess, String eventType) {
+            this(timestamp, ipAddress, userAgent, isSuccess, eventType, UUID.randomUUID().toString());
         }
 
         // 기존 호환성을 위한 생성자
@@ -99,6 +108,7 @@ public class AuthService {
             this.userAgent = null;
             this.isSuccess = false;
             this.eventType = null;
+            this.sessionId = UUID.randomUUID().toString();
         }
     }
 
@@ -189,13 +199,15 @@ public class AuthService {
 
         String ipAddress = (String) logEntry.get("ip");
         String userAgent = (String) logEntry.get("user_agent");
+        String sessionId = UUID.randomUUID().toString();
 
         LoginAttempt attempt = new LoginAttempt(
                 LocalDateTime.now(),
                 ipAddress,
                 userAgent,
                 isSuccessfulEvent(eventType),
-                eventType
+                eventType,
+                sessionId
         );
 
         LoginAttemptTracker tracker = loginAttempts.computeIfAbsent(email, k -> new LoginAttemptTracker());
@@ -203,6 +215,12 @@ public class AuthService {
 
         // 로그인 시도 및 비정상 접근 패턴 감지
         checkLoginAttemptPatterns(email, tracker);
+
+        // 동시 세션 감지
+        detectConcurrentSessions(email, tracker);
+
+        // 로그인 시간대 분석
+        analyzeLoginTimePatterns(email, tracker);
     }
 
     // 로그인 이벤트 성공 여부 판단
@@ -471,4 +489,128 @@ public class AuthService {
     public void authenticateWithKakaoAndRedirect(String code, HttpServletResponse response) throws IOException {
         authenticateWithKakaoAndRedirect(code, null, response);
     }
+
+    // 동시 세션 감지 메서드
+    private void detectConcurrentSessions(String email, LoginAttemptTracker tracker) {
+        LocalDateTime now = LocalDateTime.now();
+
+        // 30분 내 서로 다른 세션 ID로 로그인한 시도 찾기
+        List<LoginAttempt> concurrentSessions = tracker.attempts.stream()
+                .filter(attempt ->
+                        attempt.timestamp.isAfter(now.minusMinutes(30)) &&
+                                attempt.isSuccess  // 성공한 로그인만 고려
+                )
+                .collect(Collectors.toList());
+
+        // 고유한 세션 ID 수 확인
+        long uniqueSessionCount = concurrentSessions.stream()
+                .map(attempt -> attempt.sessionId)
+                .distinct()
+                .count();
+
+        // 2개 이상의 고유 세션 ID 감지 시 로그 기록
+        if (uniqueSessionCount > 1) {
+            Map<String, Object> concurrentSessionDetails = new HashMap<>();
+            concurrentSessionDetails.put("email", email);
+            concurrentSessionDetails.put("unique_session_count", uniqueSessionCount);
+            concurrentSessionDetails.put("session_details", concurrentSessions.stream()
+                    .map(s -> Map.of(
+                            "ip", s.ipAddress,
+                            "user_agent", s.userAgent,
+                            "timestamp", s.timestamp,
+                            "session_id", s.sessionId
+                    ))
+                    .collect(Collectors.toList())
+            );
+
+            logSecurityEvent("concurrent_sessions_detected", concurrentSessionDetails, null);
+        }
+    }
+
+    // 로그인 시간대 분석 메서드
+    private void analyzeLoginTimePatterns(String email, LoginAttemptTracker tracker) {
+        // 24시간 동안의 로그인 시도 분석
+        List<LoginAttempt> dailyAttempts = tracker.attempts.stream()
+                .filter(attempt -> attempt.timestamp.isAfter(LocalDateTime.now().minusDays(1)))
+                .collect(Collectors.toList());
+
+        // 시간대별 로그인 횟수 집계
+        Map<Integer, Long> hourlyLoginCounts = dailyAttempts.stream()
+                .collect(Collectors.groupingBy(
+                        attempt -> attempt.timestamp.getHour(),
+                        Collectors.counting()
+                ));
+
+        // 가장 많이 로그인하는 시간대 찾기
+        Integer peakHour = hourlyLoginCounts.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(null);
+
+        if (peakHour != null) {
+            Map<String, Object> loginTimeAnalysis = new HashMap<>();
+            loginTimeAnalysis.put("email", email);
+            loginTimeAnalysis.put("peak_hour", peakHour);
+            loginTimeAnalysis.put("hourly_login_counts", hourlyLoginCounts);
+
+            // 시간대별 로그인 분포 로깅
+            logSecurityEvent("login_time_analysis", loginTimeAnalysis, null);
+        }
+    }
+
+
+    // 로그인 실패 메서드
+    public void recordLoginFailure(Map<String, Object> logEntry) {
+        String email = (String) logEntry.get("email");
+        String ipAddress = (String) logEntry.get("ip");
+        String userAgent = (String) logEntry.get("user_agent");
+
+        LoginAttempt failedAttempt = new LoginAttempt(
+                LocalDateTime.now(),
+                ipAddress,
+                userAgent,
+                false,  // 실패 표시
+                "login_failure",
+                UUID.randomUUID().toString()
+        );
+
+        LoginAttemptTracker tracker = loginAttempts.computeIfAbsent(email, k -> new LoginAttemptTracker());
+        tracker.addAttempt(failedAttempt);
+
+        // 로그인 실패 패턴 분석
+        analyzeLoginFailurePatterns(email, tracker);
+    }
+
+    private void analyzeLoginFailurePatterns(String email, LoginAttemptTracker tracker) {
+        LocalDateTime now = LocalDateTime.now();
+
+        // 10분 내 로그인 실패 횟수 확인
+        List<LoginAttempt> recentFailedAttempts = tracker.attempts.stream()
+                .filter(attempt ->
+                        !attempt.isSuccess &&
+                                attempt.timestamp.isAfter(now.minusMinutes(10))
+                )
+                .collect(Collectors.toList());
+
+        // 10분 내 10회 이상 로그인 실패
+        if (recentFailedAttempts.size() >= 10) {
+            // 실패 시도의 고유 IP 주소들
+            Set<String> uniqueIpAddresses = recentFailedAttempts.stream()
+                    .map(attempt -> attempt.ipAddress)
+                    .collect(Collectors.toSet());
+
+            Map<String, Object> failureDetails = new HashMap<>();
+            failureDetails.put("email", email);
+            failureDetails.put("failure_count", recentFailedAttempts.size());
+            failureDetails.put("unique_ip_addresses", uniqueIpAddresses);
+            failureDetails.put("first_failure_time",
+                    recentFailedAttempts.get(0).timestamp);
+            failureDetails.put("last_failure_time",
+                    recentFailedAttempts.get(recentFailedAttempts.size() - 1).timestamp);
+
+            // 보안 이벤트 로깅
+            logSecurityEvent("massive_login_failures", failureDetails, null);
+        }
+    }
+
 }
