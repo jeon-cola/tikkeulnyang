@@ -21,6 +21,7 @@ services:
     depends_on:
       - mysql
       - redis
+      - logstash
     environment:
       - TZ=Asia/Seoul
       - JAVA_TOOL_OPTIONS=-Duser.timezone=Asia/Seoul
