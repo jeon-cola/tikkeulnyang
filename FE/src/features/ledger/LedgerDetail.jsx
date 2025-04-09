@@ -3,9 +3,11 @@ import MonthBar from "./components/MonthBar";
 import Container from "@/components/Container";
 import LedgerHeader from "./components/LedgerHeader";
 import CategoryBox from "./components/CategoryBox";
+import IsLoading from "@/components/IsLoading";
+import AlertModal from "@/components/AlertModal";
+
 import Api from "../../services/Api";
 import CategoryList from "./components/CategoryList";
-import IsLoading from "@/components/IsLoading";
 import WasteIcon from "./assets/waste_icon.png";
 import EmptyIcon from "./assets/empty_icon.png";
 // import DeleteIcon from "./assets/delete_icon.png"; // 삭제 아이콘 추가 (아이콘 필요)
@@ -14,7 +16,8 @@ import EmptyIcon from "./assets/empty_icon.png";
 const categories = CategoryList();
 
 export default function LedgerDetail() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isAlertModal, setIsAlertModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeDate, setActiveDate] = useState(new Date());
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState({
@@ -49,6 +52,7 @@ export default function LedgerDetail() {
     categoryId: 0,
     merchantName: "",
   });
+
   // 새 트랜잭션 데이터
   const [createData, setCreateData] = useState({
     amount: 0,
@@ -84,6 +88,7 @@ export default function LedgerDetail() {
         console.log(response.data);
         if (response.data.status === "success") {
           const data = response.data.data;
+          setIsLoading(false);
 
           // 거래 내역을 날짜 기준으로 정렬 (최신 순)
           if (data.transactionsMap && Array.isArray(data.transactionsMap)) {
@@ -94,16 +99,18 @@ export default function LedgerDetail() {
             // ✅ 낭비 여부를 transactionId 기준으로 저장
             const wasteMap = {};
             data.transactionsMap.forEach((item) => {
-              wasteMap[item.transactionId] = item.isWaste || false;
+              wasteMap[item.transactionId] = Boolean(item.isWaste);
             });
             setWasteStates(wasteMap);
+            setSelectedMonth(data);
           }
-          setSelectedMonth(data);
           setTotalIncome(data.totalIncome);
           setTotalSpent(data.totalSpent);
         }
       } catch (error) {
         console.error("월별 세부내역 조회 실패", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchMonthlyData();
@@ -132,7 +139,9 @@ export default function LedgerDetail() {
 
   // 만약 낭비 항목만 보고자 할 경우 필터 추가
   const transactionsToDisplay = showWasteOnly
-    ? filteredTransactions.filter((item) => wasteStates[item.transactionId])
+    ? filteredTransactions.filter(
+        (item) => wasteStates[item.transactionId] === true
+      )
     : filteredTransactions;
 
   // 낭비 체크 버튼을 클릭 시 처리 (API 호출 포함)
@@ -156,6 +165,10 @@ export default function LedgerDetail() {
       console.log("낭비 소비 체크 API 응답:", response.data);
     } catch (error) {
       console.error("에러 응답:", error.response?.data || error);
+      setWasteStates((prev) => ({
+        ...prev,
+        [transactionId]: !prev[transactionId],
+      }));
     }
   };
 
@@ -192,9 +205,11 @@ export default function LedgerDetail() {
         finalPayload
       );
       console.log("내역 수정 완료:", response.data);
+      setIsLoading(true);
 
       // 성공 후 데이터 다시 불러오기
       await refreshData();
+      setIsLoading(false);
 
       return true;
     } catch (error) {
@@ -204,8 +219,10 @@ export default function LedgerDetail() {
     }
   };
 
-  // 데이터 새로고침 함수 - 수정
+  // 데이터 새로고침 함수
   const refreshData = async () => {
+    console.log("리렌더링 안되는 듯");
+    console.log("✅ refreshData() 호출됨");
     try {
       const year = activeDate.getFullYear();
       const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
@@ -215,37 +232,28 @@ export default function LedgerDetail() {
 
       if (refreshResponse.data.status === "success") {
         const data = refreshResponse.data.data;
+        setIsLoading(true);
 
         // 배열이 있는지 확인하고, 없으면 빈 배열로 기본값 설정
         const transactionsMapArray = Array.isArray(data.transactionsMap)
           ? data.transactionsMap
           : [];
 
+        console.log("📦 응답된 transactionsMap:", transactionsMapArray);
         // 날짜별 정렬
         transactionsMapArray.sort((a, b) => {
           return new Date(b.date) - new Date(a.date);
         });
-
         // 낭비 상태 업데이트
         const wasteMap = {};
         transactionsMapArray.forEach((item) => {
-          wasteMap[item.transactionId] = item.isWaste || false;
+          console.log("🔥 isWaste 상태:", item.transactionId, item.isWaste);
+          wasteMap[item.transactionId] = Boolean(item.isWaste);
         });
-
-        // 상태를 올바른 순서로 모두 업데이트
         setWasteStates(wasteMap);
-
-        // React가 변경을 감지하도록 새 객체 생성
-        const updatedData = {
-          ...data,
-          transactionsMap: transactionsMapArray,
-        };
-
-        setSelectedMonth(updatedData);
+        setSelectedMonth(data);
         setTotalIncome(data.totalIncome);
         setTotalSpent(data.totalSpent);
-
-        // 필요한 경우 주요 상태 값을 업데이트하여 강제 재렌더링
         setActiveCategory(activeCategory);
       }
     } catch (error) {
@@ -395,6 +403,7 @@ export default function LedgerDetail() {
     if (success) {
       setIsModalOpen(false);
       setCurrentTransaction(null);
+      setIsLoading(true);
     }
   };
 
@@ -440,6 +449,7 @@ export default function LedgerDetail() {
     try {
       const response = await Api.post(`api/transactions`, payload);
       console.log("새 거래 내역 생성:", response.data);
+      setIsLoading(true);
 
       // 성공시 데이터 새로고침
       await refreshData();
@@ -450,6 +460,7 @@ export default function LedgerDetail() {
 
       // 성공 메시지
       alert("새 내역이 추가되었습니다.");
+      setIsLoading(false);
     } catch (error) {
       console.error("새 거래 내역 생성 실패:", error);
       alert("새 거래 내역 추가에 실패했습니다.");
@@ -676,7 +687,7 @@ export default function LedgerDetail() {
 
                 {/* 카테고리 선택 */}
                 <div className="mb-4">
-                  <p className="text-gray-600 mb-2">카테고리</p>
+                  {/* <p className="text-gray-600 mb-2">카테고리</p> */}
                   <div className="grid grid-cols-5 gap-2">
                     {categories.map((category) => (
                       <div
@@ -693,7 +704,7 @@ export default function LedgerDetail() {
                           alt={category.name}
                           className="w-10 h-10 mb-1"
                         />
-                        <span className="text-xs text-center">
+                        <span className="text-[10px] text-center">
                           {category.name}
                         </span>
                       </div>
@@ -809,7 +820,7 @@ export default function LedgerDetail() {
 
                 {/* 카테고리 선택 */}
                 <div className="mb-4">
-                  <p className="text-gray-600 mb-2">카테고리</p>
+                  {/* <p className="text-gray-600 mb-2">카테고리</p> */}
                   <div className="grid grid-cols-5 gap-2">
                     {categories.map((category) => (
                       <div
@@ -826,7 +837,7 @@ export default function LedgerDetail() {
                           alt={category.name}
                           className="w-10 h-10 mb-1"
                         />
-                        <span className="text-xs text-center">
+                        <span className="text-[10px] text-center">
                           {category.name}
                         </span>
                       </div>

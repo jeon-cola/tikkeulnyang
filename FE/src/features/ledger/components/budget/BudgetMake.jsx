@@ -18,7 +18,6 @@ export default function BudgetMake() {
   const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
 
   // 예산 데이터 조회
-  // 예산 데이터 조회
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -77,7 +76,6 @@ export default function BudgetMake() {
         setIsLoading(false);
       }
     };
-
     fetchData();
   }, [year, month]);
 
@@ -89,20 +87,16 @@ export default function BudgetMake() {
       prevDate.setMonth(prevDate.getMonth() - 1);
       const prevYear = prevDate.getFullYear();
       const prevMonth = (prevDate.getMonth() + 1).toString().padStart(2, "0");
-
       const response = await Api.get(
         `api/budget/categories?year=${prevYear}&month=${prevMonth}`
       );
-
       const backendData = response.data.data?.categories || [];
-
       if (backendData.some((item) => item.hasBudget)) {
         // 카테고리 ID 기준으로 매칭하여 예산 구성
         const mappedData = categories.map((cat) => {
           const matched = backendData.find(
             (item) => item.categoryId === cat.id
           );
-
           return {
             category_id: cat.id,
             category_name: cat.name,
@@ -113,7 +107,6 @@ export default function BudgetMake() {
             has_budget: matched?.hasBudget || false,
           };
         });
-
         setBudgetData(mappedData);
 
         // 총 예산 계산
@@ -122,7 +115,6 @@ export default function BudgetMake() {
           0
         );
         setTotalBudget(total);
-
         alert("이전 달 예산을 불러왔습니다.");
       } else {
         alert("이전 달 예산 데이터가 없습니다.");
@@ -137,7 +129,6 @@ export default function BudgetMake() {
   const handleBudgetChange = (categoryId, value) => {
     const numberValue =
       value === "" ? 0 : parseInt(value.replace(/,/g, ""), 10);
-
     setBudgetData((prev) =>
       prev.map((item) =>
         item.category_id === categoryId
@@ -145,14 +136,12 @@ export default function BudgetMake() {
           : item
       )
     );
-
     // 총 예산 업데이트
     const updatedTotal = budgetData
       .map((item) =>
         item.category_id === categoryId ? numberValue : item.budget_amount
       )
       .reduce((sum, amount) => sum + amount, 0);
-
     setTotalBudget(updatedTotal);
   };
 
@@ -169,7 +158,6 @@ export default function BudgetMake() {
         };
         await Api.post(`api/budget/plan?year=${year}&month=${month}`, payload);
       }
-
       alert("예산이 성공적으로 저장되었습니다.");
 
       // 저장 후 데이터 다시 불러오기
@@ -181,7 +169,6 @@ export default function BudgetMake() {
       // 데이터 매핑 및 상태 업데이트
       const mappedData = categories.map((cat) => {
         const matched = backendData.find((item) => item.categoryId === cat.id);
-
         return {
           category_id: cat.id,
           category_name: cat.name,
@@ -192,7 +179,6 @@ export default function BudgetMake() {
           has_budget: matched?.hasBudget || false,
         };
       });
-
       setBudgetData(mappedData);
 
       // 총 예산 계산
