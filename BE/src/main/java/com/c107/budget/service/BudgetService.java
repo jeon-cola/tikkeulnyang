@@ -333,7 +333,7 @@ public class BudgetService {
      * 낭비 금액 계산
      * 캐싱 키: email, 연도, 월
      */
-    @Cacheable(value = "wasteMoney", key = "#email + '-' + #year + '-' + #month")
+//    @Cacheable(value = "wasteMoney", key = "#email + '-' + #year + '-' + #month")
     public BudgetResponseDto.BudgetWaste getWasteMoney(String email, Integer year, Integer month) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -341,29 +341,42 @@ public class BudgetService {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
-        // transactions 테이블에서 데이터 조회
-        List<Transaction> transactions = transactionRepository.findByUserIdAndTransactionDateBetween(
-                user.getUserId(),
-                startDate.atStartOfDay(),
-                endDate.atTime(23, 59, 59)
-        );
-
+        // transactions 테이블에서 데이터 직접 쿼리
         int totalWasteAmount = 0;
-        int wasteCount = 0;
 
-        // 낭비로 표시된 거래(isWaste=1)만 필터링하여 합계 계산
-        for (Transaction transaction : transactions) {
-            try {
-                // 입금(수입)은 제외하고 지출만 고려
-                if (transaction.getTransactionType() != null && transaction.getTransactionType() != 1) {
-                    Integer isWaste = transaction.getIsWaste();
-                    // isWaste가 1인 경우에만 낭비 금액으로 계산
-                    if (isWaste != null && isWaste == 1) {
-                        totalWasteAmount += transaction.getAmount();
-                        wasteCount++;
+        try {
+            // 직접 SQL 쿼리로 합계 구하기 (선택적: 문제 해결 확인 후 기존 코드로 되돌릴 수 있음)
+            Integer sum = transactionRepository.sumWasteAmountByUserIdAndPeriod(
+                    user.getUserId(),
+                    startDate.atStartOfDay(),
+                    endDate.atTime(23, 59, 59)
+            );
+
+            if (sum != null) {
+                totalWasteAmount = sum;
+            }
+        } catch (Exception e) {
+            // SQL 쿼리 실패 시 원래 방식으로 계산
+            List<Transaction> transactions = transactionRepository.findByUserIdAndTransactionDateBetween(
+                    user.getUserId(),
+                    startDate.atStartOfDay(),
+                    endDate.atTime(23, 59, 59)
+            );
+
+            // 낭비로 표시된 거래(isWaste=1)만 필터링하여 합계 계산
+            for (Transaction transaction : transactions) {
+                try {
+                    // 입금(수입)은 제외하고 지출만 고려
+                    if (transaction.getTransactionType() != null && transaction.getTransactionType() != 1) {
+                        Integer isWaste = transaction.getIsWaste();
+                        // isWaste가 1인 경우에만 낭비 금액으로 계산
+                        if (isWaste != null && isWaste == 1) {
+                            totalWasteAmount += transaction.getAmount();
+                        }
                     }
+                } catch (Exception ex) {
+                    // 개별 거래 처리 중 오류 무시
                 }
-            } catch (Exception e) {
             }
         }
 
@@ -372,6 +385,15 @@ public class BudgetService {
                 .month(month)
                 .totalWasteAmount(totalWasteAmount)
                 .build();
+    }
+
+
+    /**
+     * wasteMoney 캐시를 비우는 메서드
+     */
+    @CacheEvict(value = "wasteMoney", allEntries = true)
+    public void clearWasteMoneyCache() {
+        // 캐시만 비우는 메서드이므로 내용은 비워둠
     }
 
     /**

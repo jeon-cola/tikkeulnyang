@@ -58,6 +58,7 @@ public class BudgetController {
         return ResponseUtil.success("남은 예산 조회에 성공했습니다.", responseDto);
     }
 
+
     @GetMapping("/waste/money")
     public ResponseEntity<?> getWasteMoney(
             @AuthenticationPrincipal String email,
@@ -68,11 +69,13 @@ public class BudgetController {
         int targetYear = (year != null) ? year : now.getYear();
         int targetMonth = (month != null) ? month : now.getMonthValue();
 
+        // 캐시 초기화 (문제 해결 후 제거 가능)
+        budgetService.clearWasteMoneyCache();
+
         BudgetResponseDto.BudgetWaste responseDto = budgetService.getWasteMoney(
                 email, targetYear, targetMonth);
 
         return ResponseUtil.success("낭비 금액 조회에 성공했습니다.", responseDto);
-
     }
 
     @GetMapping("/categories")
