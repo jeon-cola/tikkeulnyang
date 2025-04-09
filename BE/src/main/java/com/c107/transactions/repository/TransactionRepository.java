@@ -2,6 +2,8 @@ package com.c107.transactions.repository;
 
 import com.c107.transactions.entity.Transaction;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -41,4 +43,16 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     List<Transaction> findAllByUserIdAndTransactionDateBetween(
             Integer userId, LocalDateTime start, LocalDateTime end);
 
+    // TransactionRepository 인터페이스에 추가
+    @Query("SELECT SUM(t.amount) FROM Transaction t " +
+            "WHERE t.userId = :userId " +
+            "AND t.transactionDate BETWEEN :startDate AND :endDate " +
+            "AND t.transactionType != 1 " +  // 입금(수입) 제외
+            "AND t.isWaste = 1 " +           // 낭비 표시된 것만
+            "AND (t.deleted = 0 OR t.deleted IS NULL)")  // 삭제되지 않은 거래만
+    Integer sumWasteAmountByUserIdAndPeriod(
+            @Param("userId") Integer userId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }
