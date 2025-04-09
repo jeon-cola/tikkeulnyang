@@ -19,6 +19,7 @@ import ChooseAlertModal from "../../../components/ChooseAlertModal.jsx";
 import AlertModal from "../../../components/AlertModal.jsx";
 import {setPage} from "../../challenge/ChallengeSlice.js"
 import IsLoading from "../../../components/IsLoading.jsx"
+import Password from "../../../components/Password"
 
 export default function MyPageMenu() {
   const dispatch = useDispatch();
@@ -40,6 +41,8 @@ export default function MyPageMenu() {
   const nav = useNavigate();
   const [isLoading, setIsLoading] = useState(false)
   const [message , setMessage ] =useState("")
+  const [isPassword, setIsPassword] = useState(false)
+  const [chargeMessage, setChargeMessage] = useState(false)
 
   // 챌린지 조회 성공시 화면 로딩
   useEffect(()=> {
@@ -79,25 +82,30 @@ export default function MyPageMenu() {
   }
 
   // 예치금 충전
-  function chargeHandler() {
+  function chargeHandler(password) {
     setIsLoading(true)
     const fetchData = async () => {
       try {
         const response = await Api.post("/api/account/deposit-charge", {
           amount: inputChange,
+          transactionPassword:password
         });
         if (response.data === "예치금 충전 요청이 완료되었습니다.") {
+          setIsPassword(false)
           setIsMessageModal(true)
-          setMessage("예치금 충전이 완료되었습니다다")
+          setMessage("예치금 충전이 완료되었습니다")
           const currentDeposit = parseInt(deposit, 10);
           const additionAmount = parseInt(inputChange, 10);
           const newDeposit = (currentDeposit + additionAmount).toString();
           dispatch(setDeposit(newDeposit));
-        } else if (response.data === "계좌잔액이 부족합니다.") {
-          setMessage("계좌잔액이 부족합니다")
         }
       } catch (error) {
-        console.log(error);
+        console.log(error)
+        if (error.response.data === "계좌잔액이 부족합니다.") {
+          setMessage("계좌잔액이 부족합니다")
+        } else if ( error.response.data === "거래 비밀번호가 올바르지 않습니다.") {
+          setChargeMessage(true)
+        }
       } finally {
         setIsLoading(false)
       }
@@ -369,7 +377,7 @@ export default function MyPageMenu() {
                         onChange={inputHandler}
                         />
                     </div>
-                    <button className="customButton" onClick={chargeHandler}>
+                    <button className="customButton" onClick={()=>setIsPassword(true)}>
                       충전하기
                     </button>
                   </div>
@@ -511,8 +519,9 @@ export default function MyPageMenu() {
           </AlertModal>
         </div>
       </div>
+      {isPassword?<Password isFail={chargeMessage} isFunction={chargeHandler}/>:""}
     </div>
-    :<IsLoading/>}
+    :<IsLoading />}
     </>
   );
 }
