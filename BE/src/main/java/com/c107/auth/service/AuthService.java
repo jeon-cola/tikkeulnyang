@@ -56,6 +56,7 @@ public class AuthService {
     @Value("${app.base.url}")
     private String baseUrl;
 
+    // 로그인 시도 추적을 위한 메모리 기반 저장소
     private static final Map<String, List<LoginAttempt>> loginAttempts = new ConcurrentHashMap<>();
 
     private static class LoginAttempt {
@@ -65,7 +66,7 @@ public class AuthService {
         }
     }
 
-    // ===================== 보안 로그 헬퍼 메서드 추가 =====================
+    // ===================== 보안 로그 헬퍼 메서드 =====================
     private void logSecurityEvent(String eventType, Map<String, Object> details) {
         try {
             Map<String, Object> logEntry = new HashMap<>();
@@ -78,7 +79,7 @@ public class AuthService {
             securityLogger.error("보안 로그 생성 실패: " + eventType, e);
         }
     }
-    // =====================================================================
+    // =================================================================
 
     public void redirectToKakaoLogin(HttpServletResponse response) throws IOException {
         String loginUrl = "https://kauth.kakao.com/oauth/authorize"
@@ -123,6 +124,9 @@ public class AuthService {
     }
 
     public void authenticateWithKakaoAndRedirect(String code, HttpServletResponse response) throws IOException {
+
+        System.out.println("엘라스틱 서치 이 메서드 들어옴");
+
         try {
             // MDC 컨텍스트 설정
             MDC.put("event_type", "login_attempt");
@@ -170,7 +174,7 @@ public class AuthService {
             Optional<User> existingUserOpt = loginUserRepository.findByEmail(email);
             if (existingUserOpt.isPresent()) {
                 User user = existingUserOpt.get();
-                // 로그인 성공 로그 남기기
+                // 로그인 성공 보안 로그 남기기
                 logSecurityEvent("login_success", Map.of(
                         "email", email,
                         "user_role", user.getRole()
@@ -216,9 +220,6 @@ public class AuthService {
         LocalDateTime dayAgo = LocalDateTime.now().minusDays(1);
         attempts.removeIf(attempt -> attempt.timestamp.isBefore(dayAgo));
     }
-
-    // 기존 createSecurityLogMessage는 대체됨 -> logSecurityEvent 헬퍼 메서드를 사용하므로 더 이상 직접 호출할 필요 없음.
-    // private String createSecurityLogMessage(String eventType, Map<String, Object> details) { ... }
 
     private void setAccessTokenCookie(String accessToken, HttpServletResponse response) {
         Cookie cookie = new Cookie("accessToken", accessToken);
@@ -302,4 +303,3 @@ public class AuthService {
                 .body(Map.of("accessToken", accessTokenJwt));
     }
 }
-
