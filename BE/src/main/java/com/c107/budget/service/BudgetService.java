@@ -349,16 +349,18 @@ public class BudgetService {
         );
 
         int totalWasteAmount = 0;
+        int wasteCount = 0;
 
         // 낭비로 표시된 거래(isWaste=1)만 필터링하여 합계 계산
         for (Transaction transaction : transactions) {
             try {
                 // 입금(수입)은 제외하고 지출만 고려
-                if (transaction.getTransactionType() != 1) {
+                if (transaction.getTransactionType() != null && transaction.getTransactionType() != 1) {
                     Integer isWaste = transaction.getIsWaste();
                     // isWaste가 1인 경우에만 낭비 금액으로 계산
                     if (isWaste != null && isWaste == 1) {
                         totalWasteAmount += transaction.getAmount();
+                        wasteCount++;
                     }
                 }
             } catch (Exception e) {
