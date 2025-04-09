@@ -125,7 +125,7 @@ public class AuthService {
 
     public void authenticateWithKakaoAndRedirect(String code, HttpServletResponse response) throws IOException {
 
-        System.out.println("엘라스틱 서치 이 메서드 들어옴");
+        logger.debug("엘라스틱 서치 이 메서드 들어옴");
 
         try {
             // MDC 컨텍스트 설정

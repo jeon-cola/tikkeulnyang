@@ -4,6 +4,7 @@ import com.c107.auth.service.AuthService;
 import com.c107.common.util.ResponseUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.Map;
+import org.slf4j.Logger;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -19,6 +21,8 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
 
     /**
      * 카카오 로그인:
@@ -44,6 +48,7 @@ public class AuthController {
             HttpServletResponse response
     ) throws IOException {
         // authenticateWithKakao 내부에서 사용자 확인 후, 리다이렉트 URL을 결정하도록 함.
+        logger.debug("api콜백은 찍힘");
         authService.authenticateWithKakaoAndRedirect(code, response);
     }
 
