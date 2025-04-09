@@ -17,7 +17,7 @@ export default function BucketListInformation() {
             </div>
             <div>
                 <p>나만의 목표 달성을 위한</p>
-                <p>버킷리스트를 만들어 보세요요</p>
+                <p>버킷리스트를 만들어 보세요</p>
             </div>
             <div className="w-full h-[128px] bg-[#FF957A] rounded-[25px] flex items-center justify-between px-7">
                 <div className="text-white text-left">

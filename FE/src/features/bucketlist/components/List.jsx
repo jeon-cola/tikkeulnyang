@@ -6,6 +6,7 @@ import AlertModal from "../../../components/AlertModal";
 import ChooseAlertModal from "../../../components/ChooseAlertModal";
 import CustomBackHeader from "../../../components/CustomBackHeader";
 import Password from "../../../components/Password"
+import IsLoading from "../../../components/IsLoading"
 
 export default function List() {
   const [userData, setUserData] = useState([]);
@@ -15,7 +16,9 @@ export default function List() {
   const [isDeleteModal, setIsDeleteModal] = useState(false)
   const [delteCheck, setDeleteCheck] = useState(false)
   const [isPassword, setIsPassword] = useState(false)
+  const [isMessage, setIsMessage] = useState("")
   const [checkMessage, setCheckMessage] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
 
   // 버킷리스트 리스트 가져오기
@@ -33,17 +36,31 @@ export default function List() {
     fetchData();
   },[])
 
+  //비밀번호 
+  function passwordHandler() {
+    setIsPassword(true)
+  }
+
   // 저축 통신
   function saveHandler(password) {
+    setIsLoading(true)
     const fetchData = async () => {
       try {
         const response = await Api.post("api/bucket/saving",{"bucketId":selectBucketListId,"transactionPassword":password})
         if (response.data.status) {
+          setIsMessage("저축이 완료되었습니다")
+          setIsPassword(false)
           setIsAlertModal(true)
           refreshList()
         }
       } catch (error) {
-        console.log(error)
+        if (error.response.data === "계좌잔액이 부족합니다.") {
+          setIsMessage("계좌잔액이 부족합니다")
+        } else if (error.response.data === "거래 비밀번호가 올바르지 않습니다.") {
+          setCheckMessage(true)
+        }
+      } finally {
+        setIsLoading(false)
       }
     }
     fetchData()
@@ -51,16 +68,19 @@ export default function List() {
 
     // 삭제 통신
     function deleteHandler(bucketListId) {
-      console.log(bucketListId)
+      setIsLoading(true)
       const fetchData = async () => {
         try {
           const response = await Api.delete(`api/bucket/delete/${bucketListId}`)
           if (response.data.status) {
+            setIsMessage(response.data.message)
             setDeleteCheck(true)
             refreshList()
           }
         } catch (error) {
-          console.log(error)
+          setIsMessage(error.response.data)
+        } finally {
+          setIsLoading(false)
         }
       }
       fetchData()
@@ -115,41 +135,46 @@ export default function List() {
 
 
   return (
-    <div className="flex flex-col gap-4 mb-4">
+    <>
+    {!isLoading?
+
+<div className="flex flex-col gap-4 mb-4">
       <CustomBackHeader title="버킷 리스트 조회" showCreateButton={true} navigate="/bucketlist"/>
       <div className="mt-[37px] flex flex-col gap-3">
-        {userData.map((data,index)=>(
-          <MapCategory key={index} list={data} onSaving={checkAlertModalOpen} onDelete={deleteModalOpen}/>
-        ))}
-        <ChooseAlertModal title="저축하기" isClose={checkAlertModalClose} isOpen={savingCheck} isFunctionHandler={()=>saveHandler(selectBucketListId)}>
-          <div>
-            <p>확인 버튼을 누르면 자동으로</p>
-            <p>설정된 계좌를 통해 저축이 이루어 집니다</p>
-            <p>저축을 진행하시겠습니까?</p>
+      {userData.map((data,index)=>(
+        <MapCategory key={index} list={data} onSaving={checkAlertModalOpen} onDelete={deleteModalOpen}/>
+      ))}
+        <ChooseAlertModal title="저축하기" isClose={checkAlertModalClose} isOpen={savingCheck} isFunctionHandler={passwordHandler}>
+        <div>
+        <p>확인 버튼을 누르면 자동으로</p>
+        <p>설정된 계좌를 통해 저축이 이루어 집니다</p>
+        <p>저축을 진행하시겠습니까?</p>
           </div>
-        </ChooseAlertModal>
-
-        <ChooseAlertModal title="삭제하기" isClose={deleteModalClose} isOpen={isDeleteModal} isFunctionHandler={()=>deleteHandler(selectBucketListId)}>
+          </ChooseAlertModal>
+          
+          <ChooseAlertModal title="삭제하기" isClose={deleteModalClose} isOpen={isDeleteModal} isFunctionHandler={()=>deleteHandler(selectBucketListId)}>
           <div>
-            <p>확인 버튼을 누르면</p>
-            <p>해당 버킷리스트가 삭제됩니다</p>
-            <p>정말 삭제하시겠습니까?</p>
+          <p>확인 버튼을 누르면</p>
+          <p>해당 버킷리스트가 삭제됩니다</p>
+          <p>정말 삭제하시겠습니까?</p>
           </div>
-        </ChooseAlertModal>
-
-        <AlertModal title="저축 완료" isOpen={isAlertModal} isClose={AlertModalClose} height={170}>
+          </ChooseAlertModal>
+          
+          <AlertModal title="저축 송금" isOpen={isAlertModal} isClose={AlertModalClose} height={170}>
           <div>
-            <p>저축이 완료되었습니다다</p>
+          <p>{isMessage}</p>
           </div>
-        </AlertModal>
-
-        <AlertModal title="삭제 완료" isClose={deleteCheckClose} isOpen={delteCheck} height={170}>
+          </AlertModal>
+          
+          <AlertModal title="삭제 완료" isClose={deleteCheckClose} isOpen={delteCheck} height={170}>
           <div>
-            <p>삭제가 완료되었습니다</p>
+          <p>{isMessage}</p>
           </div>
-        </AlertModal>
-      </div>
-      {isPassword?<Password isFail={checkMessage} isFunction={saveHandler}/>:""}
-    </div>
-  )
-}
+          </AlertModal>
+          </div>
+          {isPassword?<Password isFail={checkMessage} isFunction={saveHandler}/>:""}
+          </div>
+      :<IsLoading/>}
+      </>
+        )
+      }
