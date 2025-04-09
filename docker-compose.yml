@@ -104,6 +104,7 @@ services:
       - "5000:5000"
     volumes:
       - ./elk/logstash/pipeline:/usr/share/logstash/pipeline
+      - ./elk/logstash/logs:/tmp 
     environment:
       - "LS_JAVA_OPTS=-Xms256m -Xmx512m"
     depends_on:
