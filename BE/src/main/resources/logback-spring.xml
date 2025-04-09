@@ -10,7 +10,7 @@
     <!-- Logstash TCP Appender: Logstash의 TCP 입력(port 5000 등)으로 전송 -->
     <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
         <!-- destination은 Logstash 서버의 호스트:포트입니다. -->
-        <destination>localhost:5000</destination>
+        <destination>logstash:5000</destination>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
                 <timestamp/>
