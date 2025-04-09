@@ -5,6 +5,10 @@ import Api from "../../../../services/Api";
 import CustomBackHeader from "@/components/CustomBackHeader";
 import CategoryList from "../CategoryList";
 import WasteBlackIcon from "../../assets/waste_black.png";
+// import Buz from "../../assets/buz-124000.png";
+// import Watch from "../../assetswatch_7_214000.png";
+// import Ring from "../../assets/ring_499400.png";
+// import Tab from "../../assets/tab_9_8700000.png";
 
 const categories = CategoryList();
 
@@ -15,6 +19,13 @@ const getDaysLeftInMonth = (date) => {
   const lastDay = new Date(year, month, 0).getDate();
   return lastDay - today + 1;
 };
+
+// const samsungDevices = {
+//   0: Buz,
+//   1: Watch,
+//   2: Ring,
+//   3: Tab,
+// };
 
 export default function BudgetMain() {
   const [activeDate, setActiveDate] = useState(new Date());
@@ -38,6 +49,8 @@ export default function BudgetMain() {
     };
     fetchData();
   }, [year, month]);
+
+  // 낭비금액 조회
 
   // response값 가져옴
   const total = budgetData?.totals?.total_amount || 0;
@@ -64,6 +77,7 @@ export default function BudgetMain() {
             }}
           />
         </div>
+
         {/* 예산 정보 */}
         <div className="relative w-full h-auto bg-white rounded-md shadow-sm px-[10px] py-2">
           <div className="flex justify-between items-center mt-4 mb-4">
@@ -121,7 +135,6 @@ export default function BudgetMain() {
               const exceed = item.isExceed === 1;
               const percent =
                 budget > 0 ? Math.min((used / budget) * 100, 100) : 0;
-
               return (
                 <div
                   key={item.categoryId}
@@ -172,6 +185,11 @@ export default function BudgetMain() {
               );
             })}
           </div>
+        </div>
+
+        {/* 낭비항목 */}
+        <div className="relative w-full h-auto bg-white rounded-md shadow-sm min-h-screen">
+          <img src="" alt="" />
         </div>
       </div>
     </>
