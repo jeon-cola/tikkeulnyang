@@ -239,15 +239,8 @@ public class AuthService {
             logMessage.put("timestamp", LocalDateTime.now());
             logMessage.put("event_type", eventType);
             logMessage.putAll(details);
-
-            // 디버그 로그 추가
-            System.out.println("Creating log message: " + logMessage);
-
             return objectMapper.writeValueAsString(logMessage);
         } catch (Exception e) {
-            // 예외 상세 로깅
-            System.err.println("Error creating security log message: " + e.getMessage());
-            e.printStackTrace();
             return "Security log creation failed: " + eventType;
         }
     }
