@@ -127,22 +127,23 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
   return (
     <div className="bg-white w-full p-[10px] text-black">
       {type === "personal" ? (
-  <div className="flex items-center justify-between text-lg mt-2">
-    <p>{formatKoreanDate(paymentData?.data?.date)}</p>
-    {new Date(date) <= new Date() && ( // 오늘 이하일 때만 버튼 표시
-      <button
-        onClick={handleMemoButtonClick}
-        className="flex items-center bg-[#FF987A] hover:bg-[#ff8461] text-white text-sm font-medium px-3 py-1.5 rounded-full shadow"
-      >
-        <img
-          src="/icons/white_cat.png"
-          alt="고양이 아이콘"
-          className="w-6 h-6 mr-1.5"
-        />
-        티끌냥의 리포트
-      </button>
-    )}
-  </div>
+        <div className="flex items-center justify-between text-lg mt-2">
+          <p>{formatKoreanDate(paymentData?.data?.date)}</p>
+          {type === "personal" && new Date(date) <= new Date() && (
+            <button
+              onClick={handleMemoButtonClick}
+              className="flex items-center bg-[#FF987A] hover:bg-[#ff8461] text-white text-sm font-medium px-3 py-1.5 rounded-full shadow"
+            >
+              <img
+                src="/icons/white_cat.png"
+                alt="고양이 아이콘"
+                className="w-6 h-6 mr-1.5"
+              />
+              티끌냥의 리포트
+            </button>
+          )}
+
+        </div>
       ) : (
         <div className="flex justify-between">
           <p className="flex flex-start pb-[10px]">
@@ -177,12 +178,12 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
                   date={!userId ? paymentData?.data?.date : paymentData?.date}
                 />
               </div>
-              <button
+              {/* <button
                 className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1 rounded"
                 onClick={handleMemoButtonClick}
               >
                 티끌냥
-              </button>
+              </button> */}
             </div>
           )}
         </div>
@@ -190,52 +191,52 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
 
       {/* 메모 모달 */}
       {memoModalOpen && (
-  <div className="fixed inset-0 bg-[#525252]/40 flex items-center justify-center z-50">
-    <div className="bg-white rounded-lg shadow-lg w-[90%] max-w-md p-4 relative z-10">
-      <div className="flex items-center justify-center gap-2 mb-2">
-        <img
-          src="/icons/cream_cat.png"
-          alt="cat icon"
-          className="w-6 h-6"
-        />
-        <h2 className="text-lg font-bold">티끌냥 리포트</h2>
-        <img
-          src="/icons/cream_cat.png"
-          alt="cat icon"
-          className="w-6 h-6"
-        />
-      </div>
-      <p className="text-gray-800 whitespace-pre-line">
-        {memoContent}
-        <span className="inline-block ml-2">
-          <img
-            src="/icons/cream_cat.png"
-            alt="cat icon"
-            className="w-4 h-4 inline-block align-text-bottom"
-          />
-          <img
-            src="/icons/cream_cat.png"
-            alt="cat icon"
-            className="w-4 h-4 inline-block align-text-bottom ml-1"
-          />
-          <img
-            src="/icons/cream_cat.png"
-            alt="cat icon"
-            className="w-4 h-4 inline-block align-text-bottom ml-1"
-          />
-        </span>
-      </p>
-      <div className="flex justify-center mt-4">
-        <button
-          onClick={closeMemoModal}
-          className="px-4 py-1 bg-[#FF987A] text-white rounded hover:bg-[#ff8461]"
-        >
-          닫기
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+        <div className="fixed inset-0 bg-[#525252]/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-[90%] max-w-md p-4 relative z-10">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <img
+                src="/icons/cream_cat.png"
+                alt="cat icon"
+                className="w-6 h-6"
+              />
+              <h2 className="text-lg font-bold">티끌냥 리포트</h2>
+              <img
+                src="/icons/cream_cat.png"
+                alt="cat icon"
+                className="w-6 h-6"
+              />
+            </div>
+            <p className="text-gray-800 whitespace-pre-line">
+              {memoContent}
+              <span className="inline-block ml-2">
+                <img
+                  src="/icons/cream_cat.png"
+                  alt="cat icon"
+                  className="w-4 h-4 inline-block align-text-bottom"
+                />
+                <img
+                  src="/icons/cream_cat.png"
+                  alt="cat icon"
+                  className="w-4 h-4 inline-block align-text-bottom ml-1"
+                />
+                <img
+                  src="/icons/cream_cat.png"
+                  alt="cat icon"
+                  className="w-4 h-4 inline-block align-text-bottom ml-1"
+                />
+              </span>
+            </p>
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={closeMemoModal}
+                className="px-4 py-1 bg-[#FF987A] text-white rounded hover:bg-[#ff8461]"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
 
 
@@ -245,37 +246,37 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
       <ul className="h-auto">
         {type === "personal"
           ? // 개인 가계부 데이터
-            paymentData?.data?.transactions?.map((item, index) => {
-              const matchedCategory = categories.find(
-                (cat) => cat.name === item.category
-              );
-              const Icon = matchedCategory ? matchedCategory.Icon : null;
+          paymentData?.data?.transactions?.map((item, index) => {
+            const matchedCategory = categories.find(
+              (cat) => cat.name === item.category
+            );
+            const Icon = matchedCategory ? matchedCategory.Icon : null;
 
-              return (
-                <li
-                  key={index}
-                  className="flex items-center gap-2 text-lg pt-4"
-                >
-                  {Icon && (
-                    <img
-                      src={Icon}
-                      alt={item.category}
-                      className="w-10 h-auto"
-                    />
-                  )}
-                  <span className="ml-[20px]">{item.category}</span>
-                  <span className="relative left-30px">{item.matchedName}</span>
-                  <span>{item.description}</span>
-                  <span className="ml-auto">
-                    {item.amount != null
-                      ? `${item.amount.toLocaleString()}`
-                      : "금액 없음"}
-                  </span>
-                </li>
-              );
-            })
+            return (
+              <li
+                key={index}
+                className="flex items-center gap-2 text-lg pt-4"
+              >
+                {Icon && (
+                  <img
+                    src={Icon}
+                    alt={item.category}
+                    className="w-10 h-auto"
+                  />
+                )}
+                <span className="ml-[20px]">{item.category}</span>
+                <span className="relative left-30px">{item.matchedName}</span>
+                <span>{item.description}</span>
+                <span className="ml-auto">
+                  {item.amount != null
+                    ? `${item.amount.toLocaleString()}`
+                    : "금액 없음"}
+                </span>
+              </li>
+            );
+          })
           : !userId
-          ? // 본인 공유 가계부 데이터
+            ? // 본인 공유 가계부 데이터
             paymentData?.data?.transactions?.map((item, index) => {
               const matchedCategory = categories.find(
                 (cat) => cat.name === item.category
@@ -305,7 +306,7 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
                 </li>
               );
             })
-          : // 타인 공유 가계부 데이터
+            : // 타인 공유 가계부 데이터
             paymentData?.transactions?.map((item, index) => {
               const matchedCategory = categories.find(
                 (cat) => cat.name === item.category
