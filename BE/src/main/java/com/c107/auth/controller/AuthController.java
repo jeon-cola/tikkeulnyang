@@ -5,6 +5,7 @@ import com.c107.common.util.ResponseUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 
@@ -68,5 +70,27 @@ public class AuthController {
     public ResponseEntity<?> kakaoCallbackJson(@RequestParam("code") String code) {
         return authService.authenticateWithKakaoAndReturnJson(code);
     }
+
+
+
+    // 로그인 실패 메서드
+    @PostMapping("/simulate-login-failure")
+    public ResponseEntity<?> simulateLoginFailure(
+            @RequestParam String email,
+            @RequestParam String ipAddress,
+            @RequestParam String userAgent
+    ) {
+        // 로그인 실패 이벤트 시뮬레이션
+        Map<String, Object> failureLog = new HashMap<>();
+        failureLog.put("email", email);
+        failureLog.put("ip", ipAddress);
+        failureLog.put("user_agent", userAgent);
+
+        // 로그인 실패 이벤트 기록
+        authService.recordLoginFailure(failureLog);
+
+        return ResponseEntity.ok("Login failure simulated");
+    }
+
 
 }
