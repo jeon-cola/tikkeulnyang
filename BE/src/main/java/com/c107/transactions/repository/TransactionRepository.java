@@ -37,4 +37,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     default List<Transaction> findByUserId(Integer userId) {
         return findByUserIdAndDeleted(userId, 0);
     }
+
+    List<Transaction> findAllByUserIdAndTransactionDateBetween(
+            Integer userId, LocalDateTime start, LocalDateTime end);
+
 }
