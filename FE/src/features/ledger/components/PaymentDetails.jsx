@@ -17,6 +17,8 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
   const [paymentData, setPaymentData] = useState(null);
   const [isOpen, setIsOPen] = useState(false);
   const [blinkList, setBlinkList] = useState([]);
+  const [memoModalOpen, setMemoModalOpen] = useState(false);
+  const [memoContent, setMemoContent] = useState("");
 
   // 알람 지우기
   function cancleAlamHandler() {
@@ -93,6 +95,23 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
     fetchData();
   }
 
+  const handleMemoButtonClick = async () => {
+    try {
+      const response = await Api.post("/api/memos", { date });
+      if (response.status === 200 && response.data) {
+        setMemoContent(response.data.content || "메모 내용이 비어 있습니다.");
+      } else {
+        setMemoContent("해당 날짜의 거래 내역이 없습니다.");
+      }
+    } catch (error) {
+      console.error("메모 생성/조회 실패", error);
+      setMemoContent("메모를 불러오는 데 실패했습니다.");
+    }
+    setMemoModalOpen(true);
+  };
+
+  const closeMemoModal = () => setMemoModalOpen(false);
+
   useEffect(() => {
     if (date) {
       console.log(date);
@@ -108,9 +127,22 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
   return (
     <div className="bg-white w-full p-[10px] text-black">
       {type === "personal" ? (
-        <p className="flex flex-start text-lg mt-2">
-          {formatKoreanDate(paymentData?.data?.date)}
-        </p>
+        <div className="flex items-center justify-between text-lg mt-2">
+          <p>{formatKoreanDate(paymentData?.data?.date)}</p>
+          <button
+  onClick={handleMemoButtonClick}
+  className="flex items-center bg-[#FF987A] hover:bg-[#ff8461] text-white text-sm font-medium px-3 py-1.5 rounded-full shadow"
+>
+  <img
+    src="/icons/white_cat.png"
+    alt="고양이 아이콘"
+    className="w-6 h-6 mr-1.5"
+  />
+  티끌냥의 리포트
+</button>
+
+
+        </div>
       ) : (
         <div className="flex justify-between">
           <p className="flex flex-start pb-[10px]">
@@ -135,18 +167,79 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
               />
             </div>
           ) : (
-            <div onClick={() => setIsOPen(true)}>
-              <Comment
-                title="댓글"
-                isOpen={isOpen}
-                onClose={onCloseModalHandler}
-                userId={userId}
-                date={!userId ? paymentData?.data?.date : paymentData?.date}
-              />
+            <div className="flex items-center gap-2">
+              <div onClick={() => setIsOPen(true)}>
+                <Comment
+                  title="댓글"
+                  isOpen={isOpen}
+                  onClose={onCloseModalHandler}
+                  userId={userId}
+                  date={!userId ? paymentData?.data?.date : paymentData?.date}
+                />
+              </div>
+              <button
+                className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1 rounded"
+                onClick={handleMemoButtonClick}
+              >
+                티끌냥
+              </button>
             </div>
           )}
         </div>
       )}
+
+      {/* 메모 모달 */}
+      {memoModalOpen && (
+  <div className="fixed inset-0 bg-[#525252]/40 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg shadow-lg w-[90%] max-w-md p-4 relative z-10">
+      <div className="flex items-center justify-center gap-2 mb-2">
+        <img
+          src="/icons/cream_cat.png"
+          alt="cat icon"
+          className="w-6 h-6"
+        />
+        <h2 className="text-lg font-bold">티끌냥 리포트</h2>
+        <img
+          src="/icons/cream_cat.png"
+          alt="cat icon"
+          className="w-6 h-6"
+        />
+      </div>
+      <p className="text-gray-800 whitespace-pre-line">
+        {memoContent}
+        <span className="inline-block ml-2">
+          <img
+            src="/icons/cream_cat.png"
+            alt="cat icon"
+            className="w-4 h-4 inline-block align-text-bottom"
+          />
+          <img
+            src="/icons/cream_cat.png"
+            alt="cat icon"
+            className="w-4 h-4 inline-block align-text-bottom ml-1"
+          />
+          <img
+            src="/icons/cream_cat.png"
+            alt="cat icon"
+            className="w-4 h-4 inline-block align-text-bottom ml-1"
+          />
+        </span>
+      </p>
+      <div className="flex justify-center mt-4">
+        <button
+          onClick={closeMemoModal}
+          className="px-4 py-1 bg-[#FF987A] text-white rounded hover:bg-[#ff8461]"
+        >
+          닫기
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+
 
       {/* <ul className="space-y-2 m"> */}
       <ul className="h-auto">
