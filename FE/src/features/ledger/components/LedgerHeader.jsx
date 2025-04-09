@@ -6,7 +6,6 @@ import { useSelector } from "react-redux";
 export default function LedgerHeader({
   onEditClick,
   isEditMode,
-  onAdd,
   onEdit,
   onDelete,
   // isCreateModeOn,

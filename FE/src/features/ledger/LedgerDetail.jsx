@@ -16,6 +16,8 @@ import EmptyIcon from "./assets/empty_icon.png";
 const categories = CategoryList();
 
 export default function LedgerDetail() {
+  const [alertModalProps, setAlertModalProps] = useState(null);
+  const [alertMessage, setAlertMessage] = useState("");
   const [isAlertModal, setIsAlertModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeDate, setActiveDate] = useState(new Date());
@@ -37,10 +39,9 @@ export default function LedgerDetail() {
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   // 수정 모달 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // 내역 추가 모달 상태
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   // 현재 수정 중인 트랜잭션
   const [currentTransaction, setCurrentTransaction] = useState(null);
+
   // 수정 중인 데이터
   const [editData, setEditData] = useState({
     amount: 0,
@@ -51,21 +52,16 @@ export default function LedgerDetail() {
     merchantName: "",
   });
 
-  // 새 트랜잭션 데이터
-  const [createData, setCreateData] = useState({
-    amount: 0,
-    transactionDate: "",
-    selectedDay: new Date().getDate(),
-    selectedMonth: new Date().getMonth() + 1,
-    categoryId: 2, // 기본 카테고리: 식비
-    merchantName: "",
-  });
-  // 확인 모달 상태
-  const [confirmModal, setConfirmModal] = useState({
-    isOpen: false,
-    message: "",
-    onConfirm: null,
-  });
+  const AlertModalOpen = (message) => {
+    setAlertMessage(message);
+    setIsAlertModal(true);
+  };
+
+  const AlertModalClose = () => {
+    setIsAlertModal(false);
+    setAlertMessage("");
+  };
+
   // 편집 모드 상태 (메인 편집 버튼용)
   const [isMainEditMode, setIsMainEditMode] = useState(false);
 
@@ -221,8 +217,7 @@ export default function LedgerDetail() {
 
   // 데이터 새로고침 함수
   const refreshData = async () => {
-    console.log("리렌더링 안되는 듯");
-    console.log("✅ refreshData() 호출됨");
+    console.log("refreshData() 호출됨");
     try {
       const year = activeDate.getFullYear();
       const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
@@ -239,7 +234,7 @@ export default function LedgerDetail() {
           ? data.transactionsMap
           : [];
 
-        console.log("📦 응답된 transactionsMap:", transactionsMapArray);
+        console.log("응답된 transactionsMap:", transactionsMapArray);
         // 날짜별 정렬
         transactionsMapArray.sort((a, b) => {
           return new Date(b.date) - new Date(a.date);
@@ -271,12 +266,15 @@ export default function LedgerDetail() {
 
     if (isDeleteMode) {
       // 삭제 모드일 때는 확인 모달 표시
-      setConfirmModal({
-        isOpen: true,
-        message: `"${
+      setAlertModalProps({
+        title: "내역 삭제",
+        content: `"${
           item.merchantName || "내역"
         }" (${item.amount.toLocaleString()}원)을 삭제하시겠습니까?`,
+        height: 250,
+        showCancelButton: true,
         onConfirm: () => deleteTransaction(item.transactionId),
+        onCancel: () => setAlertModalProps(null),
       });
       return;
     }
@@ -290,16 +288,14 @@ export default function LedgerDetail() {
       date.getHours()
     ).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:00`;
 
-    // 중요: 수정 시에는 기존 금액 값을 유지
     setEditData({
-      amount: item.amount, // 기존 금액 값 사용
+      amount: item.amount,
       transactionDate: formattedDate,
       selectedDay: date.getDate(),
       selectedMonth: date.getMonth() + 1,
       categoryId: reverseCategoryMapping[item.categoryName] || 1,
       merchantName: item.merchantName || "",
     });
-
     setIsModalOpen(true);
   };
 
@@ -307,16 +303,13 @@ export default function LedgerDetail() {
   const deleteTransaction = async (transactionId) => {
     try {
       console.log("삭제 요청 ID:", transactionId);
-
       const response = await Api.delete(`api/transactions/${transactionId}`);
       console.log("내역 삭제 완료:", response.data);
-
       // 즉시 로컬 상태를 업데이트하여 삭제를 반영
       setSelectedMonth((prevState) => {
         const updatedTransactions = prevState.transactionsMap.filter(
           (item) => item.transactionId !== transactionId
         );
-
         return {
           ...prevState,
           transactionsMap: updatedTransactions,
@@ -329,19 +322,15 @@ export default function LedgerDetail() {
         delete newWasteStates[transactionId];
         return newWasteStates;
       });
-
-      // 전체 동기화를 위해 서버에서 데이터 새로고침
       await refreshData();
-
       // 확인 모달 닫기
-      setConfirmModal({ isOpen: false, message: "", onConfirm: null });
-
-      // 성공 메시지
-      alert("내역이 성공적으로 삭제되었습니다.");
+      AlertModalOpen("내역이 삭제되었습니다.");
     } catch (error) {
       console.error("내역 삭제 실패:", error);
       console.error("에러 상세:", error.response?.data || error.message);
-      alert("내역 삭제에 실패했습니다.");
+      AlertModalOpen("내역 삭제에 실패했습니다.");
+    } finally {
+      setAlertModalProps(null);
     }
   };
 
@@ -381,66 +370,7 @@ export default function LedgerDetail() {
     if (success) {
       setIsModalOpen(false);
       setCurrentTransaction(null);
-      setIsLoading(true);
-    }
-  };
-
-  // 내역 추가 시작 함수
-  const startAddTransaction = () => {
-    // 현재 날짜로 기본값 설정
-    const now = new Date();
-    const formattedDate = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
-    ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(
-      now.getHours()
-    ).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:00`;
-
-    // createData 사용하도록 수정
-    setCreateData({
-      amount: 0,
-      transactionDate: formattedDate,
-      selectedDay: now.getDate(),
-      selectedMonth: now.getMonth() + 1,
-      categoryId: 2, // 기본 카테고리: 식비
-      merchantName: "",
-    });
-
-    // 추가 모달 열기
-    setIsAddModalOpen(true);
-  };
-
-  // 내역 추가 실행 함수
-  const executeAddTransaction = async () => {
-    const now = new Date();
-    const payload = {
-      cardId: 0,
-      transactionType: 2, // 1: 수입, 2: 지출
-      amount: createData.amount, // createData 사용
-      categoryId: createData.categoryId, // createData 사용
-      merchantName: createData.merchantName, // createData 사용
-      year: now.getFullYear(),
-      month: createData.selectedMonth, // createData 사용
-      day: createData.selectedDay, // createData 사용
-    };
-
-    try {
-      const response = await Api.post(`api/transactions`, payload);
-      console.log("새 거래 내역 생성:", response.data);
-      setIsLoading(true);
-
-      // 성공시 데이터 새로고침
-      await refreshData();
-
-      // 모달 닫기
-      setIsAddModalOpen(false);
-      setIsCreateModeOn(false);
-
-      // 성공 메시지
-      alert("새 내역이 추가되었습니다.");
       setIsLoading(false);
-    } catch (error) {
-      console.error("새 거래 내역 생성 실패:", error);
-      alert("새 거래 내역 추가에 실패했습니다.");
     }
   };
 
@@ -503,7 +433,6 @@ export default function LedgerDetail() {
             <LedgerHeader
               onEditClick={toggleMainEditMode}
               isEditMode={isMainEditMode}
-              onAdd={startAddTransaction}
               onEdit={toggleEditMode}
               onDelete={toggleDeleteMode}
               isEditModeOn={isEditMode}
@@ -654,11 +583,10 @@ export default function LedgerDetail() {
               </ul>
             </div>
           </Container>
-
           {/* 수정 모달 */}
           {isModalOpen && currentTransaction && (
             <div className="fixed inset-0 bg-[#525252]/40 flex items-end justify-center z-50 pb-8">
-              <div className="bg-white w-full rounded-t-xl p-4 animate-slide-up h-[650px] overflow-y-auto mb-safe">
+              <div className="bg-white w-full rounded-t-xl p-4 animate-slide-up h-[610px] overflow-y-auto mb-safe">
                 <h3 className="text-xl font-bold mb-4 mt-2">내역 수정</h3>
 
                 {/* 카테고리 선택 */}
@@ -703,29 +631,35 @@ export default function LedgerDetail() {
                 </div>
 
                 {/* 금액 입력 - 수정 모달 */}
-                <div className="mb-4">
+                {/* 금액 입력 - 수정 모달 */}
+                <div className="relative mb-4">
                   <label className="block text-gray-600 mb-1">금액</label>
                   <input
                     type="text"
-                    value={editData.amount}
+                    inputMode="numeric"
+                    value={
+                      editData.amount > 0
+                        ? `${editData.amount.toLocaleString("ko-KR")}원`
+                        : ""
+                    }
+                    onFocus={(e) => {
+                      // 포커스 받으면 초기화하여 입력 준비
+                      e.target.value = "";
+                    }}
                     onChange={(e) => {
-                      // 입력값이 빈 문자열이면 0으로 설정
-                      if (e.target.value === "") {
-                        setEditData({ ...editData, amount: 0 });
-                        return;
-                      }
-
-                      // 숫자만 입력 허용
-                      if (/^\d*$/.test(e.target.value)) {
-                        // 앞에 오는 0 제거 (예: "0123" -> "123")
-                        const cleanValue = e.target.value.replace(
-                          /^0+(\d)/,
-                          "$1"
-                        );
-                        setEditData({
-                          ...editData,
-                          amount: Number(cleanValue),
-                        });
+                      // 숫자만 입력 가능하도록
+                      const raw = e.target.value.replace(/[^\d]/g, "");
+                      setEditData({
+                        ...editData,
+                        amount: raw ? Number(raw) : 0,
+                      });
+                    }}
+                    onBlur={(e) => {
+                      // 포커스를 잃었을 때 다시 포맷팅
+                      if (editData.amount > 0) {
+                        e.target.value = `${editData.amount.toLocaleString(
+                          "ko-KR"
+                        )}원`;
                       }
                     }}
                     className="w-full p-2 border rounded-lg"
@@ -768,18 +702,17 @@ export default function LedgerDetail() {
                     </div>
                   </div>
                 </div>
-
                 {/* 버튼 영역 */}
                 <div className="flex gap-2 mt-8 pb-4">
                   <button
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-4 bg-gray-200! rounded-lg font-medium text-lg"
+                    className="flex-1 h-[45px] bg-gray-200! rounded-lg font-medium text-lg flex items-center justify-center"
                   >
                     취소
                   </button>
                   <button
                     onClick={handleSaveChanges}
-                    className="flex-1 py-4 bg-blue-500 text-white rounded-lg font-medium text-lg"
+                    className="flex-1 h-[45px] text-white rounded-lg font-medium text-lg flex items-center justify-center"
                   >
                     저장
                   </button>
@@ -787,41 +720,36 @@ export default function LedgerDetail() {
               </div>
             </div>
           )}
-
           {/* 확인 모달 */}
-          {confirmModal.isOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white w-[90%] max-w-md rounded-xl p-4 animate-slide-up">
-                <h3 className="text-xl font-bold mb-4 text-gray-800">확인</h3>
-                <p className="text-gray-600 mb-6">{confirmModal.message}</p>
-
-                {/* 버튼 영역 */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() =>
-                      setConfirmModal({
-                        isOpen: false,
-                        message: "",
-                        onConfirm: null,
-                      })
-                    }
-                    className="flex-1 py-3 bg-gray-200 rounded-lg font-medium"
-                  >
-                    취소
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (confirmModal.onConfirm) confirmModal.onConfirm();
-                    }}
-                    className="flex-1 py-3 bg-red-500 text-white rounded-lg font-medium"
-                  >
-                    삭제
-                  </button>
-                </div>
-              </div>
-            </div>
+          {alertModalProps && (
+            <AlertModal
+              title={alertModalProps.title}
+              isOpen={true}
+              isClose={() => setAlertModalProps(null)}
+              height={180}
+              onConfirm={() => {
+                alertModalProps.onConfirm?.();
+                setAlertModalProps(null);
+              }}
+              onCancel={() => {
+                alertModalProps.onCancel?.();
+                setAlertModalProps(null);
+              }}
+              showCancelButton={alertModalProps.showCancelButton}
+            >
+              <p className="text-center">{alertModalProps.content}</p>
+            </AlertModal>
           )}
-
+          {isAlertModal && (
+            <AlertModal
+              title="알림"
+              isOpen={true}
+              isClose={AlertModalClose}
+              height={180}
+            >
+              <p className="text-center">{alertMessage}</p>
+            </AlertModal>
+          )}
           {/* 애니메이션 스타일 */}
           <style>{`
 @keyframes pop {
