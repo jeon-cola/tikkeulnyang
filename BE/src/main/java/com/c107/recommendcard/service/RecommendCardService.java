@@ -14,6 +14,8 @@ import com.c107.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,7 @@ public class RecommendCardService {
     private final CheckCardBenefitRepository checkCardBenefitRepository;
     private final CheckBenefitRepository checkBenefitRepository;
     private final CreditBenefitRepository creditBenefitRepository;
+    private static final Logger securityLogger = LoggerFactory.getLogger("SECURITY_MONITOR");
 
 
     /**
@@ -178,8 +181,11 @@ public class RecommendCardService {
         } finally {
             long duration = System.currentTimeMillis() - start;
             MDC.put("durationMs", String.valueOf(duration));
-            log.info("신용카드 추천 응답 완료"); // Kibana 시각화용 로그
-            MDC.clear(); // 꼭 비워줘야 누적 안 됨
+
+            // ✅ JSON 기반으로 MDC 필드가 전달되도록 로그 출력
+            securityLogger.info("카드 추천 로그: {}", MDC.getCopyOfContextMap());
+
+            MDC.clear();
         }
     }
 
