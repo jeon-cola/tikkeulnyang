@@ -76,6 +76,7 @@ export default function BudgetMain() {
         const response = await Api.get(
           `api/budget/categories?year=${year}&month=${month}`
         );
+        console.log(response.data)
         setBudgetData(response.data.data);
       } catch (error) {
         console.log(error);
