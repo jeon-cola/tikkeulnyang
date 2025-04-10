@@ -120,7 +120,7 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
     }
   }, [date]); //data가 바뀔 때마다 다시 요청
 
-  if (!paymentData) return <div>소비내역이 없습니다</div>;
+  if (!paymentData) return <div>로딩 중...</div>;
 
   const match = blinkList.some((item) => item === date);
 
