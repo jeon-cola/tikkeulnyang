@@ -16,11 +16,14 @@ import com.c107.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -34,11 +37,16 @@ public class TransactionService {
     private final CardRepository cardRepository;
     private final BudgetCategoryRepository budgetCategoryRepository;
     private final CategoryRepository categoryRepository;
+    private static final Logger securityLogger = LoggerFactory.getLogger("SECURITY_MONITOR");
 
     @Transactional
     public Transaction createTransaction(String email, TransactionCreateRequest request) {
         long start = System.currentTimeMillis();
         try {
+            MDC.put("event_type", "transaction_create");
+            MDC.put("userEmail", email);
+            MDC.put("transactionAmount", String.valueOf(request.getAmount()));
+            MDC.put("merchantName", request.getMerchantName());
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
@@ -83,14 +91,35 @@ public class TransactionService {
             Transaction saved = transactionRepository.save(newTransaction);
 
             long elapsed = System.currentTimeMillis() - start;
-            logger.info("TRANSACTION_LOG | type=CREATE | status=SUCCESS | userId={} | amount={} | responseTimeMs={}",
-                    user.getUserId(), request.getAmount(), elapsed);
+
+            Map<String, Object> logDetails = new HashMap<>();
+            logDetails.put("event_type", "transaction_create");
+            logDetails.put("status", "SUCCESS");
+            logDetails.put("userId", user.getUserId());
+            logDetails.put("amount", request.getAmount());
+            logDetails.put("responseTimeMs", elapsed);
+            logDetails.put("merchantName", request.getMerchantName());
+            logDetails.put("transactionType", request.getTransactionType());
+
+            securityLogger.info("Transaction Created: {}", logDetails);
             return saved;
         } catch (Exception e) {
             long elapsed = System.currentTimeMillis() - start;
-            logger.error("TRANSACTION_LOG | type=CREATE | status=FAIL | email={} | amount={} | responseTimeMs={}",
-                    email, request.getAmount(), elapsed, e);
+
+            // 실패 시 보안 로깅
+            Map<String, Object> errorDetails = new HashMap<>();
+            errorDetails.put("event_type", "transaction_create_failure");
+            errorDetails.put("status", "FAIL");
+            errorDetails.put("email", email);
+            errorDetails.put("amount", request.getAmount());
+            errorDetails.put("responseTimeMs", elapsed);
+            errorDetails.put("errorMessage", e.getMessage());
+
+            securityLogger.error("Transaction Creation Failed: {}", errorDetails);
+
             throw e;
+        } finally {
+            MDC.clear();
         }
     }
 
@@ -102,19 +131,50 @@ public class TransactionService {
      */
     @Transactional
     public Transaction updateTransaction(Long transactionId, TransactionUpdateRequest request) {
-        // transaction_id가 int 타입이므로 변환 (만약 repository의 ID 타입이 Integer라면)
-        Transaction transaction = transactionRepository.findById(Math.toIntExact(transactionId))
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "거래 내역을 찾을 수 없습니다."));
+        long start = System.currentTimeMillis();
 
-        transaction.setAmount(request.getAmount());
-        transaction.setTransactionDate(request.getTransactionDate());
-        transaction.setCategoryId(request.getCategoryId());
-        transaction.setMerchantName(request.getMerchantName());
+        try {
+            MDC.put("event_type", "transaction_update");
+            MDC.put("transactionId", String.valueOf(transactionId));
 
-        transaction.setUpdatedAt(LocalDateTime.now());
-        Transaction updatedTransaction = transactionRepository.save(transaction);
-        logger.info("거래 내역 수정 완료: ID = {}", transactionId);
-        return updatedTransaction;
+            // transaction_id가 int 타입이므로 변환 (만약 repository의 ID 타입이 Integer라면)
+            Transaction transaction = transactionRepository.findById(Math.toIntExact(transactionId))
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "거래 내역을 찾을 수 없습니다."));
+
+            transaction.setAmount(request.getAmount());
+            transaction.setTransactionDate(request.getTransactionDate());
+            transaction.setCategoryId(request.getCategoryId());
+            transaction.setMerchantName(request.getMerchantName());
+
+            transaction.setUpdatedAt(LocalDateTime.now());
+            Transaction updatedTransaction = transactionRepository.save(transaction);
+
+            long elapsed = System.currentTimeMillis() - start;
+
+            // JSON 보안 로깅
+            Map<String, Object> updateDetails = new HashMap<>();
+            updateDetails.put("event_type", "transaction_update");
+            updateDetails.put("transactionId", transactionId);
+            updateDetails.put("amount", request.getAmount());
+            updateDetails.put("merchantName", request.getMerchantName());
+            updateDetails.put("responseTimeMs", elapsed);
+
+            securityLogger.info("Transaction Updated: {}", updateDetails);
+
+            return updatedTransaction;
+        } catch (Exception e) {
+            // 에러 로깅
+            Map<String, Object> errorDetails = new HashMap<>();
+            errorDetails.put("event_type", "transaction_update_failure");
+            errorDetails.put("transactionId", transactionId);
+            errorDetails.put("errorMessage", e.getMessage());
+
+            securityLogger.error("Transaction Update Failed: {}", errorDetails);
+
+            throw e;
+        } finally {
+            MDC.clear();
+        }
     }
 
     /**
@@ -125,6 +185,9 @@ public class TransactionService {
     public void deleteTransaction(Long transactionId) {
         long start = System.currentTimeMillis();
         try {
+            MDC.put("event_type", "transaction_delete");
+            MDC.put("transactionId", String.valueOf(transactionId));
+
             Transaction transaction = transactionRepository.findById(Math.toIntExact(transactionId))
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "거래 내역을 찾을 수 없습니다."));
 
@@ -132,14 +195,26 @@ public class TransactionService {
             transaction.setDeleted(1);
             transaction.setUpdatedAt(LocalDateTime.now());
             transactionRepository.save(transaction);
+
             long elapsed = System.currentTimeMillis() - start;
-            logger.info("TRANSACTION_LOG | type=DELETE | status=SUCCESS | transactionId={} | responseTimeMs={}",
-                    transactionId, elapsed);
+            Map<String, Object> deleteDetails = new HashMap<>();
+            deleteDetails.put("event_type", "transaction_delete");
+            deleteDetails.put("transactionId", transactionId);
+            deleteDetails.put("responseTimeMs", elapsed);
+
+            securityLogger.info("Transaction Deleted: {}", deleteDetails);
+
         } catch (Exception e) {
-            long elapsed = System.currentTimeMillis() - start;
-            logger.error("TRANSACTION_LOG | type=DELETE | status=FAIL | transactionId={} | responseTimeMs={}",
-                    transactionId, elapsed, e);
+            Map<String, Object> errorDetails = new HashMap<>();
+            errorDetails.put("event_type", "transaction_delete_failure");
+            errorDetails.put("transactionId", transactionId);
+            errorDetails.put("errorMessage", e.getMessage());
+
+            securityLogger.error("Transaction Deletion Failed: {}", errorDetails);
+
             throw e;
+        } finally {
+            MDC.clear();
         }
     }
 }
