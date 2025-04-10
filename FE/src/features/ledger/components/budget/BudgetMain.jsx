@@ -5,11 +5,6 @@ import Api from "../../../../services/Api";
 import CustomBackHeader from "@/components/CustomBackHeader";
 import CategoryList from "../CategoryList";
 import WasteBlackIcon from "../../assets/waste_black.png";
-// import Buz from "../../assets/buz-124000.png";
-// import Watch from "../../assetswatch_7_214000.png";
-// import Ring from "../../assets/ring_499400.png";
-// import Tab from "../../assets/tab_9_8700000.png";
-
 import Buz from "../../assets/buz-124000.png";
 import Ring from "../../assets/ring_499400.png";
 import Tab from "../../assets/tab_9_870000.png";
@@ -17,11 +12,25 @@ import Watch from "../../assets/watch_7_214000.png";
 
 const categories = CategoryList();
 
-const wasteProduct = {
-  0: Buz,
-  1: Ring,
-  2: Tab,
-  3: Watch,
+const getWasteImage = (amount) => {
+  if (amount >= 870000) {
+    return { image: Tab, name: "갤럭시 탭 9" };
+  } else if (amount >= 499400) {
+    return { image: Ring, name: "갤럭시 링" };
+  } else if (amount >= 214000) {
+    return { image: Watch, name: "갤럭시 워치" };
+  } else if (amount >= 124000) {
+    return { image: Buz, name: "갤럭시 버즈" };
+  } else {
+    return null;
+  }
+};
+
+const getObjectPostfix = (word) => {
+  const lastChar = word[word.length - 1];
+  const code = lastChar.charCodeAt(0);
+  const hasFinalConsonant = (code - 44032) % 28 !== 0;
+  return hasFinalConsonant ? "을" : "를";
 };
 
 const getDaysLeftInMonth = (date) => {
@@ -32,13 +41,6 @@ const getDaysLeftInMonth = (date) => {
   return lastDay - today + 1;
 };
 
-// const samsungDevices = {
-//   0: Buz,
-//   1: Watch,
-//   2: Ring,
-//   3: Tab,
-// };
-
 export default function BudgetMain() {
   const [activeDate, setActiveDate] = useState(new Date());
   const [budgetData, setBudgetData] = useState(null);
@@ -47,20 +49,18 @@ export default function BudgetMain() {
   const year = activeDate.getFullYear();
   const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
 
-  // 낭비 금액 조회
   useEffect(() => {
     const fetchWasteData = async () => {
       try {
         const res = await Api.get(
           `api/budget/waste/money?year=${year}&month=${month}`
         );
-        console.log("낭비 데이터 조회", res.data.data);
-        // const wasteAmount = res.data.data.total_waste_amount;
-        console.log(wasteAmount); // 출력됨됨
-        if (res.status === "success") {
+        console.log("낭비 데이터 조회", res.data);
+
+        if (res.data.status === "success") {
           const wasteAmount = res.data.data.total_waste_amount;
+          console.log("total_waste_amount 값:", wasteAmount);
           setTotalWaste(wasteAmount);
-          console.log("총 낭비금액:", totalWaste); //출력안됨
         }
       } catch (err) {
         console.error(err);
@@ -69,7 +69,6 @@ export default function BudgetMain() {
     fetchWasteData();
   }, [year, month]);
 
-  // 항목별 예산 조회
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -85,9 +84,6 @@ export default function BudgetMain() {
     fetchData();
   }, [year, month]);
 
-  // 낭비금액 조회
-
-  // response값 가져옴
   const total = budgetData?.totals?.total_amount || 0;
   const remaining = budgetData?.totals?.total_remaining_amount || 0;
   const spending = budgetData?.totals?.total_spending_amount || 0;
@@ -115,14 +111,12 @@ export default function BudgetMain() {
         {/* 예산 정보 */}
         <div className="relative w-full h-auto bg-white rounded-md shadow-sm px-[10px] py-2">
           <div className="flex justify-between items-center mt-4 mb-4">
-            {/* 좌) 남은 예산 */}
             <div className="text-left mb-2">
               <p className="text-xs text-gray-500">남은 예산(월별)</p>
               <p className="text-xl font-semibold text-black">
                 {remaining.toLocaleString()}원
               </p>
             </div>
-            {/* 우) 남은 일일예산 */}
             <div className="text-right">
               <p className="text-xs text-gray-500">남은 일일 예산</p>
               <p className="text-base font-semibold text-black">
@@ -158,6 +152,7 @@ export default function BudgetMain() {
             </div>
           </div>
         </div>
+
         {/* 카테고리별 막대 차트 */}
         <div className="relative w-full h-auto bg-white rounded-md shadow-sm mt-4 space-y-4">
           {budgetData?.categories?.map((item) => {
@@ -191,7 +186,6 @@ export default function BudgetMain() {
                   <div className="flex justify-between text-sm font-medium mb-1">
                     <span>{item.name}</span>
                   </div>
-
                   <div className="relative w-full h-[25px] bg-[#ECECEC] rounded-full overflow-hidden">
                     <div
                       className={`h-full ${
@@ -199,11 +193,9 @@ export default function BudgetMain() {
                       } rounded-full`}
                       style={{ width: `${percent}%` }}
                     >
-                      {" "}
                       <span className="text-right!">{percent.toFixed(0)}%</span>
                     </div>
                   </div>
-
                   <div className="flex justify-between">
                     <span className="text-right text-[12px] text-gray-500 mt-1">
                       {used.toLocaleString()}
@@ -218,14 +210,54 @@ export default function BudgetMain() {
           })}
         </div>
 
-        {/* 낭비 비용관련 물건 */}
-        <div className="relative w-full h-auto bg-white rounded-md shadow-sm min-h-screen mt-4">
-          <p>낭비내역</p>
-        </div>
-
         {/* 낭비항목 */}
-        <div className="relative w-full h-auto bg-white rounded-md shadow-sm min-h-screen">
-          <img src="" alt="" />
+        <div className="relative w-full h-auto bg-white rounded-md shadow-sm my-2 pb-8">
+          <div className="flex flex-col items-center justify-center text-center font-semibold">
+            {totalWaste >= 124000 ? (
+              <>
+                {(() => {
+                  const result = getWasteImage(totalWaste);
+                  return (
+                    result && (
+                      <>
+                        <p className="pt-5">
+                          낭비금액{" "}
+                          {totalWaste !== null
+                            ? totalWaste.toLocaleString()
+                            : "0"}
+                          원
+                        </p>
+                        <img
+                          src={result.image}
+                          alt="낭비 물건 이미지"
+                          className="w-[180px] h-auto py-4"
+                        />
+                        <p>
+                          {result.name}
+                          {getObjectPostfix(result.name)} 살 수 있는
+                        </p>
+                        <p>금액을 낭비했어요</p>
+                      </>
+                    )
+                  );
+                })()}
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center font-semibold pt-7">
+                <img
+                  src={WasteBlackIcon}
+                  alt="기본 낭비 아이콘"
+                  className="w-10 h-auto"
+                />
+
+                <p className="pt-3">이번 달 낭비금액은</p>
+                <p>
+                  {totalWaste !== null ? totalWaste.toLocaleString() : "0"}
+                  원이네요
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>
