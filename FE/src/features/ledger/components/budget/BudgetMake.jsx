@@ -4,6 +4,7 @@ import CustomBackHeader from "@/components/CustomBackHeader";
 import MonthBar from "../MonthBar";
 import Api from "../../../../services/Api";
 import CategoryList from "../CategoryList";
+import AlertModal from "../../../../components/AlertModal";
 
 const categories = CategoryList();
 
@@ -13,9 +14,21 @@ export default function BudgetMake() {
   const [isFirstBudget, setIsFirstBudget] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [totalBudget, setTotalBudget] = useState(0);
+  const [successMessage, setSuccessMessage] = useState("")
+  const [failMessage, setFailMessage] = useState("")
+  const [successIsOpen, setSuccessIsOpen] = useState(false)
+  const [failIsOpen, setFailIsOpen] =  useState(false)
 
   const year = activeDate.getFullYear();
   const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
+
+  function closeSuccessHandler(){
+    setSuccessIsOpen(false)
+  }
+
+  function closeFailHandler(){
+    setFailIsOpen(false)
+  }
 
   // 예산 데이터 조회
   useEffect(() => {
@@ -115,13 +128,17 @@ export default function BudgetMake() {
           0
         );
         setTotalBudget(total);
-        alert("이전 달 예산을 불러왔습니다.");
+        setSuccessIsOpen(true)
+        setSuccessMessage("이전 달 예산을 불러왔습니다.")
+        
       } else {
-        alert("이전 달 예산 데이터가 없습니다.");
+        setFailIsOpen(true)
+        setFailMessage("이전 달 예산 데이터가 없습니다.")
       }
     } catch (error) {
       console.log("이전 달 예산 불러오기 실패:", error);
-      alert("이전 달 예산을 불러오는데 실패했습니다.");
+      setFailIsOpen(true)
+      setFailMessage("이전 달 예산을 불러오는데 실패했습니다.")
     }
   };
 
@@ -158,7 +175,8 @@ export default function BudgetMake() {
         };
         await Api.post(`api/budget/plan?year=${year}&month=${month}`, payload);
       }
-      alert("예산이 성공적으로 저장되었습니다.");
+      setSuccessIsOpen(true)
+      setSuccessMessage("예산이 성공적으로 저장되었습니다.")
 
       // 저장 후 데이터 다시 불러오기
       const response = await Api.get(
@@ -189,7 +207,8 @@ export default function BudgetMake() {
       setTotalBudget(total);
     } catch (error) {
       console.error("예산 저장 실패:", error);
-      alert("예산 저장에 실패했습니다.");
+      setFailIsOpen(true)
+      setFailMessage("예산 저장에 실패했습니다.")
     }
   };
 
@@ -327,6 +346,13 @@ export default function BudgetMake() {
                 예산 저장하기
               </button>
             </div>
+            <AlertModal isClose={closeSuccessHandler} isOpen={successIsOpen} title="성공" height={170}>
+              {successMessage}
+            </AlertModal>
+
+            <AlertModal isClose={closeFailHandler} isOpen={failIsOpen} title="에러" height={170}>
+              {successMessage}
+            </AlertModal>
           </>
         )}
       </Container>
