@@ -6,12 +6,13 @@ import Container from "@/components/Container";
 import MonthBar from "../MonthBar";
 import Api from "../../../../services/Api";
 import CategoryList from "../CategoryList";
+import IsLoading from "@/components/IsLoading";
 
 const categories = CategoryList();
-
 Chart.register(ChartDataLabels);
 
 export default function BudgetReport() {
+  const [isLoading, setIsLoading] = useState(true);
   const [activeDate, setActiveDate] = useState(new Date());
   const [chartData, setChartData] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
@@ -33,27 +34,69 @@ export default function BudgetReport() {
     "#D9D9D9",
   ];
 
+  // ✅ 차트 그리는 함수
+  const drawChart = (data) => {
+    const ctx = chartRef.current.getContext("2d");
+
+    if (window.budgetChart) {
+      window.budgetChart.destroy();
+    }
+
+    window.budgetChart = new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels: data.map((item) => item.name),
+        datasets: [
+          {
+            label: "소비 금액",
+            data: data.map((item) => item.amount),
+            backgroundColor: backgroundColors,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: { top: 20, bottom: 20, left: 20, right: 20 },
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: "bottom",
+            labels: {
+              boxWidth: 15,
+              padding: 20,
+              font: { size: 12 },
+              maxWidth: 130,
+              usePointStyle: true,
+            },
+          },
+          datalabels: { display: false },
+        },
+      },
+    });
+  };
+
+  // ✅ 데이터 fetch 및 chart 렌더링
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await Api.get(
           `api/payment/statistics/category/${year}/${month}`
         );
+
         if (response.data.status === "success") {
           const categoriesData = response.data.data.categories;
+
           const sortedData = [...categoriesData].sort((a, b) => {
-            const percentA =
-              typeof a.percentage === "string"
-                ? parseFloat(a.percentage)
-                : a.percentage;
-            const percentB =
-              typeof b.percentage === "string"
-                ? parseFloat(b.percentage)
-                : b.percentage;
+            const percentA = parseFloat(a.percentage);
+            const percentB = parseFloat(b.percentage);
             return percentB - percentA;
           });
 
           setChartData(sortedData);
+          drawChart(sortedData); // ✅ 여기서 딱 한 번만 차트 렌더링
 
           const dataWithIds = categoriesData.map((item) => {
             const matchedCategory = categories.find(
@@ -72,63 +115,15 @@ export default function BudgetReport() {
         }
       } catch (error) {
         console.error("요청 실패:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
+
     fetchData();
   }, [year, month]);
 
-  useEffect(() => {
-    if (!chartData.length) return;
-    const ctx = chartRef.current.getContext("2d");
-
-    if (window.budgetChart) {
-      window.budgetChart.destroy();
-    }
-
-    window.budgetChart = new Chart(ctx, {
-      type: "pie",
-      data: {
-        labels: chartData.map((item) => item.name),
-        datasets: [
-          {
-            label: "소비 금액",
-            data: chartData.map((item) => item.amount),
-            backgroundColor: backgroundColors,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        layout: {
-          padding: {
-            top: 20,
-            bottom: 20,
-            left: 20,
-            right: 20,
-          },
-        },
-        plugins: {
-          legend: {
-            display: true,
-            position: "bottom",
-            labels: {
-              boxWidth: 15,
-              padding: 20,
-              font: {
-                size: 12,
-              },
-              maxWidth: 130, // 범례 2줄로 보이게 조정
-              usePointStyle: true,
-            },
-          },
-          datalabels: {
-            display: false, // 파이차트 % 제거
-          },
-        },
-      },
-    });
-  }, [chartData]);
+  if (isLoading) return <IsLoading />;
 
   return (
     <div className="h-screen overflow-y-auto">
@@ -149,7 +144,7 @@ export default function BudgetReport() {
           <canvas
             id="pieChart"
             ref={chartRef}
-            className="w-full max-w-[500px] h-[500px] mx-auto" // 크기 확대
+            className="w-full max-w-[500px] h-[500px] mx-auto"
           ></canvas>
         </div>
 
