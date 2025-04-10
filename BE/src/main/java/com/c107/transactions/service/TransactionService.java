@@ -96,10 +96,12 @@ public class TransactionService {
             logDetails.put("event_type", "transaction_create");
             logDetails.put("status", "SUCCESS");
             logDetails.put("userId", user.getUserId());
+            logDetails.put("email", email);
             logDetails.put("amount", request.getAmount());
             logDetails.put("responseTimeMs", elapsed);
             logDetails.put("merchantName", request.getMerchantName());
             logDetails.put("transactionType", request.getTransactionType());
+            logDetails.put("logger_name", "SECURITY_MONITOR");
 
             securityLogger.info("Transaction Created: {}", logDetails);
             return saved;
@@ -114,6 +116,7 @@ public class TransactionService {
             errorDetails.put("amount", request.getAmount());
             errorDetails.put("responseTimeMs", elapsed);
             errorDetails.put("errorMessage", e.getMessage());
+            errorDetails.put("logger_name", "SECURITY_MONITOR");
 
             securityLogger.error("Transaction Creation Failed: {}", errorDetails);
 
@@ -158,6 +161,7 @@ public class TransactionService {
             updateDetails.put("amount", request.getAmount());
             updateDetails.put("merchantName", request.getMerchantName());
             updateDetails.put("responseTimeMs", elapsed);
+            updateDetails.put("logger_name", "SECURITY_MONITOR");
 
             securityLogger.info("Transaction Updated: {}", updateDetails);
 
@@ -168,6 +172,7 @@ public class TransactionService {
             errorDetails.put("event_type", "transaction_update_failure");
             errorDetails.put("transactionId", transactionId);
             errorDetails.put("errorMessage", e.getMessage());
+            errorDetails.put("logger_name", "SECURITY_MONITOR");
 
             securityLogger.error("Transaction Update Failed: {}", errorDetails);
 
@@ -201,6 +206,7 @@ public class TransactionService {
             deleteDetails.put("event_type", "transaction_delete");
             deleteDetails.put("transactionId", transactionId);
             deleteDetails.put("responseTimeMs", elapsed);
+            deleteDetails.put("logger_name", "SECURITY_MONITOR");
 
             securityLogger.info("Transaction Deleted: {}", deleteDetails);
 
@@ -209,6 +215,7 @@ public class TransactionService {
             errorDetails.put("event_type", "transaction_delete_failure");
             errorDetails.put("transactionId", transactionId);
             errorDetails.put("errorMessage", e.getMessage());
+            errorDetails.put("logger_name", "SECURITY_MONITOR");
 
             securityLogger.error("Transaction Deletion Failed: {}", errorDetails);
 
