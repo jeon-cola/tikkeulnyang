@@ -67,4 +67,24 @@
         <appender-ref ref="SECURITY_LOGSTASH"/>
         <appender-ref ref="CONSOLE"/>
     </logger>
+
+    <appender name="SECURITY_LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>logstash:5000</destination>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <provider class="net.logstash.logback.composite.LogstashVersionJsonProvider"/>
+            <provider class="net.logstash.logback.composite.message.MessageJsonProvider"/>
+            <provider class="net.logstash.logback.composite.LoggerNameJsonProvider"/>
+            <provider class="net.logstash.logback.composite.LogLevelJsonProvider"/>
+
+            <!-- JSON 메시지 파싱을 위한 커스텀 프로바이더 -->
+            <provider class="net.logstash.logback.composite.JsonProviders">
+                <customFields>
+                    {
+                    "service": "transaction-service",
+                    "environment": "production"
+                    }
+                </customFields>
+            </provider>
+        </encoder>
+    </appender>
 </configuration>
