@@ -19,7 +19,6 @@ import { useSelector } from "react-redux";
 export default function Router() {
   const { isAuthenticated } = useSelector((state) => state.user);
   const location = useLocation();
-  console.log(location.pathname);
 
   const hideNavBarPaths = ["/", "/user/", "/user/login", "/user/signup"];
   const shouldShowNavBar = !hideNavBarPaths.includes(location.pathname);
