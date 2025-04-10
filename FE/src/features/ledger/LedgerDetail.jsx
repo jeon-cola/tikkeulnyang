@@ -5,7 +5,7 @@ import LedgerHeader from "./components/LedgerHeader";
 import CategoryBox from "./components/CategoryBox";
 import IsLoading from "@/components/IsLoading";
 import AlertModal from "@/components/AlertModal";
-
+import CustomBackHeader from "../../components/CustomBackHeader";
 import Api from "../../services/Api";
 import CategoryList from "./components/CategoryList";
 import WasteIcon from "./assets/waste_icon.png";
@@ -430,6 +430,7 @@ export default function LedgerDetail() {
       {!isLoading ? (
         <div className="h-screen overflow-y-auto">
           <Container>
+            <CustomBackHeader title="가계부" />
             <LedgerHeader
               onEditClick={toggleMainEditMode}
               isEditMode={isMainEditMode}
@@ -630,7 +631,6 @@ export default function LedgerDetail() {
                   />
                 </div>
 
-                {/* 금액 입력 - 수정 모달 */}
                 {/* 금액 입력 - 수정 모달 */}
                 <div className="relative mb-4">
                   <label className="block text-gray-600 mb-1">금액</label>

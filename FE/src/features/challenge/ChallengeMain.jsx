@@ -13,11 +13,13 @@ import RenderList from "@/features/challenge/components/RenderList";
 import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
 import CreateButton from "./components/CreateButton";
 import CustomHeader from "@/components/CustomHeader";
+import IsLoading from "../../components/IsLoading"
 
 export default function ChallengeMain() {
   const [officialChallenges, setOfficialChallenges] = useState([]);
   const [userChallenges, setUserChallenges] = useState([]);
   const [recommendChallenges, setRecommendChallenges] = useState([]);
+  const [isLoading, setIsLoading] = useState(false)
 
   // 페이지 저장할 State
   const [officialPageCnt, setOfficialPageCnt] = useState(0);
@@ -68,6 +70,11 @@ export default function ChallengeMain() {
 
     setRecommendChallenges([...recommendChallenges, ...formattedChallenges]);
   };
+
+  // 추천, 공식, 유저 챌린지 를 불러올떄 loading 화면 
+  useEffect(()=> {
+    setIsLoading(!(userChallenges.length !== 0 && recommendChallenges.length !== 0 && officialChallenges.length !== 0))
+  },[userChallenges,recommendChallenges,officialChallenges])
 
   // 페이지가 실행되자마자 우선 추천, 공식, 유저 챌린지를 4개씩 불러온다.
 
@@ -207,6 +214,9 @@ export default function ChallengeMain() {
   };
   return (
     <>
+    {isLoading?<IsLoading/>
+    :
+    <>
       <CustomHeader title="챌린지" />
       <CreateButton />
       {/* <CustomBackHeader title="챌린지" /> */}
@@ -215,5 +225,7 @@ export default function ChallengeMain() {
         {renderPage()}
       </div>
     </>
+  }
+  </>
   );
 }
