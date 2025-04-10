@@ -12,6 +12,7 @@ const categories = CategoryList();
 Chart.register(ChartDataLabels);
 
 export default function BudgetReport() {
+  console.log("호출")
   const [isLoading, setIsLoading] = useState(true);
   const [activeDate, setActiveDate] = useState(new Date());
   const [chartData, setChartData] = useState([]);
@@ -88,14 +89,15 @@ export default function BudgetReport() {
         console.log(response.data)
         if (response.data.status === "success") {
           const categoriesData = response.data.data.categories;
-
+          console.log(1)
           const sortedData = [...categoriesData].sort((a, b) => {
             const percentA = parseFloat(a.percentage);
             const percentB = parseFloat(b.percentage);
             return percentB - percentA;
           });
-
+          console.log(2)
           setChartData(sortedData);
+          console.log(3)
 
           // ✅ DOM 렌더링 이후 안전하게 차트를 그림
           setTimeout(() => {
@@ -103,7 +105,7 @@ export default function BudgetReport() {
               drawChart(sortedData);
             }
           }, 0);
-
+          console.log(4)
           const dataWithIds = categoriesData.map((item) => {
             const matchedCategory = categories.find(
               (c) => c.name === item.name
@@ -113,11 +115,13 @@ export default function BudgetReport() {
               categoryId: matchedCategory ? matchedCategory.id : 999,
             };
           });
+          console.log(5)
 
           const idSortedData = [...dataWithIds].sort(
             (a, b) => a.categoryId - b.categoryId
           );
           setCategoriesList(idSortedData);
+          console.log(6)
         }
       } catch (error) {
         console.error("요청 실패:", error);
