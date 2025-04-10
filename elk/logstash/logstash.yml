@@ -1,3 +1,10 @@
+# logstash/config/logstash.yml
+
+pipeline.workers: 2 # CPU 코어 수가 많아도 2~4 정도로 제한
+pipeline.batch.size: 100 # 한 번에 처리할 이벤트 수
+pipeline.batch.delay: 50 # (ms) 이벤트 모을 시간
+
+# 기본 설정은 그대로 유지 가능
 http.host: "0.0.0.0"
 pipeline.ordered: auto
 config.reload.automatic: true
