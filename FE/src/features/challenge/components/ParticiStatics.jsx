@@ -37,14 +37,15 @@ export default function ParticiStatics({
             </div>
 
             {/* 달성률 영역 */}
-            <div className="absolute flex flex-rows  w-[108px] h-[44px] left-[231px] top-0">
+            {/* <div className="absolute flex flex-rows  w-[108px] h-[44px] left-[231px] top-0">
               <p className="whitespace-nowrap absolute w-[108px] h-[23px] right-[12px] top-0 font-['Prompt'] font-normal text-[15px] leading-[23px] text-black">
                 평균 소비 비율
               </p>
               <p className="absolute w-[30px] h-[23px] right-[14px] top-[21px] font-['Prompt'] font-normal text-[15px] leading-[23px] text-black">
                 {averageSuccessRate}%
+                60%
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
 

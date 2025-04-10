@@ -70,6 +70,9 @@ export default function RoundChart({ data = [75, 25] }) {
         tooltip: {
           enabled: false,
         },
+        datalabels: {
+          display: false,
+        },
       },
       cutout: 50, // 도넛의 중앙 구멍 크기(백분율)
     };
