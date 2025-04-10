@@ -12,6 +12,7 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import AlertModal from "@/components/AlertModal";
+import IsLoading from "../../components/IsLoading"
 
 export default function RenderHome() {
   const navigate = useNavigate();
@@ -255,7 +256,7 @@ export default function RenderHome() {
   return (
     <>
       {isLoading ? (
-        <></>
+        <IsLoading/>
       ) : (
         <>
           {/* <CustomBackHeader title="홈" /> */}

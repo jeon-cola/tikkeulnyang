@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { useDispatch } from "react-redux"
 import { setEmail, setNickName, setProfileImg, setDeposit, setUserId,setAuthenticated } from "./features/user/UserSlice.js"
 import Api from "./services/Api";
+import { BrowserRouter } from "react-router-dom";
 
 function App() {
   const dispatch = useDispatch();
@@ -21,16 +22,16 @@ function App() {
                   dispatch(setUserId(userData.id))
               }
           } catch (error) {
-              console.log(error)
+              dispatch(setAuthenticated(false))
           }
       }
       fetchData();
   },[dispatch])
   
   return (
-    <>
+    <BrowserRouter>
       <Router />
-    </>
+    </BrowserRouter>
   );
 }
 
