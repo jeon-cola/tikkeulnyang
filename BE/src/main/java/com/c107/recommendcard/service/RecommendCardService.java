@@ -14,6 +14,7 @@ import com.c107.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -95,73 +96,91 @@ public class RecommendCardService {
     @Cacheable(value = "recommendCreditCardsCache", key = "#email", unless = "#result == null")
     @Transactional
     public List<RecommendCardResponseDto> recommendCreditCards(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
-        List<String> topCategories = extractTopCategories(user);
-        log.info("신용카드 추천 대상 상위 카테고리: {}", topCategories);
-        Set<RecommendCard> recommendedCards = new HashSet<>();
-        Map<String, Integer> budgetCategoryNameToId = budgetCategoryRepository.findAll()
-                .stream()
-                .collect(Collectors.toMap(b -> b.getCategoryName(), b -> b.getBudgetCategoryId()));
-        Map<String, Set<Integer>> categoryToCreditBenefitIds = new HashMap<>();
-        for (String category : topCategories) {
-            Integer budgetCategoryId = budgetCategoryNameToId.get(category);
-            if (budgetCategoryId != null) {
-                List<Integer> benefitIds = budgetCheckMappingRepository.findByBudgetCategoryId(budgetCategoryId)
-                        .stream()
-                        .map(mapping -> mapping.getBenefitId())
-                        .collect(Collectors.toList());
-                categoryToCreditBenefitIds.put(category, new HashSet<>(benefitIds));
-            }
-        }
-        for (String category : topCategories) {
-            Integer budgetCategoryId = budgetCategoryNameToId.get(category);
-            if (budgetCategoryId != null) {
-                List<Integer> creditBenefitIds = budgetCreditMappingRepository.findByBudgetCategoryId(budgetCategoryId)
-                        .stream()
-                        .map(mapping -> mapping.getCreditBenefitsId())
-                        .collect(Collectors.toList());
-                if (!creditBenefitIds.isEmpty()) {
-                    List<RecommendCard> creditCards = recommendCardRepository.findByCreditBenefitIds(creditBenefitIds);
-                    recommendedCards.addAll(creditCards);
-                    continue;
-                }
-            }
-            // fallback
-            List<RecommendCard> fallbackCards = recommendCardRepository.findByCreditBenefitCategory(category);
-            recommendedCards.addAll(fallbackCards);
-        }
-        Map<RecommendCard, Long> cardScoreMap = recommendedCards.stream().collect(Collectors.toMap(
-                card -> card,
-                card -> {
-                    List<CreditCardBenefit> benefits = creditCardBenefitRepository.findByRecoCardId(card.getRecoCardId());
-                    long score = topCategories.stream().filter(category -> {
-                        Set<Integer> mappedIds = categoryToCreditBenefitIds.getOrDefault(category, Collections.emptySet());
-                        return benefits.stream().anyMatch(b -> mappedIds.contains(b.getCreditBenefitsId()));
-                    }).count();
-                    return score;
-                }
-        ));
-        return cardScoreMap.entrySet().stream()
-                .sorted((e1, e2) -> {
-                    int cmp = Long.compare(e2.getValue(), e1.getValue());
-                    if (cmp == 0) {
-                        return Long.compare(e1.getKey().getRecoCardId(), e2.getKey().getRecoCardId());
-                    }
-                    return cmp;
-                })
-                .limit(10)
-                .map(e -> {
-                    RecommendCard card = e.getKey();
-                    List<CreditCardBenefit> benefits = creditCardBenefitRepository.findByRecoCardId(card.getRecoCardId());
-                    String benefitDesc = benefits.stream()
-                            .map(b -> b.getDescription())
-                            .collect(Collectors.joining(", "));
-                    return RecommendCardResponseDto.of(card, benefitDesc);
-                })
-                .collect(Collectors.toList());
-    }
+        long start = System.currentTimeMillis(); // 응답 시간 측정 시작
+        MDC.put("service", "recommendCreditCards");
+        MDC.put("cache", "on"); // 캐싱 꺼두고 비교 시 off 로 수동 변경
+        MDC.put("userEmail", email);
 
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
+
+            List<String> topCategories = extractTopCategories(user);
+            log.info("신용카드 추천 대상 상위 카테고리: {}", topCategories);
+
+            Set<RecommendCard> recommendedCards = new HashSet<>();
+            Map<String, Integer> budgetCategoryNameToId = budgetCategoryRepository.findAll()
+                    .stream()
+                    .collect(Collectors.toMap(b -> b.getCategoryName(), b -> b.getBudgetCategoryId()));
+
+            Map<String, Set<Integer>> categoryToCreditBenefitIds = new HashMap<>();
+            for (String category : topCategories) {
+                Integer budgetCategoryId = budgetCategoryNameToId.get(category);
+                if (budgetCategoryId != null) {
+                    List<Integer> benefitIds = budgetCheckMappingRepository.findByBudgetCategoryId(budgetCategoryId)
+                            .stream()
+                            .map(mapping -> mapping.getBenefitId())
+                            .collect(Collectors.toList());
+                    categoryToCreditBenefitIds.put(category, new HashSet<>(benefitIds));
+                }
+            }
+
+            for (String category : topCategories) {
+                Integer budgetCategoryId = budgetCategoryNameToId.get(category);
+                if (budgetCategoryId != null) {
+                    List<Integer> creditBenefitIds = budgetCreditMappingRepository.findByBudgetCategoryId(budgetCategoryId)
+                            .stream()
+                            .map(mapping -> mapping.getCreditBenefitsId())
+                            .collect(Collectors.toList());
+                    if (!creditBenefitIds.isEmpty()) {
+                        List<RecommendCard> creditCards = recommendCardRepository.findByCreditBenefitIds(creditBenefitIds);
+                        recommendedCards.addAll(creditCards);
+                        continue;
+                    }
+                }
+                List<RecommendCard> fallbackCards = recommendCardRepository.findByCreditBenefitCategory(category);
+                recommendedCards.addAll(fallbackCards);
+            }
+
+            Map<RecommendCard, Long> cardScoreMap = recommendedCards.stream().collect(Collectors.toMap(
+                    card -> card,
+                    card -> {
+                        List<CreditCardBenefit> benefits = creditCardBenefitRepository.findByRecoCardId(card.getRecoCardId());
+                        long score = topCategories.stream().filter(category -> {
+                            Set<Integer> mappedIds = categoryToCreditBenefitIds.getOrDefault(category, Collections.emptySet());
+                            return benefits.stream().anyMatch(b -> mappedIds.contains(b.getCreditBenefitsId()));
+                        }).count();
+                        return score;
+                    }
+            ));
+
+            List<RecommendCardResponseDto> result = cardScoreMap.entrySet().stream()
+                    .sorted((e1, e2) -> {
+                        int cmp = Long.compare(e2.getValue(), e1.getValue());
+                        if (cmp == 0) {
+                            return Long.compare(e1.getKey().getRecoCardId(), e2.getKey().getRecoCardId());
+                        }
+                        return cmp;
+                    })
+                    .limit(10)
+                    .map(e -> {
+                        RecommendCard card = e.getKey();
+                        List<CreditCardBenefit> benefits = creditCardBenefitRepository.findByRecoCardId(card.getRecoCardId());
+                        String benefitDesc = benefits.stream()
+                                .map(b -> b.getDescription())
+                                .collect(Collectors.joining(", "));
+                        return RecommendCardResponseDto.of(card, benefitDesc);
+                    })
+                    .collect(Collectors.toList());
+
+            return result;
+        } finally {
+            long duration = System.currentTimeMillis() - start;
+            MDC.put("durationMs", String.valueOf(duration));
+            log.info("신용카드 추천 응답 완료"); // Kibana 시각화용 로그
+            MDC.clear(); // 꼭 비워줘야 누적 안 됨
+        }
+    }
 
     /**
      * 체크카드 추천
