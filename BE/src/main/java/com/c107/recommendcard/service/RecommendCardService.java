@@ -96,10 +96,11 @@ public class RecommendCardService {
     @Cacheable(value = "recommendCreditCardsCache", key = "#email", unless = "#result == null")
     @Transactional
     public List<RecommendCardResponseDto> recommendCreditCards(String email) {
-        long start = System.currentTimeMillis(); // 응답 시간 측정 시작
-        MDC.put("service", "recommendCreditCards");
-        MDC.put("cache", "on"); // 캐싱 꺼두고 비교 시 off 로 수동 변경
+        long start = System.currentTimeMillis(); // 응답 시간 측정 시작4
+        MDC.put("event_type", "recommend_credit"); // ✅ 이거 추가
         MDC.put("userEmail", email);
+        MDC.put("service", "recommendCreditCards");
+        MDC.put("cache", "on");
 
         try {
             User user = userRepository.findByEmail(email)
@@ -191,6 +192,13 @@ public class RecommendCardService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
         List<String> topCategories = extractTopCategories(user);
+
+        MDC.put("event_type", "recommend_check");
+        MDC.put("userEmail", email);
+        MDC.put("service", "recommendCheckCards");
+        MDC.put("cache", "on");
+
+
         log.info("체크카드 추천 대상 상위 카테고리: {}", topCategories);
 
         Set<RecommendCard> recommendedCards = new HashSet<>();
