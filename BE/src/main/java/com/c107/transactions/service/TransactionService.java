@@ -37,48 +37,61 @@ public class TransactionService {
 
     @Transactional
     public Transaction createTransaction(String email, TransactionCreateRequest request) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+        long start = System.currentTimeMillis();
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        // 카테고리 검증
-        Integer categoryId = request.getCategoryId();
-        if (categoryId != null) {
-            budgetCategoryRepository.findById(categoryId)
-                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 예산 카테고리입니다."));
+            // 카테고리 검증
+            Integer categoryId = request.getCategoryId();
+            if (categoryId != null) {
+                budgetCategoryRepository.findById(categoryId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "존재하지 않는 예산 카테고리입니다."));
+            }
+
+            // 카테고리 ID가 null이면 기본 카테고리 사용
+            if (categoryId == null) {
+                Optional<BudgetCategoryEntity> defaultCategory = budgetCategoryRepository.findByCategoryName("기타");
+                categoryId = defaultCategory.map(BudgetCategoryEntity::getBudgetCategoryId).orElse(null);
+            }
+
+            // 날짜 생성
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime transactionDate = LocalDateTime.of(
+                    request.getYear(),
+                    request.getMonth(),
+                    request.getDay(),
+                    now.getHour(),
+                    now.getMinute(),
+                    now.getSecond()
+            );
+
+            // 새 거래 내역 생성
+            Transaction newTransaction = new Transaction();
+            newTransaction.setUserId(user.getUserId());
+            newTransaction.setCardId(0); // 기타 카드로 처리
+            newTransaction.setTransactionType(request.getTransactionType());
+            newTransaction.setAmount(request.getAmount());
+            newTransaction.setTransactionDate(transactionDate);
+            newTransaction.setCategoryId(categoryId);
+            newTransaction.setMerchantName(request.getMerchantName());
+            newTransaction.setIsWaste(0);
+            newTransaction.setDeleted(0);
+            newTransaction.setCreatedAt(now);
+            newTransaction.setUpdatedAt(now);
+
+            Transaction saved = transactionRepository.save(newTransaction);
+
+            long elapsed = System.currentTimeMillis() - start;
+            logger.info("TRANSACTION_LOG | type=CREATE | status=SUCCESS | userId={} | amount={} | responseTimeMs={}",
+                    user.getUserId(), request.getAmount(), elapsed);
+            return saved;
+        } catch (Exception e) {
+            long elapsed = System.currentTimeMillis() - start;
+            logger.error("TRANSACTION_LOG | type=CREATE | status=FAIL | email={} | amount={} | responseTimeMs={}",
+                    email, request.getAmount(), elapsed, e);
+            throw e;
         }
-
-        // 카테고리 ID가 null이면 기본 카테고리 사용
-        if (categoryId == null) {
-            Optional<BudgetCategoryEntity> defaultCategory = budgetCategoryRepository.findByCategoryName("기타");
-            categoryId = defaultCategory.map(BudgetCategoryEntity::getBudgetCategoryId).orElse(null);
-        }
-
-        // 날짜 생성
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime transactionDate = LocalDateTime.of(
-                request.getYear(),
-                request.getMonth(),
-                request.getDay(),
-                now.getHour(),
-                now.getMinute(),
-                now.getSecond()
-        );
-
-        // 새 거래 내역 생성
-        Transaction newTransaction = new Transaction();
-        newTransaction.setUserId(user.getUserId());
-        newTransaction.setCardId(0); // 기타 카드로 처리
-        newTransaction.setTransactionType(request.getTransactionType());
-        newTransaction.setAmount(request.getAmount());
-        newTransaction.setTransactionDate(transactionDate);
-        newTransaction.setCategoryId(categoryId);
-        newTransaction.setMerchantName(request.getMerchantName());
-        newTransaction.setIsWaste(0);
-        newTransaction.setDeleted(0);
-        newTransaction.setCreatedAt(now);
-        newTransaction.setUpdatedAt(now);
-
-        return transactionRepository.save(newTransaction);
     }
 
     /**
@@ -110,13 +123,23 @@ public class TransactionService {
      */
     @Transactional
     public void deleteTransaction(Long transactionId) {
-        Transaction transaction = transactionRepository.findById(Math.toIntExact(transactionId))
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "거래 내역을 찾을 수 없습니다."));
+        long start = System.currentTimeMillis();
+        try {
+            Transaction transaction = transactionRepository.findById(Math.toIntExact(transactionId))
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND, "거래 내역을 찾을 수 없습니다."));
 
-        // deleted 컬럼을 1로 업데이트 (소프트 딜리트)
-        transaction.setDeleted(1);
-        transaction.setUpdatedAt(LocalDateTime.now());
-        transactionRepository.save(transaction);
-        logger.info("거래 내역 소프트 딜리트 완료: ID = {}", transactionId);
+            // deleted 컬럼을 1로 업데이트 (소프트 딜리트)
+            transaction.setDeleted(1);
+            transaction.setUpdatedAt(LocalDateTime.now());
+            transactionRepository.save(transaction);
+            long elapsed = System.currentTimeMillis() - start;
+            logger.info("TRANSACTION_LOG | type=DELETE | status=SUCCESS | transactionId={} | responseTimeMs={}",
+                    transactionId, elapsed);
+        } catch (Exception e) {
+            long elapsed = System.currentTimeMillis() - start;
+            logger.error("TRANSACTION_LOG | type=DELETE | status=FAIL | transactionId={} | responseTimeMs={}",
+                    transactionId, elapsed, e);
+            throw e;
+        }
     }
 }
