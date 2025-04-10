@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ChallengeService } from "@/features/challenge/services/ChallengeService";
 import { useEffect, useState } from "react";
 import { ChallengeUtils } from "@/features/challenge/utils/ChallengeUtils";
+import CustomBackHeader from "@/components/CustomBackHeader";
 
 export default function ChallengeEnter() {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ export default function ChallengeEnter() {
   const handleClick = async () => {
     const response = await ChallengeService.postChallengeJoin(id);
     console.log("ChallengeJoin result : ", response);
-    navigate(`/challenge/%{id}`); // 추후에 결제 완료 알림창 뜨도록 하게 할것
+    navigate(`/challenge/${id}`); // 추후에 결제 완료 알림창 뜨도록 하게 할것
   };
 
   return (
@@ -81,7 +82,8 @@ export default function ChallengeEnter() {
         <></>
       ) : (
         <>
-          <CustomHeader title="챌린지 입장" showCreateButton="true" />
+          {/* <CustomHeader title="챌린지 입장" showCreateButton="true" /> */}
+          <CustomBackHeader title="챌린지 입장" />
           <div className="flex flex-col items-start p-[30px_20px_82px] gap-3 absolute w-full min-h-screen left-0 top-[49px] overflow-y-scroll bg-[#F7F7F7]">
             <ChallengeIntro
               challengeType={challengeData.challenge.challengeType}
@@ -115,17 +117,16 @@ export default function ChallengeEnter() {
                 <div className="w-1/2 max-w-xs h-px bg-[#FF957A]"></div>
               </div>
             </div>
-            <div className="flex flex-col items-center p-[30px_12px_30px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
+            {/* <div className="flex flex-col items-center p-[30px_12px_30px] gap-[22px] relative w-full h-auto bg-white rounded-[6px]">
               <div className="w-[348px] h-[90px] flex-none order-0 self-stretch flex-grow-0 relative">
-                {/* 제목 부분 */}
+                
 
                 <h2 className=" w-[194.95px] h-[32px] left-[12.05px] top-[3px] font-[Pretendard] font-bold text-[23px] leading-[27px] text-black">
                   예치금 충전 및 결제
                 </h2>
 
-                {/* 예치금 정보 그룹 */}
+               
                 <div className="relative flex flex-col w-full h-[46px]">
-                  {/* 참가 예치금 행 */}
                   <div className=" w-[348px] h-[20px] left-[12px] top-[1px]">
                     <span className="absolute w-[78.73px] h-[20px] left-[12px] top-[5px] font-[Pretendard] font-normal text-[17px] leading-[20px] text-black">
                       참가 예치금
@@ -135,7 +136,6 @@ export default function ChallengeEnter() {
                     </span>
                   </div>
 
-                  {/* 현재 보유 예치금 행 */}
                   <div className="w-[348px] h-[20px] left-[12px] top-[100px]">
                     <span className="absolute w-[115.24px] h-[20px] left-[12px] top-[45px] font-[Pretendard] font-normal text-[17px] leading-[20px] text-black">
                       현재 보유 예치금
@@ -146,7 +146,7 @@ export default function ChallengeEnter() {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* 결제 버튼 */}
             <div className="w-full justify-center flex flex-row">
