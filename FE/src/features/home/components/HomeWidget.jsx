@@ -41,7 +41,7 @@ export default function Homewidget({ title, content }) {
   };
 
   const [icon, setIcon] = useState(null);
-  const [message, setMessage] = useState(null)
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     console.log("HomeWidget", content);
@@ -54,7 +54,7 @@ export default function Homewidget({ title, content }) {
     } else if (title === "구독 결제 예정") {
       setIcon(ScheduleWidget);
       setMessage("다가오는 결제 확인");
-    } else if (title === "지난달 통계") {
+    } else if (title === "이번달 통계") {
       setIcon(GraphWidget);
       setMessage("소비 패턴 분석");
     } else if (title === "현재 소비 금액") {
@@ -79,7 +79,9 @@ export default function Homewidget({ title, content }) {
             <h3 className="absolute top-0 left-0 right-0 text-left font-normal text-[20px] leading-[30px] text-black">
               {title}
             </h3>
-            <p className="absolute top-7 left-0 text-left text-[#A7A7A7]">{message}</p>
+            <p className="absolute top-7 left-0 text-left text-[#A7A7A7]">
+              {message}
+            </p>
             <img
               src={icon}
               alt={icon}
