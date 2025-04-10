@@ -351,7 +351,7 @@ export default function BudgetMake() {
             </AlertModal>
 
             <AlertModal isClose={closeFailHandler} isOpen={failIsOpen} title="에러" height={170}>
-              {successMessage}
+              {failMessage}
             </AlertModal>
           </>
         )}
