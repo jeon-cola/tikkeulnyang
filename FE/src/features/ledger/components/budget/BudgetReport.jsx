@@ -85,7 +85,7 @@ export default function BudgetReport() {
         const response = await Api.get(
           `api/payment/statistics/category/${year}/${month}`
         );
-
+        console.log(response.data)
         if (response.data.status === "success") {
           const categoriesData = response.data.data.categories;
 
