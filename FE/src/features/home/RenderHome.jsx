@@ -19,7 +19,7 @@ export default function RenderHome() {
   const [widgets, setWidgets] = useState([
     { id: "widget-1", title: "남은예산", content: ["0원"] },
     { id: "widget-2", title: "구독 결제 예정", content: [] },
-    { id: "widget-3", title: "지난달 통계", content: [] },
+    { id: "widget-3", title: "이번달 통계", content: [] },
     { id: "widget-4", title: "현재 소비 금액", content: ["0원"] },
     { id: "widget-5", title: "남은 카드 실적", content: ["50,000원"] },
     { id: "widget-6", title: "버킷리스트", content: [] },
@@ -139,18 +139,18 @@ export default function RenderHome() {
     switch (id) {
       case "widget-1":
         // 예산 페이지로 이동
-        navigate(`/ledger`);
+        navigate(`/ledger/budget`);
         break;
       case "widget-2":
         // 구독 페이지로 이동
         navigate(`/home/subscribe`);
         break;
       case "widget-3":
-        console.log("통계 페이지 미완");
+        navigate(`/ledger/budget/report`);
 
         break;
       case "widget-4":
-        console.log("현재 소비 금액 위젯 클릭됨");
+        navigate(`/ledger`);
 
         break;
       case "widget-5":
@@ -290,11 +290,11 @@ export default function RenderHome() {
               {/* 텍스트 콘텐츠 - 중앙 정렬 */}
               <div className="relative z-10 flex flex-col items-center justify-center text-white">
                 <p className="text-sm text-gray-200">이번달 카드 추천</p>
-                <h3 className="text-lg font-semibold">카드 혜택으로 절약하기</h3>
+                <h3 className="text-lg font-semibold">
+                  카드 혜택으로 절약하기
+                </h3>
               </div>
             </div>
-
-
 
             <div
               className="flex flex-col p-[12px_20px_12px] gap-[5px] relative w-full h-auto bg-white rounded-[6px]"
@@ -318,7 +318,9 @@ export default function RenderHome() {
             </div>
 
             <div className="flex justify-between w-full h-auto mt-[1px]">
-              <h2 className="ml-[5px] font-semibold text-xl text-left leading-[17px] tracking-[0.01em] text-black">위젯으로 모아보기</h2>
+              <h2 className="ml-[5px] font-semibold text-xl text-left leading-[17px] tracking-[0.01em] text-black">
+                위젯으로 모아보기
+              </h2>
 
               <div
                 className="flex justify-center items-center px-[5px] py-[3px] bg-white shadow-[1px_1px_4px_rgba(0,0,0,0.1)] rounded-[30px] cursor-pointer"
