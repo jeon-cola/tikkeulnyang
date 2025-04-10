@@ -12,38 +12,30 @@ const categories = CategoryList();
 Chart.register(ChartDataLabels);
 
 export default function BudgetReport() {
-  console.log("호출")
   const [isLoading, setIsLoading] = useState(true);
   const [activeDate, setActiveDate] = useState(new Date());
   const [chartData, setChartData] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
   const chartRef = useRef(null);
+  const chartInstance = useRef(null); // 🔥 useRef로 chart 인스턴스 관리
 
   const year = activeDate.getFullYear();
   const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
 
   const backgroundColors = [
-    "#ff957a",
-    "#fdbb8e",
-    "#FFE790",
-    "#EAF3A0",
-    "#D9F9BF",
-    "#b2eee6",
-    "#a7e9f4",
-    "#aae1fe",
-    "#e4d8ff",
-    "#D9D9D9",
+    "#ff957a", "#fdbb8e", "#FFE790", "#EAF3A0", "#D9F9BF",
+    "#b2eee6", "#a7e9f4", "#aae1fe", "#e4d8ff", "#D9D9D9",
   ];
 
   // ✅ 차트 그리는 함수
   const drawChart = (data) => {
     const ctx = chartRef.current.getContext("2d");
 
-    if (window.budgetChart) {
-      window.budgetChart.destroy();
+    if (chartInstance.current) {
+      chartInstance.current.destroy();
     }
 
-    window.budgetChart = new Chart(ctx, {
+    chartInstance.current = new Chart(ctx, {
       type: "pie",
       data: {
         labels: data.map((item) => item.name),
@@ -79,49 +71,44 @@ export default function BudgetReport() {
     });
   };
 
-  // ✅ 데이터 fetch 및 한 번만 drawChart 호출
+  // ✅ 차트 데이터 변경될 때 차트 그리기
+  useEffect(() => {
+    if (chartData.length > 0 && chartRef.current) {
+      drawChart(chartData);
+    }
+  }, [chartData]);
+
+  // ✅ API 호출 및 데이터 세팅
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await Api.get(
           `api/payment/statistics/category/${year}/${month}`
         );
-        console.log(response.data)
+        console.log(response.data);
         if (response.data.status === "success") {
           const categoriesData = response.data.data.categories;
-          console.log(1)
+
           const sortedData = [...categoriesData].sort((a, b) => {
             const percentA = parseFloat(a.percentage);
             const percentB = parseFloat(b.percentage);
             return percentB - percentA;
           });
-          console.log(2)
-          setChartData(sortedData);
-          console.log(3)
 
-          // ✅ DOM 렌더링 이후 안전하게 차트를 그림
-          setTimeout(() => {
-            if (chartRef.current) {
-              drawChart(sortedData);
-            }
-          }, 0);
-          console.log(4)
+          setChartData(sortedData); // 여기까지만 하고 drawChart는 useEffect에서 처리
+
           const dataWithIds = categoriesData.map((item) => {
-            const matchedCategory = categories.find(
-              (c) => c.name === item.name
-            );
+            const matchedCategory = categories.find((c) => c.name === item.name);
             return {
               ...item,
               categoryId: matchedCategory ? matchedCategory.id : 999,
             };
           });
-          console.log(5)
 
           const idSortedData = [...dataWithIds].sort(
             (a, b) => a.categoryId - b.categoryId
           );
           setCategoriesList(idSortedData);
-          console.log(6)
         }
       } catch (error) {
         console.error("요청 실패:", error);
@@ -155,6 +142,8 @@ export default function BudgetReport() {
             id="pieChart"
             ref={chartRef}
             className="w-full max-w-[500px] h-[500px] mx-auto"
+            width={500}
+            height={500}
           ></canvas>
         </div>
 
