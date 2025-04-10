@@ -1,10 +1,9 @@
 import { useEffect, useState, useRef } from "react"
 import CustomBackHeader from "../../../components/CustomBackHeader"
 import bankImage from "../assets/bank.png"
-import axios from "axios";
 import BankImg from "../assets/BankImgFunction"
-import { useNavigate } from "react-router-dom";
 import Api from "../../../services/Api";
+import AlertModal from "../../../components/AlertModal";
 
 export default function Account() {
     const [list, setList] = useState([])
@@ -14,6 +13,8 @@ export default function Account() {
     });
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
+    const [message, setMessage] = useState("")
+    const [isAlertOpen, setIsAlertOpen] = useState(false) 
 
     function handleBankSelect(bank) {
         setAccount({
@@ -23,6 +24,11 @@ export default function Account() {
         setIsOpen(false);
     }
 
+    // 알렛창 닫기
+    function closeHandler() {
+        setIsAlertOpen(false)
+    }
+
     //대표계좌 설정
     function registHandler(e) {
         e.preventDefault()
@@ -30,7 +36,8 @@ export default function Account() {
             console.log(account.bankImformation.accountNumber)
             const response = await Api.post(`/api/account/set-representative?accountNo=${account.bankImformation.accountNumber}`)
             console.log(response.data)
-            window.alert("대표계좌로 설정되었습니다")
+            setMessage("대표계좌로 설정되었습니다")
+            setIsAlertOpen(true)
         }
         fetchData();
     }
@@ -113,6 +120,10 @@ export default function Account() {
             <div className="w-full flex flex-col items-center">
                 <button className="customButton bg-blue-500 text-white px-4 py-2 rounded" onClick={registHandler}>저장하기</button>
             </div>
+
+            <AlertModal title="대표계좌 설정" isOpen={isAlertOpen} isClose={closeHandler} height={170}>
+                {message}
+            </AlertModal>
         </div>
     )
 }
