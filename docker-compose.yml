@@ -21,7 +21,6 @@ services:
     depends_on:
       - mysql
       - redis
-      - logstash
     environment:
       - TZ=Asia/Seoul
       - JAVA_TOOL_OPTIONS=-Duser.timezone=Asia/Seoul
@@ -78,72 +77,6 @@ services:
     networks:
       - app_network
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.13
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      - xpack.security.enabled=false
-    ports:
-      - "9200:9200"
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - app_network
-    restart: always
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-
-  logstash:
-    image: docker.elastic.co/logstash/logstash:7.17.13
-    container_name: logstash
-    ports:
-      - "5044:5044"
-      - "5000:5000"
-    volumes:
-      - ./elk/logstash/pipeline:/usr/share/logstash/pipeline
-      - ./elk/logstash/logs:/usr/share/logstash/logs
-    environment:
-      - "LS_JAVA_OPTS=-Xms256m -Xmx512m -Djava.io.tmpdir=/tmp"
-    depends_on:
-      - elasticsearch
-    networks:
-      - app_network
-    restart: always
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:7.17.13
-    container_name: kibana
-    ports:
-      - "5601:5601"
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    depends_on:
-      - elasticsearch
-    networks:
-      - app_network
-    restart: always
-
-  filebeat:
-    image: docker.elastic.co/beats/filebeat:7.17.13
-    container_name: filebeat
-    user: root
-    volumes:
-      - ./elk/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - /var/log/spring-boot:/var/log/spring-boot:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: filebeat -e -strict.perms=false
-    depends_on:
-      - elasticsearch
-      - logstash
-    networks:
-      - app_network
-    restart: always
-
   redis:
     image: redis:latest
     container_name: redis
@@ -160,4 +93,3 @@ networks:
 volumes:
   mysql_data:
   grafana_data:
-  elasticsearch_data:
