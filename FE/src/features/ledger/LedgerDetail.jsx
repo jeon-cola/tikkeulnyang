@@ -632,7 +632,6 @@ export default function LedgerDetail() {
                 </div>
 
                 {/* 금액 입력 - 수정 모달 */}
-                {/* 금액 입력 - 수정 모달 */}
                 <div className="relative mb-4">
                   <label className="block text-gray-600 mb-1">금액</label>
                   <input
