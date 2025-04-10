@@ -78,7 +78,7 @@ export default function BudgetReport() {
     });
   };
 
-  // ✅ 데이터 fetch 및 chart 렌더링
+  // ✅ 데이터 fetch 및 한 번만 drawChart 호출
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -96,7 +96,13 @@ export default function BudgetReport() {
           });
 
           setChartData(sortedData);
-          drawChart(sortedData); // ✅ 여기서 딱 한 번만 차트 렌더링
+
+          // ✅ DOM 렌더링 이후 안전하게 차트를 그림
+          setTimeout(() => {
+            if (chartRef.current) {
+              drawChart(sortedData);
+            }
+          }, 0);
 
           const dataWithIds = categoriesData.map((item) => {
             const matchedCategory = categories.find(
