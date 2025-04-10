@@ -5,6 +5,7 @@ import Api from "../../../services/Api"
 import CustomModal from "../../../components/CustomModal"
 import { useNavigate } from "react-router-dom"
 import {setProfileImg,setNickName, resetUser } from "../../user/UserSlice"
+import AlertModal from "../../../components/AlertModal"
 
 export default function Correction() {
     const [userImg, setUserImg] = useState("")
@@ -17,10 +18,16 @@ export default function Correction() {
     const [isNickName, setIsNickName] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isLeaveModal, setIsLeaveModal] =useState(false)
+    const [message, setMessage] = useState("")
+    const [isOpen, setIsOpen] = useState(false)
     const [fileImg, setFileImg] = useState(null);
     const fileInput = useRef(null);
     const nav =useNavigate()
     const dispatch = useDispatch()
+
+     function closeHandler(){
+        setIsOpen(false)
+     }
 
     function handleButtonClick() {
         fileInput.current.click()
@@ -52,19 +59,22 @@ export default function Correction() {
                 const response = await Api.post("api/user/profile-image",formData)
                 console.log(response)
                 if (response.data.status === "success") {
-                    window.alert("이미지 변경에 성공하셨습니다")
+                    setMessage("이미지 변경에 성공하셨습니다")
+                    setIsOpen(true)
                     dispatch(setProfileImg(response.data.data))
                     setUserImg(response.data.data)
                     setIsModalOpen(false)
                 } else {
-                    window.alert("인증 오류. 다시 로그인 해주시기 바랍니다")
+                    setIsOpen(true)
+                    setMessage("인증 오류. 다시 로그인 해주시기 바랍니다")
                     nav("/user")
                 }
             }
             fetchData()
         } catch (error) {
             console.log(error)
-            window.alert("서버 에러. 다시 시도해주시기 바랍니다")
+            setMessage("서버 에러. 다시 시도해주시기 바랍니다")
+            setIsOpen(true)
         }
     }
     
@@ -93,7 +103,8 @@ export default function Correction() {
                 }
             } catch (error) {
                 console.log(error)
-                window.alert("서버에러 잠시후 시도해 주세요")
+                setMessage("서버에러 잠시후 시도해 주세요")
+                setIsOpen(true)
         } 
         }
         fetchData()
@@ -117,16 +128,19 @@ export default function Correction() {
                     if (response.data.status === "success") {
                         setCorrectionCheck(false)
                         dispatch(setNickName(response.data.data.nickname))
-                        window.alert("변경 성공")
+                        setMessage("변경 성공")
+                        setIsOpen(true)
                     }
                 } catch (error) {
                     if (error.response && error.response.data.status === "fail") {
                         setIsNickName(false)
                         console.log("확인",isNickName,correctionCheck)
-                        window.alert("이미 사용중인 닉네임이 존재합니다")
+                        setMessage("이미 사용중인 닉네임이 존재합니다")
+                        setIsOpen(true)
                     } else {
                         console.log(error)
-                        window.alert("오류가 발생했습니다. 다시 시도해 주세요")
+                        setMessage("오류가 발생했습니다. 다시 시도해 주세요")
+                        setIsOpen(true)
                     }
                 }
             }
@@ -152,14 +166,16 @@ export default function Correction() {
             try {
                 const response = await Api.delete("api/user/delete")
                 if (response.data.status === "success") {
-                    window.alert("탈퇴가 완료되었습니다")
+                    setIsOpen(true)
+                    setMessage("탈퇴가 완료되었습니다")
                     setIsLeaveModal(false)
                     dispatch(resetUser())
                     nav("/home")
                 }
             } catch (error) {
                 console.log(error)
-                window.alert("서버에러 다시 시도해주세요")
+                setIsOpen(true)
+                setMessage("서버에러 다시 시도해주세요")
             }
         }
         fetchData()
@@ -249,6 +265,9 @@ export default function Correction() {
                     </div>
                   </CustomModal>
                 </div>
+                <AlertModal isOpen={isOpen} isClose={closeHandler} height={170}>
+                    {message}
+                </AlertModal>
         </div>
     )
 }

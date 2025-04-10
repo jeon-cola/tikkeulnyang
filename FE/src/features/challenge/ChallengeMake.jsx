@@ -7,10 +7,13 @@ import { useState, useEffect } from "react";
 import ChallengeCalendar from "@/features/challenge/components/ChallengeCalendar";
 import CustomBackHeader from "@/components/CustomBackHeader";
 import IsLoading from "../../components/IsLoading"
+import AlertModal from "../../components/AlertModal";
 
 export default function ChallengeMake() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading ] = useState(false);
+  const [message, setMessage] = useState("")
+  const [isOpen, setIsOpen] = useState(false)
   const [challengeData, setChallengeData] = useState({
     challengeName: "",
     description: "",
@@ -25,6 +28,11 @@ export default function ChallengeMake() {
 
   // 썸네일 이미지 파일을 저장할 state
   const [thumbnail, setThumbnail] = useState(null);
+
+  // 모달창 닫기
+  function closeModal() {
+    setIsOpen(false)
+  }
 
   useEffect(() => {
     //uploadThumbnail(challengeId);
@@ -82,13 +90,15 @@ export default function ChallengeMake() {
 
       // 빈 필드가 있는 경우
       if (emptyFields.length > 0) {
-        alert(`다음 항목을 입력해주세요:\n${emptyFields.join("\n")}`);
+        setMessage(`다음 항목을 입력해주세요:\n${emptyFields.join("\n")}`)
+        setIsOpen(true)
         return;
       }
 
       // 썸네일이 선택되지 않은 경우 확인
       if (!thumbnail) {
-        alert("썸네일 이미지를 업로드해주세요.");
+        setMessage("썸네일 이미지를 업로드해주세요.")
+        setIsOpen(true)
         return;
       }
 
@@ -107,13 +117,15 @@ export default function ChallengeMake() {
         }
       } catch (error) {
         console.error("썸네일 업로드 실패:", error);
-        alert("썸네일 업로드에 실패했습니다.");
+        setMessage("썸네일 업로드에 실패했습니다.")
+        setIsOpen(true)
       } 
 
       navigate(`/challenge`);
     } catch (error) {
       console.error("챌린지 생성 실패", error);
-      alert("챌린지 생성에 실패했습니다. ");
+      setMessage("챌린지 생성에 실패했습니다. ")
+      setIsOpen(true)
     } finally {
       setIsLoading(false)
     }
@@ -319,6 +331,10 @@ export default function ChallengeMake() {
           </button>
         </div>
       </div>
+
+      <AlertModal title="경고" isOpen={isOpen} isClose={closeModal} height={150}>
+        {message}
+      </AlertModal>
 
       <NavBar />
     </>
