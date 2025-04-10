@@ -52,6 +52,19 @@ export default function LedgerDetail() {
     merchantName: "",
   });
 
+  const [successMessage, setSuccessMessage] = useState("")
+  const [failMessage, setFailMessage] = useState("")
+  const [successIsOpen, setSuccessIsOpen] = useState(false)
+  const [failIsOpen, setFailIsOpen] = useState(false)
+
+  function closeSuccessHandler() {
+    setSuccessIsOpen(false)
+  }
+
+  function closeFailHandler() {
+    setFailIsOpen(false)
+  }
+
   const AlertModalOpen = (message) => {
     setAlertMessage(message);
     setIsAlertModal(true);
@@ -201,6 +214,8 @@ export default function LedgerDetail() {
         finalPayload
       );
       console.log("내역 수정 완료:", response.data);
+      setSuccessMessage("내역 수정이 완료되었습니다")
+      setSuccessIsOpen(true)
       setIsLoading(true);
 
       // 성공 후 데이터 다시 불러오기
@@ -211,6 +226,8 @@ export default function LedgerDetail() {
     } catch (error) {
       console.error("내역 수정 실패:", error);
       console.error("에러 상세:", error.response?.data || error.message);
+      setFailMessage("내역 수정이 실패하였습니다")
+      setFailIsOpen(true)
       return false;
     }
   };
@@ -750,6 +767,15 @@ export default function LedgerDetail() {
               <p className="text-center">{alertMessage}</p>
             </AlertModal>
           )}
+
+          <AlertModal title="성공" isOpen={successIsOpen} isClose={closeSuccessHandler} height={180}>
+            {successMessage}
+          </AlertModal>
+
+          <AlertModal title="에러" isOpen={failIsOpen} isClose={closeFailHandler} height={180}>
+            {failMessage}
+          </AlertModal>
+
           {/* 애니메이션 스타일 */}
           <style>{`
 @keyframes pop {
