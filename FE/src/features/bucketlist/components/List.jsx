@@ -23,6 +23,7 @@ export default function List() {
 
   // 버킷리스트 리스트 가져오기
   useEffect(()=> {
+    setIsLoading(true)
     const fetchData = async() => {
     try {
       const response = await Api.get("api/bucket/list")
@@ -31,6 +32,8 @@ export default function List() {
         }
       } catch (error) { 
         console.log(error)
+      } finally {
+        setIsLoading(false)
       }
     }
     fetchData();
