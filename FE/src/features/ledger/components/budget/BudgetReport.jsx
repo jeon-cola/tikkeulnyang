@@ -9,41 +9,7 @@ import CategoryList from "../CategoryList";
 
 const categories = CategoryList();
 
-const connectLinePlugin = {
-  id: "connectLinePlugin",
-  afterDatasetDraw(chart, args, pluginOptions) {
-    const { ctx } = chart;
-    const datasetMeta = chart.getDatasetMeta(0);
-
-    datasetMeta.data.forEach((arc) => {
-      const { x: centerX, y: centerY } = arc.getProps(["x", "y"], true);
-      const { startAngle, endAngle, outerRadius } = arc.getProps(
-        ["startAngle", "endAngle", "outerRadius"],
-        true
-      );
-
-      // 중심각 계산
-      const angle = (startAngle + endAngle) / 2;
-      const labelX = centerX + Math.cos(angle) * (outerRadius + 20); // 라벨 위치 계산
-      const labelY = centerY + Math.sin(angle) * (outerRadius + 20);
-
-      // 선 그리기
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(
-        centerX + Math.cos(angle) * outerRadius,
-        centerY + Math.sin(angle) * outerRadius
-      ); // 파이조각 외곽점
-      ctx.lineTo(labelX, labelY); // 라벨 포인트
-      ctx.strokeStyle = arc.options.backgroundColor;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.restore();
-    });
-  },
-};
-
-Chart.register(ChartDataLabels, connectLinePlugin);
+Chart.register(ChartDataLabels);
 
 export default function BudgetReport() {
   const [activeDate, setActiveDate] = useState(new Date());
@@ -67,20 +33,15 @@ export default function BudgetReport() {
     "#D9D9D9",
   ];
 
-  // 카테고리 통계를 위한 api 연결
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await Api.get(
           `api/payment/statistics/category/${year}/${month}`
         );
-        console.log("테스트:", response.data);
         if (response.data.status === "success") {
           const categoriesData = response.data.data.categories;
-          console.log("예산통계 데이터:", categoriesData);
-          // 퍼센트 기준 내림차순 정렬 (높은 퍼센트가 먼저 오도록)
           const sortedData = [...categoriesData].sort((a, b) => {
-            // parseFloat을 사용해 문자열인 경우에도 올바르게 비교
             const percentA =
               typeof a.percentage === "string"
                 ? parseFloat(a.percentage)
@@ -89,24 +50,21 @@ export default function BudgetReport() {
               typeof b.percentage === "string"
                 ? parseFloat(b.percentage)
                 : b.percentage;
-
-            return percentB - percentA; // 내림차순 정렬
+            return percentB - percentA;
           });
 
           setChartData(sortedData);
-          // 카테고리 목록은 ID 기준 정렬
-          // 1. 각 데이터 항목에 해당 카테고리 ID 매핑
+
           const dataWithIds = categoriesData.map((item) => {
             const matchedCategory = categories.find(
               (c) => c.name === item.name
             );
             return {
               ...item,
-              categoryId: matchedCategory ? matchedCategory.id : 999, // 매칭되지 않으면 높은 ID 부여
+              categoryId: matchedCategory ? matchedCategory.id : 999,
             };
           });
 
-          // 2. ID 기준으로 정렬
           const idSortedData = [...dataWithIds].sort(
             (a, b) => a.categoryId - b.categoryId
           );
@@ -118,16 +76,14 @@ export default function BudgetReport() {
     };
     fetchData();
   }, [year, month]);
+
   useEffect(() => {
     if (!chartData.length) return;
     const ctx = chartRef.current.getContext("2d");
 
-    // 기존 차트 제거
     if (window.budgetChart) {
       window.budgetChart.destroy();
     }
-
-    const total = chartData.reduce((sum, item) => sum + item.amount, 0);
 
     window.budgetChart = new Chart(ctx, {
       type: "pie",
@@ -146,39 +102,28 @@ export default function BudgetReport() {
         maintainAspectRatio: false,
         layout: {
           padding: {
-            top: 70,
-            bottom: 70,
-            left: 70,
-            right: 70,
+            top: 20,
+            bottom: 20,
+            left: 20,
+            right: 20,
           },
         },
         plugins: {
           legend: {
-            display: false,
+            display: true,
+            position: "bottom",
+            labels: {
+              boxWidth: 15,
+              padding: 20,
+              font: {
+                size: 12,
+              },
+              maxWidth: 130, // 범례 2줄로 보이게 조정
+              usePointStyle: true,
+            },
           },
           datalabels: {
-            color: "#000",
-            font: {
-              weight: "bold",
-              size: 12,
-            },
-            anchor: "end", // 원 밖으로 위치
-            align: "end", // 선 밖 끝에 정렬
-            offset: 5, // 떨어지는 거리
-            formatter: (value, context) => {
-              const label = context.chart.data.labels[context.dataIndex];
-              const total = context.chart.data.datasets[0].data.reduce(
-                (a, b) => a + b,
-                0
-              );
-              const percentage = ((value / total) * 100).toFixed(1);
-              return `${label}\n${percentage}%`;
-            },
-            // 아래 스타일은 선택 사항
-            backgroundColor: "#ffffff",
-            borderWidth: 1,
-            borderRadius: 4,
-            padding: 6,
+            display: false, // 파이차트 % 제거
           },
         },
       },
@@ -198,17 +143,18 @@ export default function BudgetReport() {
             }}
           />
         </div>
+
         {/* 파이차트 */}
         <div className="w-full h-auto bg-white rounded-md shadow-sm px-4 py-3">
           <canvas
             id="pieChart"
             ref={chartRef}
-            className="w-full max-w-[400px] h-[400px] mx-auto"
+            className="w-full max-w-[500px] h-[500px] mx-auto" // 크기 확대
           ></canvas>
         </div>
 
         {/* 카테고리별 목록 */}
-        <div className="bg-white w-full rounded-md shadow-sm px-4 py-3">
+        <div className="bg-white w-full rounded-md shadow-sm px-4 py-3 mt-4">
           <h2 className="text-lg font-semibold mb-3">카테고리별 소비 내역</h2>
           <ul className="space-y-2">
             {chartData.map((item, index) => {
@@ -219,15 +165,15 @@ export default function BudgetReport() {
                   className="flex items-center justify-between pb-2"
                 >
                   <div className="flex justify-between gap-4">
-                    {/* 퍼센트 박스 */}
                     <div
                       className="w-[48px] h-[28px] text-sm flex items-center justify-center text-white font-medium rounded-md"
-                      style={{ backgroundColor: backgroundColors[index] }}
+                      style={{
+                        backgroundColor:
+                          backgroundColors[index % backgroundColors.length],
+                      }}
                     >
                       {item.percentage}%
                     </div>
-
-                    {/* 아이콘 및 카테고리네임 */}
                     <div className="flex justify-start gap-2 min-w-[120px]">
                       {matched && (
                         <img
@@ -239,8 +185,6 @@ export default function BudgetReport() {
                       <span className="text-gray-700">{item.name}</span>
                     </div>
                   </div>
-
-                  {/* 금액 */}
                   <span className="text-medium font-medium text-gray-800">
                     {item.amount.toLocaleString()}원
                   </span>

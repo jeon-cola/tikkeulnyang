@@ -73,8 +73,7 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
     }
   }, [date]);
 
-  if (!paymentData) return <div>소비내역이 없습니다</div>;
-  const hasBlink = blinkList.includes(date);
+  if (!paymentData) return <div>로딩 중...</div>;
 
   // === 모달 열기/닫기 ===
   const openEditModal = (item) => {
