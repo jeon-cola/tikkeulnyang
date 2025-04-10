@@ -9,6 +9,7 @@ import Buz from "../../assets/buz-124000.png";
 import Ring from "../../assets/ring_499400.png";
 import Tab from "../../assets/tab_9_870000.png";
 import Watch from "../../assets/watch_7_214000.png";
+import IsLoading from "@/components/IsLoading";
 
 const categories = CategoryList();
 
@@ -45,6 +46,7 @@ export default function BudgetMain() {
   const [activeDate, setActiveDate] = useState(new Date());
   const [budgetData, setBudgetData] = useState(null);
   const [totalWaste, setTotalWaste] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const year = activeDate.getFullYear();
   const month = (activeDate.getMonth() + 1).toString().padStart(2, "0");
@@ -61,6 +63,8 @@ export default function BudgetMain() {
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchWasteData();
@@ -91,7 +95,9 @@ export default function BudgetMain() {
     ? Math.floor(((spending - total) / total) * 100)
     : 0;
 
-  return (
+  return isLoading ? (
+    <IsLoading />
+  ) : (
     <>
       <CustomBackHeader title="예산보기" />
       <BudgetBar />
@@ -204,30 +210,28 @@ export default function BudgetMain() {
         <div className="relative w-full h-auto bg-white rounded-md shadow-sm my-2 pb-8">
           <div className="flex flex-col items-center justify-center text-center font-semibold">
             {totalWaste >= 124000 ? (
-              <>
-                {(() => {
-                  const result = getWasteImage(totalWaste);
-                  return (
-                    result && (
-                      <>
-                        <p className="pt-5">
-                          낭비금액 {totalWaste.toLocaleString()}원
-                        </p>
-                        <img
-                          src={result.image}
-                          alt="낭비 물건 이미지"
-                          className="w-[180px] h-auto py-4"
-                        />
-                        <p>
-                          {result.name}
-                          {getObjectPostfix(result.name)} 살 수 있는
-                        </p>
-                        <p>금액을 낭비했어요</p>
-                      </>
-                    )
-                  );
-                })()}
-              </>
+              (() => {
+                const result = getWasteImage(totalWaste);
+                return (
+                  result && (
+                    <>
+                      <p className="pt-5">
+                        낭비금액 {totalWaste.toLocaleString()}원
+                      </p>
+                      <img
+                        src={result.image}
+                        alt="낭비 물건 이미지"
+                        className="w-[180px] h-auto py-4"
+                      />
+                      <p>
+                        {result.name}
+                        {getObjectPostfix(result.name)} 살 수 있는
+                      </p>
+                      <p>금액을 낭비했어요</p>
+                    </>
+                  )
+                );
+              })()
             ) : (
               <div className="flex flex-col items-center justify-center text-center font-semibold pt-7">
                 <img
