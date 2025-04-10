@@ -55,11 +55,8 @@ export default function BudgetMain() {
         const res = await Api.get(
           `api/budget/waste/money?year=${year}&month=${month}`
         );
-        console.log("낭비 데이터 조회", res.data);
-
         if (res.data.status === "success") {
           const wasteAmount = res.data.data.total_waste_amount;
-          console.log("total_waste_amount 값:", wasteAmount);
           setTotalWaste(wasteAmount);
         }
       } catch (err) {
@@ -75,7 +72,6 @@ export default function BudgetMain() {
         const response = await Api.get(
           `api/budget/categories?year=${year}&month=${month}`
         );
-        console.log("예산 데이터 조회", response.data.data);
         setBudgetData(response.data.data);
       } catch (error) {
         console.log(error);
@@ -87,11 +83,13 @@ export default function BudgetMain() {
   const total = budgetData?.totals?.total_amount || 0;
   const remaining = budgetData?.totals?.total_remaining_amount || 0;
   const spending = budgetData?.totals?.total_spending_amount || 0;
-  const isExceed = budgetData?.totals?.total_is_exceed || false;
+  const isExceed = spending > total;
   const daysLeft = getDaysLeftInMonth(activeDate);
   const dailyAvailable = daysLeft > 0 ? Math.floor(remaining / daysLeft) : 0;
-  const percent = Math.min((remaining / total) * 100, 100);
-  const exceedPercent = Math.abs((remaining / total) * 100);
+  const percent = total > 0 ? (spending / total) * 100 : 0;
+  const exceedPercent = isExceed
+    ? Math.floor(((spending - total) / total) * 100)
+    : 0;
 
   return (
     <>
@@ -134,21 +132,14 @@ export default function BudgetMain() {
             </div>
 
             <div className="relative w-full h-[24px] bg-[#F1EFEF] border border-[#DFDFDF] rounded-[70px] mt-2 overflow-hidden">
-              {isExceed ? (
-                <div
-                  className="h-full bg-[#FF957A] rounded-[70px] text-white text-[12px] text-center"
-                  style={{ width: `${Math.min(exceedPercent, 100)}%` }}
-                >
-                  {exceedPercent.toFixed(0)}%
-                </div>
-              ) : (
-                <div
-                  className="h-full bg-[#AAE1FE] rounded-[70px] text-white text-[12px] text-center"
-                  style={{ width: `${percent}%` }}
-                >
-                  {percent.toFixed(0)}%
-                </div>
-              )}
+              <div
+                className={`h-full flex items-center pl-2 ${
+                  isExceed ? "bg-[#FF957A]" : "bg-[#AAE1FE]"
+                } rounded-[70px] text-black font-medium text-[15px]`}
+                style={{ width: `${Math.min(percent, 100)}%` }}
+              >
+                {isExceed ? `+${exceedPercent}%` : `${percent.toFixed(0)}%`}
+              </div>
             </div>
           </div>
         </div>
@@ -160,9 +151,8 @@ export default function BudgetMain() {
             const used = item.spendingAmount || 0;
             const budget = item.amount || 0;
             const remaining = item.remainingAmount;
-            const exceed = item.isExceed === 1;
-            const percent =
-              budget > 0 ? Math.min((used / budget) * 100, 100) : 0;
+            const exceed = used > budget;
+            const percent = budget > 0 ? (used / budget) * 100 : 0;
 
             return (
               <div
@@ -188,12 +178,12 @@ export default function BudgetMain() {
                   </div>
                   <div className="relative w-full h-[25px] bg-[#ECECEC] rounded-full overflow-hidden">
                     <div
-                      className={`h-full ${
+                      className={`h-full flex items-center pl-2 ${
                         exceed ? "bg-[#FF957A]" : "bg-[#AAE1FE]"
-                      } rounded-full`}
-                      style={{ width: `${percent}%` }}
+                      } rounded-full text-black font-medium text-[12px]`}
+                      style={{ width: `${Math.min(percent, 100)}%` }}
                     >
-                      <span className="text-right!">{percent.toFixed(0)}%</span>
+                      {percent.toFixed(0)}%
                     </div>
                   </div>
                   <div className="flex justify-between">
@@ -221,11 +211,7 @@ export default function BudgetMain() {
                     result && (
                       <>
                         <p className="pt-5">
-                          낭비금액{" "}
-                          {totalWaste !== null
-                            ? totalWaste.toLocaleString()
-                            : "0"}
-                          원
+                          낭비금액 {totalWaste.toLocaleString()}원
                         </p>
                         <img
                           src={result.image}
@@ -249,7 +235,6 @@ export default function BudgetMain() {
                   alt="기본 낭비 아이콘"
                   className="w-10 h-auto"
                 />
-
                 <p className="pt-3">이번 달 낭비금액은</p>
                 <p>
                   {totalWaste !== null ? totalWaste.toLocaleString() : "0"}
