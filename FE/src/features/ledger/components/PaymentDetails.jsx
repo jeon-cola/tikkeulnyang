@@ -1,4 +1,3 @@
-// src/components/ledger/PaymentDetails.jsx
 import { useEffect, useState } from "react";
 import Api from "../../../services/Api";
 import CategoryList from "./CategoryList";
@@ -93,7 +92,6 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
   const openEditModal = (item) => {
     if (type !== "personal") return;
 
-    // use the transaction’s own timestamp instead of the ledger date
     let rawDate = paymentData.date;
     if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) rawDate += "T00:00:00";
     let d = new Date(rawDate);
@@ -112,8 +110,7 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
       selectedYear: d.getFullYear(),
       selectedMonth: d.getMonth() + 1,
       selectedDay: d.getDate(),
-      categoryId:
-        categories.find((c) => c.name === item.category)?.id || 0,
+      categoryId: categories.find((c) => c.name === item.category)?.id || 0,
       merchantName: item.merchantName || "",
     });
     setIsModalOpen(true);
@@ -140,9 +137,11 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
         "-"
       ) +
       "T" +
-      [pad(newD.getHours()), pad(newD.getMinutes()), pad(newD.getSeconds())].join(
-        ":"
-      );
+      [
+        pad(newD.getHours()),
+        pad(newD.getMinutes()),
+        pad(newD.getSeconds()),
+      ].join(":");
 
     await Api.put(`api/transactions/${currentTransaction.transactionId}`, {
       amount: Number(editData.rawAmount),
@@ -274,9 +273,7 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
             )}
             <span className="ml-[20px]">{item.category}</span>
             <span className="ml-2">{item.description}</span>
-            <span className="ml-auto">
-              {item.amount.toLocaleString()}원
-            </span>
+            <span className="ml-auto">{item.amount.toLocaleString()}원</span>
           </li>
         ))}
       </ul>
@@ -420,13 +417,13 @@ export default function PaymentDetails({ date, type, userId = null, onUse }) {
               </button>
               <button
                 onClick={closeEditModal}
-                className="flex-1 h-[45px] bg-gray-200 rounded-lg font-medium text-lg"
+                className="flex-1 h-[45px] bg-gray-200! rounded-lg font-medium text-lg"
               >
                 취소
               </button>
               <button
                 onClick={doSave}
-                className="flex-1 h-[45px] bg-blue-500 text-white rounded-lg font-medium text-lg"
+                className="flex-1 h-[45px] bg-blue-500! text-white rounded-lg font-medium text-lg"
               >
                 저장
               </button>
