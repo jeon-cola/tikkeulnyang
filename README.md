@@ -1,6 +1,6 @@
 ## 절약 경쟁 기반 가계부 플랫폼
 ---
-![티끌냥](assets/homepage.png)
+ <img src="assets/homepage.png" width="200"/>
 
 ### 🎯 프로젝트 소개
 ---
@@ -22,26 +22,26 @@ https://www.notion.so/C107-1a5385e273058098a39ada169e7d648a
 
 FrontEnd
 <p align="left">
-  <img src="assets/javascript.png" width="40"/>
-  <img src="assets/css.png" width="40"/>
-  <img src="assets/React-icon.svg.png" width="40"/>
-  <img src="assets/redux.png" width="40"/>
-  <img src="assets/tailwind.png" width="40"/>
+  <img src="assets/javascript.png" width="60"/>
+  <img src="assets/css.png" width="60"/>
+  <img src="assets/React-icon.svg.png" width="60"/>
+  <img src="assets/redux.png" width="60"/>
+  <img src="assets/tailwind.png" width="60"/>
 </p>
 
 BackEnd
 <p align="left">
-  <img src="assets/springboot.webp" width="40"/>
-  <img src="assets/mysql.svg" width="40"/>
-  <img src="assets/redis.png" width="40"/>
+  <img src="assets/springboot.webp" width="60"/>
+  <img src="assets/mysql.svg" width="60"/>
+  <img src="assets/redis.png" width="60"/>
 </p>
 
 Infra
 <p align="left">
-  <img src="assets/docker.png" width="40"/>
-  <img src="assets/jenkins.png" width="40"/>
-  <img src="assets/grafana.png" width="40"/>
-  <img src="assets/prometheus.png" width="40"/>
+  <img src="assets/docker.png" width="60"/>
+  <img src="assets/jenkins.png" width="60"/>
+  <img src="assets/grafana.png" width="60"/>
+  <img src="assets/prometheus.png" width="60"/>
 </p>
 
 ### 📚 아키텍처
@@ -55,25 +55,29 @@ Infra
 
 ![checkpayments](assets/checkpayments.png)
 
-![share](assets/share.gif)
+<img scr="assets/share.gif" width="200"/>
 
 ### 챌린지
 
 ![challenge](assets/challenge.png)
 
-![challenge](assets/challenge.gif)
+<img scr="assets/challenge.gif" width="200"/>
 
 ### 버킷 리스트
 
 ![bucketlist_info](assets/bucketlist_info.png)
 
-![bucketlist_step1](assets/step1-portrait.png)  ![bucketlist_step2](assets/step2-portrait.png) ![bucketlist_step3](assets/step3-portrait.png)
+<p align="left">
+  <img src="assets/step1-portrait.png" width="200"/>
+  <img src="assets/step2-portrait.png" width="200"/>
+  <img src="assets/step3-portrait.png" width="200"/>
+</p>
 
-![bucketlist](assets/bucketlist.gif)
+<img src="assets/bucketlist.gif" width="200"/>
 
 ### 카드 추천
 
-![card_recommend](assets/card.gif)
+<img src="assets/card.gif" width="200"/>
 
 ## 소개 영상
 
