@@ -21,13 +21,28 @@ https://www.notion.so/C107-1a5385e273058098a39ada169e7d648a
 ---
 
 FrontEnd
-![javascript](assets/javascript.png) ![css](assets/css.png) ![react](assets/React-icon.svg.png) ![redux](assets/redux.png) ![tailwind](assets/tailwind.png)
+<p align="left">
+  <img src="assets/javascript.png" width="40"/>
+  <img src="assets/css.png" width="40"/>
+  <img src="assets/React-icon.svg.png" width="40"/>
+  <img src="assets/redux.png" width="40"/>
+  <img src="assets/tailwind.png" width="40"/>
+</p>
 
 BackEnd
-![springboot](assets/springboot.webp) ![mysql](assets/mysql.svg) ![redis](assets/redis.png)
+<p align="left">
+  <img src="assets/springboot.webp" width="40"/>
+  <img src="assets/mysql.svg" width="40"/>
+  <img src="assets/redis.png" width="40"/>
+</p>
 
 Infra
-![docket](assets/docker.png) ![jenkins](assets/jenkins.png) ![grafana](assets/grafana.png) ![prometheus](assets/prometheus.png)
+<p align="left">
+  <img src="assets/docker.png" width="40"/>
+  <img src="assets/jenkins.png" width="40"/>
+  <img src="assets/grafana.png" width="40"/>
+  <img src="assets/prometheus.png" width="40"/>
+</p>
 
 ### 📚 아키텍처
 
