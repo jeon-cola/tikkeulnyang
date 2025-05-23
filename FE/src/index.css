@@ -1,0 +1,259 @@
+@font-face {
+  font-family: "Pretendard";
+  src: url("./assets/fonts/pretendard/PretendardVariable.ttf");
+}
+
+* {
+  font-family: "Pretendard";
+}
+:root {
+  /* font-family: system-ui, Avenir, Helvetica, Arial, sans-serif; */
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: #242424;
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 구독 아이콘 */
+.subScribe {
+  position: absolute;
+  width: 53px;
+  height: 53px;
+  left: 107px;
+  top: 106px;
+  border-radius: 6px;
+}
+/* 구독 아이콘 */
+.lengerIcon {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  left: 0px;
+  top: 1px;
+  background: #faf4b3;
+}
+
+a {
+  font-weight: 500;
+  color: #242424;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #ff957a;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #f7f7f7;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+.customButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border-radius: 100px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 23px;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #ff957a;
+  color: white;
+  cursor: pointer;
+  transition: all 0.25s;
+  height: 43px;
+  width: 125px;
+  white-space: nowrap;
+}
+
+.customWhiteButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border-radius: 100px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 23px;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #f3f4f6;
+  color: #4e5966;
+  cursor: pointer;
+  transition: all 0.25s;
+  height: 43px;
+  width: 125px;
+  white-space: nowrap;
+}
+
+/* 긴 버튼 */
+.longButton {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 6px 16px;
+  gap: 10px;
+  width: 267px;
+  height: 43px;
+  background: #ff957a;
+  border: 1px solid #dfdfdf;
+  border-radius: 100px;
+}
+
+.smallButton {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: center;
+  color: white;
+  background: #ff957a;
+  border: none;
+  border-radius: 100px;
+  width: 60px;
+  height: 40px;
+  font-family: "Pretendard-thin";
+  font-size: 15px;
+  font-weight: 500;
+  padding: 2px 15px;
+}
+
+.smallWhiteButton {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: center;
+  color: #242424;
+  background: white;
+  border: none;
+  border-radius: 100px;
+  width: 60px;
+  height: 40px;
+  font-family: "Pretendard-thin";
+  font-size: 15px;
+  font-weight: 500;
+  padding: 2px 15px;
+  box-shadow: 1px 1px 2px 0px rgba(0, 0, 0, 15%);
+  transition: background-color 0.2s ease;
+}
+
+/* 작은 버튼 */
+.blackButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: white;
+  background: #3d3d3d;
+  border: none;
+  border-radius: 100px;
+  width: auto;
+  height: 27px;
+  font-family: "Pretendard-thin";
+  font-size: 15px;
+  font-weight: 300;
+  padding: 2px 15px;
+}
+
+.blackButton:active {
+  background-color: #242424;
+}
+
+/* 작은 버튼 */
+.whiteButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #3d3d3d;
+  background: white;
+  border-radius: 100px;
+  width: auto;
+  height: 27px;
+  font-family: "Pretendard-thin";
+  font-size: 15px !important;
+  font-weight: 500;
+  padding: 2px 15px;
+  /* 그림자효과 */
+  box-shadow: 2px 2px 2px 0px rgba(0, 0, 0, 20%);
+}
+
+.whiteButton:active {
+  background-color: white;
+}
+
+.greyButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #3d3d3d;
+  background: #d9d9d9;
+  border: none;
+  border-radius: 100px;
+  width: auto;
+  height: 30px;
+  font-family: "Pretendard-thin";
+  font-size: 13px;
+  font-weight: 500;
+  padding: 2px 15px;
+}
+
+.tikkeulButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #3d3d3d;
+  background: #ff957a;
+  border: none;
+  border-radius: 100px;
+  width: auto;
+  height: 30px;
+  font-family: "Pretendard-thin";
+  font-size: 13px;
+  font-weight: 500;
+  padding: 2px 15px;
+}
+button:hover {
+  border-color: #646cff;
+}
+/* 이 기능이 있으면 달력에서 네모가 생깁니다.. 없앨 수 있을까요? */
+/* button:not(.blackButton):not(.whiteButton):not(.customWhiteButton):focus,
+button:not(.blackButton):not(.whiteButton):not(
+    .customWhiteButton
+  ):focus-visible {
+  background-color: #e87c62;
+  outline: 4px auto;
+} */
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #f7f7f7;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #ff957a;
+  }
+}

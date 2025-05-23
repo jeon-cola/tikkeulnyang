@@ -1,0 +1,129 @@
+.react-calendar {
+  width: 100% !important;
+  max-width: 100%;
+  border: none !important;
+  font-family: "Pretendard-Regular";
+  padding-top: 10px;
+  padding-bottom: 20px;
+  border-radius: 6px;
+}
+
+/* 년도 옮기는 버튼 없애기 */
+.react-calendar__navigation__next2-button,
+.react-calendar__navigation__prev2-button {
+  display: none;
+}
+
+/* 내가 클릭한 날짜 표시 */
+.react-calendar__tile--active {
+  background-color: transparent !important;
+  color: #000000 !important;
+}
+.react-calendar__tile--active abbr {
+  position: relative;
+  z-index: 1;
+}
+.react-calendar__tile--active abbr::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 35px;
+  height: 35px;
+  background-color: #dfdfdf;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 1px 1px 4px 0px rgba(0, 0, 0, 20%);
+  z-index: -1;
+  animation: growCircle 0.3s ease;
+}
+
+/* 오늘 날짜 표시 */
+.react-calendar__tile--now {
+  position: relative;
+  background-color: transparent !important;
+}
+.react-calendar__tile--now abbr {
+  position: relative;
+  z-index: 1;
+}
+.react-calendar__tile--now abbr::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 35px;
+  height: 35px;
+  background-color: #fff0ba;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+  box-shadow: 1px 1px 4px 0px rgba(0, 0, 0, 20%);
+  animation: growCircle 0.3s ease;
+}
+
+/* 오늘 + 선택됨 */
+.react-calendar__tile--now.react-calendar__tile--active abbr::after {
+  background-color: #ff957a;
+}
+
+/* .react-calendar__navigation {
+  justify-content: flex-start !important;
+} */
+
+.react-calendar__navigation__label {
+  font-size: 20px;
+  text-align: left !important;
+  flex-grow: 0 !important;
+}
+
+/* 빨간색 주말 날짜 -> 검정색으로 표시 */
+.react-calendar__month-view__days__day--weekend {
+  color: #000000 !important;
+  text-decoration: none !important;
+}
+
+/* 해당 월이 아닌 날짜 회색표시 */
+.react-calendar__month-view__days__day--neighboringMonth {
+  color: #dfdfdf !important;
+}
+
+/* 일요일 날짜 빨간색 */
+.react-calendar__month-view__weekdays__weekday:first-child abbr,
+.current-month-sunday {
+  color: #ff957a !important;
+}
+
+/* 오늘이 일요일이면서 선택된 경우 텍스트 색상을 흰색으로 설정 */
+.react-calendar__tile--now.react-calendar__tile--active.current-month-sunday {
+  color: white !important;
+}
+
+/*월 화 수 목 금 토 일 밑줄 없애기*/
+.react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none;
+}
+
+.react-calendar__tile {
+  color: #000000;
+  text-decoration: none !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.react-calendar__tile:hover {
+  background-color: transparent !important;
+  border: none !important;
+}
+/* 작았다가 커지는 원 애니메이션 효과 */
+@keyframes growCircle {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}

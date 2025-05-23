@@ -1,0 +1,95 @@
+version: "3.8"
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ksh147!!
+      MYSQL_DATABASE: catcat
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
+
+  backend:
+    image: ddukio/backend:latest
+    container_name: backend
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      - TZ=Asia/Seoul
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=Asia/Seoul
+    ports:
+      - "8081:8080"
+    networks:
+      - app_network
+
+  frontend:
+    image: ddukio/frontend:latest
+    container_name: frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - app_network
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - app_network
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - app_network
+
+  mysql-exporter:
+    image: prom/mysqld-exporter
+    container_name: mysql-exporter
+    restart: always
+    command: ["--config.my-cnf=/etc/my.cnf"]
+    volumes:
+      - ./exporter/.my.cnf:/etc/my.cnf:ro
+    environment:
+      - DATA_SOURCE_NAME=root:ksh147!!@tcp(mysql:3306)/
+    ports:
+      - "9104:9104"
+    depends_on:
+      - mysql
+    networks:
+      - app_network
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  grafana_data:
