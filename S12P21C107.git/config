@@ -1,0 +1,10 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = true
+	symlinks = false
+	ignorecase = true
+[remote "origin"]
+	url = https://lab.ssafy.com/s12-fintech-finance-sub1/S12P21C107.git
+	fetch = +refs/*:refs/*
+	mirror = true
